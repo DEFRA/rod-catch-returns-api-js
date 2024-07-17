@@ -1,0 +1,25 @@
+{
+  "name": "rod-catch-returns-api",
+  "version": "0.0.1",
+  "description": "rod catch returns api js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/DEFRA/rod-catch-returns-api-js.git"
+  },
+  "keywords": [
+    "rod",
+    "catch",
+    "returns",
+    "api"
+  ],
+  "author": "DEFRA",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/DEFRA/rod-catch-returns-api-js/issues"
+  },
+  "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme"
+}
