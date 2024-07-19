@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "rod catch returns api js",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/DEFRA/rod-catch-returns-api-js/issues"
   },
-  "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme"
+  "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme",
+  "dependencies": {
+    "@hapi/hapi": "^21.3.10",
+    "dotenv": "^16.4.5"
+  }
 }
