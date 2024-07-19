@@ -8,6 +8,12 @@ The JavaScript version of the Rod Catch Returns API.
 
 It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node versions.
 
+# Environment variables
+
+| name | description | required | default | valid | notes |
+| ---- | ----------- | -------- | ------- | ----- | ----- |
+| PORT | Port number | no       | 5000    |       |       |
+
 ## Installation
 
 Copy the example environment file and replace the relevant variables.
