@@ -12,7 +12,11 @@ export default async () => {
   server.route(Routes)
 
   await server.start()
-  console.log('Server started at %s. Listening on %s', new Date(), server.info.uri)
+  console.log(
+    'Server started at %s. Listening on %s',
+    new Date(),
+    server.info.uri
+  )
 
   process.on('unhandledRejection', (err) => {
     console.log(err)
