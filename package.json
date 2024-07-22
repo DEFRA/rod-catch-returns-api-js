@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint 'src/**/*.js'",
+    "lint:fix": "npm run lint -- --fix",
+    "prettier": "prettier . --check"
   },
   "repository": {
     "type": "git",
@@ -31,7 +34,11 @@
   "devDependencies": {
     "@babel/preset-env": "^7.24.8",
     "babel-jest": "^29.7.0",
-    "jest": "^29.7.0"
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-standard": "^17.1.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.3.3"
   },
   "babel": {
     "presets": [
@@ -42,6 +49,20 @@
   "jest": {
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard",
+      "prettier"
+    ],
+    "env": {
+      "node": true,
+      "jest": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "sourceType": "module"
     }
   }
 }
