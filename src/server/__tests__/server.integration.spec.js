@@ -14,7 +14,7 @@ describe('server', () => {
   })
 
   it('should start the server on the specified port', async () => {
-    process.env.PORT = 5001;
+    process.env.PORT = 5001
 
     server = await initialiseServer()
 
@@ -22,4 +22,4 @@ describe('server', () => {
 
     await server.stop()
   })
-});
+})

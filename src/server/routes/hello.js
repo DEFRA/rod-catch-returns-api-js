@@ -1,7 +1,7 @@
 export default [
   {
-    method: "GET",
-    path: "/hello",
+    method: 'GET',
+    path: '/hello',
     /**
      * Handler that return hello.
      *
@@ -10,7 +10,7 @@ export default [
      * @returns {import('@hapi/hapi').ResponseObject} - A response containing hello
      */
     handler: async (request, h) => {
-      return h.response("Hello").code(200);
-    },
-  },
-];
+      return h.response('Hello').code(200)
+    }
+  }
+]
