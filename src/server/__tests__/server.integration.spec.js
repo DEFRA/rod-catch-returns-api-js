@@ -4,22 +4,21 @@ import initialiseServer from '../server.js'
 let server
 
 describe('server', () => {
-  it('successfully starts the server', async () => {
+  beforeAll(async () => {
+    process.env.PORT = 5001
     server = await initialiseServer()
+  })
 
-    const result = await server.inject({ method: 'GET', url: '/' })
-    expect(result.statusCode).toBe(404)
-
+  afterAll(async () => {
     await server.stop()
   })
 
+  it('successfully starts the server', async () => {
+    const result = await server.inject({ method: 'GET', url: '/' })
+    expect(result.statusCode).toBe(404)
+  })
+
   it('should start the server on the specified port', async () => {
-    process.env.PORT = 5001
-
-    server = await initialiseServer()
-
     expect(server.info.port).toBe(5001)
-
-    await server.stop()
   })
 })
