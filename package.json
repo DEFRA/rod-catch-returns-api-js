@@ -10,7 +10,7 @@
     "lint": "eslint 'src/**/*.js'",
     "lint:fix": "npm run lint -- --fix",
     "prettier": "prettier . --check",
-    "prettier:fix": "npm run prettier -- --write",
+    "prettier:fix": "prettier . --write",
     "format": "npm run prettier:fix && npm run lint:fix",
     "format:check": "npm run prettier && npm run lint",
     "prepare": "husky"
