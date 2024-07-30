@@ -2,12 +2,20 @@ import 'dotenv/config'
 import Hapi from '@hapi/hapi'
 
 import Routes from './routes/index.js'
+import { sequelize } from '../services/database.service.js'
 
 export default async () => {
   const server = Hapi.server({
     port: process.env.PORT || 5000,
     host: 'localhost'
   })
+
+  try {
+    await sequelize.authenticate();
+    console.log("Connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
 
   server.route(Routes)
 
