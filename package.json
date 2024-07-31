@@ -55,8 +55,9 @@
     "sourceType": "module"
   },
   "jest": {
+    "globalSetup": "./src/test-utils/global-setup.js",
     "setupFilesAfterEnv": [
-      "./src/test-utils/suite-setup.js"
+      "./src/test-utils/setup-files-after-env.js"
     ],
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
