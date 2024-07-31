@@ -5,14 +5,19 @@ The JavaScript version of the Rod Catch Returns API.
 ## Prerequisites
 
 - Node v18.x (see .nvmrc)
+- PostgreSQL
 
 It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node versions.
 
 # Environment variables
 
-| name | description | required | default | valid | notes |
-| ---- | ----------- | -------- | ------- | ----- | ----- |
-| PORT | Port number | no       | 5000    |       |       |
+| name              | description                                                     | required | default | valid | notes |
+| ----------------- | --------------------------------------------------------------- | -------- | ------- | ----- | ----- |
+| PORT              | Port number                                                     | no       | 5000    |       |       |
+| DATABASE_HOST     | The host name of the PostgreSQL database                        | yes      |         |       |       |
+| DATABASE_USERNAME | The username which is used to authenticate against the database | yes      |         |       |       |
+| DATABASE_PASSWORD | The password which is used to authenticate against the database | yes      |         |       |       |
+| DATABASE_PORT     | The port of the database                                        | no       | 5432    |       |       |
 
 ## Installation
 
