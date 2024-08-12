@@ -1,18 +1,9 @@
-version: '3.7'
-services:
-  #######################################################
-  # Redis
-  #######################################################
-  redis:
-    image: redis:alpine
-    ports:
-      - '6379:6379'
-    volumes:
-      - ./volumes/redis:/data
-    deploy:
-      restart_policy:
-        condition: on-failure
+#######################################################
+# Local services for RCR
+#######################################################
 
+version: '3.5'
+services:
   #######################################################
   # Postgres
   #######################################################
@@ -21,7 +12,9 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - local_services
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -30,3 +23,23 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    networks:
+      - local_services
+    volumes:
+      - redisdata:/data
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  local_services:

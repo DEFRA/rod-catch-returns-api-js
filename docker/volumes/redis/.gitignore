@@ -1,5 +1,0 @@
-# Used for redis persistence - do not remove
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
