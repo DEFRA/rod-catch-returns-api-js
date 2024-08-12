@@ -1,0 +1,5 @@
+# Used for postgres persistence - do not remove
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore

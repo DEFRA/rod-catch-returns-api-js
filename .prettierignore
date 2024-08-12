@@ -1,0 +1,5 @@
+# Dependency directories
+node_modules/
+
+# Ignore subdirectories of the docker/volumes folder (used for persistence)
+docker/volumes/**/*

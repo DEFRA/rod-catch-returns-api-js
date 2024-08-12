@@ -13,7 +13,8 @@
     "prettier:fix": "prettier . --write",
     "format": "npm run prettier:fix && npm run lint:fix",
     "format:check": "npm run prettier && npm run lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:infrastructure": "docker-compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri"
   },
   "repository": {
     "type": "git",
