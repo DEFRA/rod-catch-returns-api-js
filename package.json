@@ -14,7 +14,9 @@
     "format": "npm run prettier:fix && npm run lint:fix",
     "format:check": "npm run prettier && npm run lint",
     "prepare": "husky",
-    "docker:infrastructure": "docker-compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri"
+    "docker:infrastructure": "docker-compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri",
+    "docker:build-dev": "TAG=dev PROJECT_DOCKERFILE=Dockerfile.dev docker-compose -f docker/services.build.yml build",
+    "docker:services-dev": "TAG=dev docker stack deploy -c docker/services.dev.yml rcrs"
   },
   "repository": {
     "type": "git",
