@@ -9,7 +9,7 @@ services:
   ##############################################################################################################
   # Rod Catch Returns services base image
   #
-  # This is not designed to be deployed but to serve as the base image for rod-catcg-returns services.
+  # This is not designed to be deployed but to serve as the base image for rod-catch-returns services.
   ##############################################################################################################
   rod_catch_returns_base:
     image: rod_catch_returns/base

@@ -48,7 +48,7 @@ The project uses Docker for running the project.
 
 The [infrastructure.yml](docker/infrastructure.yml) docker-compose file contains everything that the service depends on to run.
 
-To start the infrastructure, run the following command in the root of the rod-licensing repository:
+To start the infrastructure, run the following:
 
 ```shell script
 npm run docker:infrastructure
