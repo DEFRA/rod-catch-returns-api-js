@@ -11,8 +11,6 @@ services:
       - 5000:5000
     env_file:
       - ../.env
-    environment:
-      - DATABASE_HOST=host.docker.internal # For the rcr_api to access PostgreSQL in a Docker container, it has to use host.docker.internal
     deploy:
       mode: replicated
       replicas: 1
