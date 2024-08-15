@@ -1,0 +1,38 @@
+#######################################################
+# Local services for RCR
+#######################################################
+
+version: '3.8'
+services:
+  #######################################################
+  # Postgres
+  #######################################################
+  postgresdb:
+    image: postgres:alpine
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rcr_api
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  pgdata:
+  redisdata:

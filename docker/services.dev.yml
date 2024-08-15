@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  ##############################################################################################################
+  # rod_catch_returns rcr_api
+  ##############################################################################################################
+  rcr_api:
+    image: rod_catch_returns/rcr_api:${TAG:-latest}
+    volumes:
+      - ../:/app
+    ports:
+      - 5000:5000
+    env_file:
+      - ../.env
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+#######################################################
+# Network configuration
+#######################################################
+networks:
+  internal:
+    driver: overlay

@@ -1,6 +1,11 @@
 import 'dotenv/config'
 
-const ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'postgres']
+const ALLOWED_HOSTS = [
+  'localhost',
+  '127.0.0.1',
+  'postgres',
+  'host.docker.internal'
+]
 
 export default async () => {
   const dbHost = process.env.DATABASE_HOST
