@@ -4,7 +4,7 @@ The JavaScript version of the Rod Catch Returns API.
 
 ## Prerequisites
 
-- Node v18.x (to execute npm helper scripts only, see .nvmrc for latest versopm)
+- Node v18.x (to execute npm helper scripts only, see .nvmrc for latest version)
 - Docker v18.06.0+ (to run the docker services)
 
 It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node versions.
