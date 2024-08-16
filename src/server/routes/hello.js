@@ -10,7 +10,7 @@ export default [
      * @returns {import('@hapi/hapi').ResponseObject} - A response containing hello
      */
     handler: async (request, h) => {
-      return h.response('Hello mate').code(200)
+      return h.response('Hello mates').code(200)
     }
   }
 ]
