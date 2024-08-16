@@ -38,12 +38,12 @@ git config --global --add versionsort.suffix -rc.
 
 # Calculate PREVIOUS_VERSION and NEW_VERSION based on the source and target of the merge
 echo "Determining versions for release"
-if [ "${BRANCH}" == "main" ]; then
+if [ "${BRANCH}" == "main-test" ]; then
     # Creating new release on the main branch, determine latest release version on main branch only
-    PREVIOUS_VERSION=$(git tag --list --merged main --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-rc\.[0-9]*)?$' | tail -1)
-    echo "Latest build on the main branch is ${PREVIOUS_VERSION}"
+    PREVIOUS_VERSION=$(git tag --list --merged main-test --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-rc\.[0-9]*)?$' | tail -1)
+    echo "Latest build on the main-test branch is ${PREVIOUS_VERSION}"
     NEW_VERSION="v$(semver "${PREVIOUS_VERSION}" -i ${RELEASE_TYPE})"
-elif [ "$BRANCH" == "develop" ]; then
+elif [ "$BRANCH" == "develop-test" ]; then
     # Creating new release on the develop branch, determine latest release version on either develop or main
     PREVIOUS_VERSION=$(git tag --list --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-rc\.[0-9]*)?$' | tail -1)
     echo "Latest build in the repository is ${PREVIOUS_VERSION}"
@@ -77,8 +77,8 @@ git tag "${NEW_VERSION}" -m "${NEW_VERSION}" -f
 git push origin "${NEW_VERSION}"
 
 # If we've pushed a new release into main and it is not a hotfix/patch, then merge the changes back to develop
-if [ "${BRANCH}" == "main" ] && [ "${RELEASE_TYPE}" != "patch" ]; then
-  git checkout develop
-  git merge -X theirs main
-  git push origin develop:develop --no-verify
+if [ "${BRANCH}" == "main-test" ] && [ "${RELEASE_TYPE}" != "patch" ]; then
+  git checkout develop-test
+  git merge -X theirs main-test
+  git push origin develop-test:develop-test --no-verify
 fi

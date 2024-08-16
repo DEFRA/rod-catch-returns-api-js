@@ -3,12 +3,12 @@ name: build
 on:
   pull_request:
     branches:
-      - develop
-      - main
+      - develop-test
+      - main-test
   push:
     branches:
-      - develop
-      - main
+      - develop-test
+      - main-test
 
 jobs:
   new-version:
