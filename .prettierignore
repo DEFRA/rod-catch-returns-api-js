@@ -3,3 +3,6 @@ node_modules/
 
 # Ignore subdirectories of the docker/volumes folder (used for persistence)
 docker/volumes/**/*
+
+# Don't format the changelog
+CHANGELOG.md
