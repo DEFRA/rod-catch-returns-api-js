@@ -11,30 +11,27 @@ on:
       - main
 
 jobs:
-  tests:
-    name: tests
+  new-version:
+    name: new-version
     runs-on: ubuntu-latest
-    env:
-      TZ: Europe/London
+    if: ${{ github.event_name == 'push' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting
-          fetch-depth: 0
       - name: Install node
         uses: actions/setup-node@v1
         with:
           node-version: '18.x'
       - name: Install dependencies
         run: npm ci
-      - name: Start infrastructure
-        run: docker swarm init && npm run docker:infrastructure
-      - name: Run tests
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      - name: Run versioning script
+        run: . ./scripts/github/deploy.sh
         env:
-          PORT: 5001
-          DATABASE_HOST: host.docker.internal
-          DATABASE_USERNAME: postgres
-          DATABASE_PASSWORD: password
-          DATABASE_PORT: 5432
-        run: npm run docker:test
+          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          BRANCH: ${{ steps.extract_branch.outputs.branch }}
+          HUSKY: 0
