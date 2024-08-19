@@ -31,7 +31,7 @@ jobs:
       - name: Start infrastructure
         run: npm run docker:infrastructure
       - name: Run tests
-        run: npm run test
+        run: npm run docker:test
         env:
           PORT: 5000
           DATABASE_HOST: host.docker.internal
