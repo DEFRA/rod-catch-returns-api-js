@@ -30,6 +30,8 @@ jobs:
         run: npm ci
       - name: Start infrastructure
         run: docker swarm init && npm run docker:infrastructure
+      - name: Build image
+        run: npm run docker:build-dev
       - name: Run tests
         env:
           PORT: 5001
