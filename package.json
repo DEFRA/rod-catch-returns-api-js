@@ -58,7 +58,6 @@
     "sourceType": "module"
   },
   "jest": {
-    "collectCoverage": true,
     "globalSetup": "./src/test-utils/global-setup.js",
     "setupFilesAfterEnv": [
       "./src/test-utils/setup-files-after-env.js"
