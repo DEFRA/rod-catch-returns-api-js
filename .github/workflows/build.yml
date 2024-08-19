@@ -1,37 +1,22 @@
 name: build
 
-on:
-  pull_request:
-    branches:
-      - develop
-      - main
-  push:
-    branches:
-      - develop
-      - main
-
 jobs:
-  new-version:
-    name: new-version
+  tests:
+    name: tests
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
+    env:
+      TZ: Europe/London
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting
+          fetch-depth: 0
       - name: Install node
         uses: actions/setup-node@v1
         with:
           node-version: '18.x'
       - name: Install dependencies
         run: npm ci
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-      - name: Run versioning script
-        run: . ./scripts/github/deploy.sh
-        env:
-          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          BRANCH: ${{ steps.extract_branch.outputs.branch }}
-          HUSKY: 0
+      - name: Run tests
+        run: npm run test
