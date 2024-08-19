@@ -16,7 +16,7 @@ echo "Executing deployment - BRANCH=${BRANCH}, COMMIT_MESSAGE=${COMMIT_MESSAGE},
 
 # Use the npm semver package to help determine release versions
 echo "Installing semver"
-npm i -g semver lerna-changelog 
+npm i -g semver
 
 echo "Checking out target branch"
 git fetch --unshallow
@@ -63,12 +63,7 @@ echo "Updating version from ${PREVIOUS_VERSION} to ${NEW_VERSION}"
 # Update package files versions
 npm version "${NEW_VERSION}"
 
-# Generate changelog information for changes since the last tag
-echo "Generating changelog updates for all changes between ${PREVIOUS_VERSION} and ${NEW_VERSION}"
-lerna-changelog --from "${PREVIOUS_VERSION}" --to "${NEW_VERSION}" | cat - CHANGELOG.md > CHANGELOG.new && mv CHANGELOG.new CHANGELOG.md
-git commit -a --amend --no-edit --no-verify
-
-# Push new tag, updated changelog and package metadata to the remote
+# Push new tag and package metadata to the remote
 echo "Pushing new release to the remote"
 git push origin "${BRANCH}:${BRANCH}" --no-verify
 
