@@ -79,16 +79,10 @@ docker stack rm rcrs
 
 ## Testing
 
-The unit test files end in unit.spec.js whereas the intergation tests end in integration.spec.js. The integration tests need to be run in a docker container.
+The unit test files end in unit.spec.js whereas the intergation tests end in integration.spec.js. As the integration tests modify the database, the `DATABASE_HOST` environment variable is hardcoded to localhost in [global-setup.js](src/test-utils/global-setup.js). This ensures that they are only run against a local instance of PostgreSQL, either on a user's machine or in a CI environment.
 
 ```shell script
-npm run docker:test
-```
-
-To clean up the docker test containers run
-
-```shell script
-npm run docker:test-clear
+npm run test
 ```
 
 ## Contributing to this project
