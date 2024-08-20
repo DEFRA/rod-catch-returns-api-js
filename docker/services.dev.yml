@@ -9,7 +9,7 @@ services:
     ports:
       - 5000:5000
     env_file:
-      - path: ../.env
+      - ../.env
     deploy:
       mode: replicated
       replicas: 1
