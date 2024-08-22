@@ -19,7 +19,7 @@ jobs:
       TZ: Europe/London
     services:
       postgres:
-        image: postgres
+        image: postgres:15.2
         env:
           POSTGRES_DB: rcr_api
           POSTGRES_USER: postgres
