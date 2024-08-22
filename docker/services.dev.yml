@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   ##############################################################################################################
   # rod_catch_returns rcr_api
@@ -16,10 +15,3 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
-#######################################################
-# Network configuration
-#######################################################
-networks:
-  internal:
-    driver: overlay

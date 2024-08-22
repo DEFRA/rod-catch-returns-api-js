@@ -2,13 +2,12 @@
 # Local services for RCR
 #######################################################
 
-version: '3.8'
 services:
   #######################################################
   # Postgres
   #######################################################
   postgresdb:
-    image: postgres:alpine
+    image: postgres:15-alpine3.20
     ports:
       - '5432:5432'
     volumes:
