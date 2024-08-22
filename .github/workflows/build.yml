@@ -23,7 +23,6 @@ jobs:
           POSTGRES_DB: rcr_api
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_HOST_AUTH_METHOD: trust
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
