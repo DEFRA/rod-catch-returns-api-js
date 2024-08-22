@@ -30,6 +30,10 @@ jobs:
         run: npm ci
       - name: Start infrastructure
         run: docker swarm init && npm run docker:infrastructure
+      - name: wait 1 min
+        uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '60'
       - name: Run tests
         env:
           PORT: 5000
