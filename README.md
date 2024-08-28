@@ -71,7 +71,7 @@ To run an up migration, run the following command:
 npm run migrate:up
 ```
 
-To run a down migration (only needed if you no longer want to back out of the last migration run), run the following command:
+To run a down migration (only needed if you to back out of the last migration run), run the following command:
 
 ```shell script
 npm run migrate:down
