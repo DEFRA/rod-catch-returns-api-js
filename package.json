@@ -19,7 +19,7 @@
     "docker:services-dev": "TAG=dev docker stack deploy -c docker/services.dev.yml rcrs",
     "migrate:build": "docker build -f Dockerfile.migrate -t liquibase-migrator .",
     "migrate:up": "docker run --network host -e ACTION=update --rm --env-file .env liquibase-migrator",
-    "migrate:down": "docker run -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator"
+    "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator"
   },
   "repository": {
     "type": "git",

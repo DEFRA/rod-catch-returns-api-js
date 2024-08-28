@@ -57,6 +57,26 @@ npm run docker:infrastructure
 This will start a docker stack named `rcri` you should be able to see this listed by typing `docker stack ls`
 Should you need to, this stack can be terminated by running `docker stack rm rcri`
 
+### Migrations
+
+There are Liquibase database migrations which need to be run. Docker is used to build and run them:
+
+```shell script
+npm run migrate:build
+```
+
+To run an up migration, run the following command:
+
+```shell script
+npm run migrate:up
+```
+
+To run a down migration (only needed if you no longer want to back out of the last migration run), run the following command:
+
+```shell script
+npm run migrate:down
+```
+
 ### Services
 
 To build the images:
