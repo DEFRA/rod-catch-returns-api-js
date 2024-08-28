@@ -8,6 +8,5 @@ liquibase \
     --username=$DATABASE_USERNAME \
     --password=$DATABASE_PASSWORD \
     --defaultSchemaName=public \
-    --log-level=FINE \
     --changeLogFile=db/changelog/db.changelog-master.xml \
     $ACTION
