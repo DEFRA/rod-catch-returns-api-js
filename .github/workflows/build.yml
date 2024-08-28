@@ -46,7 +46,7 @@ jobs:
       - name: Create .env file
         run: |
           echo -e "PORT=5000\n\
-            DATABASE_HOST=host.docker.internal\n\
+            DATABASE_HOST=postgres\n\
             DATABASE_USERNAME=postgres\n\
             DATABASE_PASSWORD=password\n\
             DATABASE_PORT=5432" > .env
