@@ -59,19 +59,19 @@ Should you need to, this stack can be terminated by running `docker stack rm rcr
 
 ### Migrations
 
-There are Liquibase database migrations which need to be run. Docker is used to build and run them:
+There are Liquibase database migrations which need to be run. First run the following to build the Docker image:
 
 ```shell script
 npm run migrate:build
 ```
 
-To run an up migration, run the following command:
+Then run the following to bring the database up to the latest version:
 
 ```shell script
 npm run migrate:up
 ```
 
-To run a down migration (only needed if you to back out of the last migration run), run the following command:
+If you would like to go back to a previous version of the database, run the following command:
 
 ```shell script
 npm run migrate:down
