@@ -9,10 +9,9 @@ ENV NPM_CONFIG_PREFIX ""
 
 # Install build-specific dependencies
 RUN apk --no-cache -U -v add make gcc g++ python3 curl git \
-    && mkdir -p /app
-
-# Set npm configuration for builds
-RUN npm config set loglevel error \
+    && mkdir -p /app \
+    # Set npm configuration for builds
+    && npm config set loglevel error \
     && npm config set audit false
 
 WORKDIR /app

@@ -9,7 +9,7 @@ ENV PATH=$PATH:/home/node/.npm-global/bin
 # Install base dependencies
 RUN apk --no-cache -U -v upgrade \
     && apk --no-cache -U -v add bash \
-    && npm install pm2 -g > /dev/null 2>&1 \
+    && npm install pm2 -g --ignore-scripts > /dev/null 2>&1 \
     && npm cache clean --force > /dev/null 2>&1
 
 USER node
