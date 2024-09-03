@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install app dependencies
 COPY / /app
-RUN npm install && npm cache clean --force > /dev/null 2>&1
+RUN npm install --ignore-scripts && npm cache clean --force > /dev/null 2>&1
 
 ####################################################################################################################################
 # Build stage 2 - Using the distribution from stage 1, build the final docker image with a minimal number of layers.
