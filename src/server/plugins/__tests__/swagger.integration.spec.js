@@ -35,5 +35,4 @@ describe('swagger', () => {
       payload: expect.stringContaining('swagger')
     })
   })
-
 })
