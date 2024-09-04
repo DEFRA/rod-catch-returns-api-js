@@ -12,7 +12,7 @@ describe('server', () => {
   it('successfully starts the server', async () => {
     server = await initialiseServer()
     const result = await server.inject({ method: 'GET', url: '/' })
-    expect(result.statusCode).toBe(404)
+    expect(result.statusCode).toBe(200)
   })
 
   it('should start the server on the specified port', async () => {
