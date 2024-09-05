@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 export default async () => {
-  // the app can only use the local database
+  // tests can only be run against a local database
   process.env.DATABASE_HOST = 'localhost'
 
   // the tests run in parallel, which can cause conflicts when multiple instances of the server are started for integration tests
