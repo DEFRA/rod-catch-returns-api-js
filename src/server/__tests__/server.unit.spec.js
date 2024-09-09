@@ -9,7 +9,8 @@ jest.mock('@hapi/hapi', () => {
       start: jest.fn(),
       info: {
         uri: 'http://localhost:5000'
-      }
+      },
+      register: jest.fn()
     }))
   }
   return Hapi

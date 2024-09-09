@@ -1,7 +1,9 @@
 import 'dotenv/config'
 import Hapi from '@hapi/hapi'
-
+import Inert from '@hapi/inert'
 import Routes from './routes/index.js'
+import Swagger from './plugins/swagger.js'
+import Vision from '@hapi/vision'
 import { sequelize } from '../services/database.service.js'
 
 export default async () => {
@@ -16,6 +18,8 @@ export default async () => {
   } catch (error) {
     console.error('Unable to connect to the database:', error)
   }
+
+  await server.register([Inert, Vision, Swagger])
 
   server.route(Routes)
 
