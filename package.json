@@ -46,6 +46,7 @@
     "@hapi/inert": "^7.1.0",
     "@hapi/vision": "^7.0.3",
     "dotenv": "^16.4.5",
+    "hapi-and-healthy": "^7.1.0",
     "hapi-swagger": "^17.3.0",
     "joi": "^17.13.3",
     "pg": "^8.12.0",
@@ -78,6 +79,9 @@
     ],
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "^@defra-fish/dynamics-lib$": "<rootDir>/src/__mocks__/dynamics-lib.js"
     }
   },
   "eslintConfig": {
