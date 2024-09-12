@@ -11,7 +11,7 @@ on:
       - main
 
 env:
-  REPOSITORY: rcr/service
+  REPOSITORY: rcr/rcr_repo
 
 jobs:
   build:
