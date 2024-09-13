@@ -90,9 +90,8 @@ jobs:
   push-ecr:
     needs: new-version
     name: push-ecr
-    runs-on:
-      ubuntu-latest
-      # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
       id-token: write
       contents: read
@@ -100,7 +99,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones block `git describe --always --tags` from working later in 'Set all tags'
+          # Shallow clones block `git describe --always --tags` from working later in 'Set all tags'
+          fetch-depth: 0
       # Configure our AWS credentials and region environment variables for use in other GitHub Actions
       # https://github.com/aws-actions/configure-aws-credentials
       - name: Configure AWS Credentials
@@ -108,17 +108,14 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_ENV_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{ secrets.AWS_ENV_ROLE }}
-
       # Login to AWS ECR private. It will use the credentials we configured in the previous step
       # https://github.com/aws-actions/amazon-ecr-login
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
       - name: Generate raw tag
         id: raw-tag
         run: echo "raw_tag=$(git describe --always --tags --abbrev=0)" >> $GITHUB_OUTPUT
-
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -131,7 +128,6 @@ jobs:
             type=raw,priority=800,value=${{ steps.raw-tag.outputs.raw_tag }}
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
-
       # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
@@ -144,9 +140,8 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
-
       # Generate a summary that will be displayed against the Job when selected in the Actions tab.
-      # We this to quickly see details for the image generated instead of digging into the build output.
+      # We do this to quickly see details for the image generated instead of digging into the build output.
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
       - name: Generate job summary
         id: summary

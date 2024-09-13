@@ -1,5 +1,6 @@
-ARG PARENT_VERSION=2.2.2-node20.11.1
+ARG PARENT_VERSION=2.3.0-node20.15.0
 
+# https://github.com/DEFRA/defra-docker-node
 FROM defradigital/node:${PARENT_VERSION} AS base
 
 USER root
