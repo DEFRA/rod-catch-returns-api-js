@@ -11,7 +11,7 @@ on:
       - main
 
 env:
-  REPOSITORY: rcr/rcr_repo
+  REPOSITORY: rod_catch_returns/api_js
 
 jobs:
   build:
