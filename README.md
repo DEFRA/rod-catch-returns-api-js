@@ -79,22 +79,22 @@ npm run migrate:down
 
 ### Services
 
-To build the images:
+To build the image for local:
 
 ```shell script
 npm run docker:build-dev
 ```
 
-To run the services:
+To run the service:
 
 ```shell script
-npm run docker:services-dev
+npm run docker:service-dev
 ```
 
-To stop the running services
+To stop the running ther service
 
 ```shell script
-docker stack rm rcrs
+npm run docker:stop-dev
 ```
 
 ## Testing

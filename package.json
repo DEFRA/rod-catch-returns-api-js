@@ -17,7 +17,7 @@
     "prepare": "husky",
     "docker:infrastructure": "docker compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri",
     "docker:build-dev": "docker build -t rcr_api_dev --target development .",
-    "docker:services-dev": "docker run -d --rm --env-file .env -p 5000:5000 -v ${PWD}/:/app --name rcr_api_dev rcr_api_dev",
+    "docker:service-dev": "docker run -d --rm --env-file .env -p 5000:5000 -v ${PWD}/:/app --name rcr_api_dev rcr_api_dev",
     "docker:stop-dev": "docker container kill rcr_api_dev",
     "docker:build": "docker build -t rcr_api --target production .",
     "docker:service": "docker run -d --rm --env-file .env -p 5000:5000 --name rcr_api rcr_api",
