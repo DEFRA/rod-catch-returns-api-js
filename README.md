@@ -79,7 +79,7 @@ npm run migrate:down
 
 ### Services
 
-To build the image for local:
+To build the image:
 
 ```shell script
 npm run docker:build-dev
