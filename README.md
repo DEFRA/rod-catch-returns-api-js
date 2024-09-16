@@ -4,20 +4,32 @@ The JavaScript version of the Rod Catch Returns API.
 
 ## Prerequisites
 
-- Node v18.x (to execute npm helper scripts only, see .nvmrc for latest version)
+- Node v20.x (to execute npm helper scripts only, see .nvmrc for latest version)
 - Docker v18.06.0+ (to run the docker services)
 
 It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node versions.
 
 # Environment variables
 
-| name              | description                                                     | required | default | valid | notes |
-| ----------------- | --------------------------------------------------------------- | -------- | ------- | ----- | ----- |
-| PORT              | Port number                                                     | no       | 5000    |       |       |
-| DATABASE_HOST     | The host name of the PostgreSQL database                        | yes      |         |       |       |
-| DATABASE_USERNAME | The username which is used to authenticate against the database | yes      |         |       |       |
-| DATABASE_PASSWORD | The password which is used to authenticate against the database | yes      |         |       |       |
-| DATABASE_PORT     | The port of the database                                        | no       | 5432    |       |       |
+| name                     | description                                                             | required | default | valid | notes                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------- | -------- | ------- | ----- | ------------------------------------------------------------------------------------------------------------- |
+| PORT                     | Port number                                                             | no       | 5000    |       |                                                                                                               |
+| DATABASE_HOST            | The host name of the PostgreSQL database                                | yes      |         |       |                                                                                                               |
+| DATABASE_USERNAME        | The username which is used to authenticate against the database         | yes      |         |       |                                                                                                               |
+| DATABASE_PASSWORD        | The password which is used to authenticate against the database         | yes      |         |       |                                                                                                               |
+| DATABASE_PORT            | The port of the database                                                | no       | 5432    |       |                                                                                                               |
+| REDIS_HOST               | Hostname of the redis instance used to cache reference data from crm    | no       |         |       | If undefined, local memory will be used for caching                                                           |
+| REDIS_PORT               | Port number of the redis instance used to cache reference data from crm | no       | 6379    |       |                                                                                                               |
+| REDIS_PASSWORD           | Password used to authenticate with the configured redis instance        | no       |         |       | If undefined, authentication will not be attempted                                                            |
+| OAUTH_CLIENT_ID          | OAuth 2.0 client ID for client credentials flow                         | yes      |         |       |                                                                                                               |
+| OAUTH_CLIENT_SECRET      | OAuth 2.0 client secret for client credentials flow                     | yes      |         |       |                                                                                                               |
+| OAUTH_AUTHORITY_HOST_URL | OAuth 2.0 authority host                                                | yes      |         |       |                                                                                                               |
+| OAUTH_TENANT             | OAuth 2.0 tenant                                                        | yes      |         |       |                                                                                                               |
+| OAUTH_SCOPE              | OAuth 2.0 scope to request (client credentials resource)                | yes      |         |       |                                                                                                               |
+| DYNAMICS_API_PATH        | Full URL to the dynamics API                                            | yes      |         |       | The full URL to the dynamics web api. e.g. https://dynamics-server/api/data/v9.1/                             |
+| DYNAMICS_API_VERSION     | The version of the Dynamics API                                         | yes      |         |       | The version of the dynamics web api. e.g. 9.1                                                                 |
+| DYNAMICS_API_TIMEOUT     | The Dynamics API request timeout                                        | no       | 90000   |       | The time in milliseconds after which requests will timeout if Dynamics does not return a response, e.g. 90000 |
+| DYNAMICS_CACHE_TTL       | Default TTL for cached operations                                       | no       | 12 hrs  |       | The default TTL for cached operations. Specified in seconds.                                                  |
 
 ## Installation
 

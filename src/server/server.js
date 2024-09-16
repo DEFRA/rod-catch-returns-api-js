@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import Hapi from '@hapi/hapi'
+import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Routes from './routes/index.js'
 import Swagger from './plugins/swagger.js'
@@ -19,7 +20,7 @@ export default async () => {
     console.error('Unable to connect to the database:', error)
   }
 
-  await server.register([Inert, Vision, Swagger])
+  await server.register([Inert, Vision, HealthCheck, Swagger])
 
   server.route(Routes)
 
