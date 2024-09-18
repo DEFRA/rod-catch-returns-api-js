@@ -91,22 +91,44 @@ npm run migrate:down
 
 ### Services
 
-To build the images:
+#### Local
+
+To build the image for local development (pm2-dev restarts the app when JS files are changed):
 
 ```shell script
 npm run docker:build-dev
 ```
 
-To run the services:
+To run the service:
 
 ```shell script
-npm run docker:services-dev
+npm run docker:service-dev
 ```
 
-To stop the running services
+To stop the running ther service
 
 ```shell script
-docker stack rm rcrs
+npm run docker:stop-dev
+```
+
+#### Production
+
+To build the image for production:
+
+```shell script
+npm run docker:build
+```
+
+To run the service:
+
+```shell script
+npm run docker:service
+```
+
+To stop the running ther service
+
+```shell script
+npm run docker:stop
 ```
 
 ## Testing
