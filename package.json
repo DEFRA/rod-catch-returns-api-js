@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme",
   "dependencies": {
-    "@defra-fish/dynamics-lib": "^1.49.0",
+    "@defra-fish/dynamics-lib": "^1.50.0-rc.6",
     "@hapi/hapi": "^21.3.10",
     "@hapi/inert": "^7.1.0",
     "@hapi/vision": "^7.0.3",
