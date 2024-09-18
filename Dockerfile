@@ -9,8 +9,8 @@ WORKDIR /app
 
 # Install app dependencies
 COPY / /app
-RUN npm install pm2 -g --ignore-scripts > /dev/null 2>&1 \
-    && npm install --ignore-scripts && npm cache clean --force > /dev/null 2>&1
+RUN npm install pm2 -g --ignore-scripts \
+    && npm install --ignore-scripts
 
 # Default service port
 ARG PORT=5000
