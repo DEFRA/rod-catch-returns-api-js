@@ -2,11 +2,11 @@ import {
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schema/licences.schema.js'
+import { Contact } from '../../models/contact.model.js'
+import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'
 import { contactForLicensee } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
-
-// TODO fix response @link licence
 
 export default [
   {
@@ -41,14 +41,11 @@ export default [
             )
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
-            const mappedResult = {
-              licenceNumber: result.ReturnPermissionNumber,
-              contact: {
-                id: result.ContactId,
-                postcode: result.Postcode
-              }
-            }
-            return h.response(mappedResult).code(StatusCodes.OK)
+            const contact = new Contact()
+            contact.id = result.ContactId
+            contact.postcode = result.Postcode
+            const licence = new Licence(result.ReturnPermissionNumber, contact)
+            return h.response(licence).code(StatusCodes.OK)
           }
         } catch (e) {
           logger.error(e)
