@@ -1,4 +1,8 @@
-import { dynamicsClient } from '@defra-fish/dynamics-lib'
+import {
+  licenceLoginRequestParamSchema,
+  licenceLoginRequestQuerySchema
+} from '../../schema/licences.schema.js'
+import { contactForLicensee } from '@defra-fish/dynamics-lib'
 
 export default [
   {
@@ -6,40 +10,49 @@ export default [
     path: '/licence/{licence}',
     options: {
       /**
-       * Retrieve a licence and its associated contact based on the given licence and postcode
+       * Retrieve a licence and its associated contact based on the given last 6 digits of the licence number and postcode
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object, that has the
-       *    - licenceNumber - the licence number used to retrieve licence information
-       *    - verification - used to verify the licence number
+       *     @param {string} request.params.licence - The last 6 digits of the licence number
+       *     @param {string} request.query.verification - The postcode to cross-check against the licence number
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {import('@hapi/hapi').ResponseObject} - A response containing the target {@link Licence} or a 403 status if not found
        */
       handler: async (request, h) => {
-        const licenceNumber = request.params.licence
-        const postcode = request.query.verification
-
-        const dynamicsRequest = {
-          PermissionNumber: licenceNumber,
-          InputPostCode: postcode
-        }
+        const permissionReferenceNumberLast6Characters = request.params.licence
+        const licenseePostcode = request.query.verification
 
         try {
-          const result = await dynamicsClient.executeUnboundAction(
-            'defra_GetContactByLicenceAndPostcode',
-            dynamicsRequest
+          const result = await contactForLicensee(
+            permissionReferenceNumberLast6Characters,
+            licenseePostcode
           )
-          // const result = await dynamicsClient.retrieve()
-          console.log(result)
-          return h.response(result).code(200)
+
+          if (result.ReturnStatus !== 'success') {
+            return h.response().code(403)
+          } else {
+            const mappedResult = {
+              licenceNumber: result.ReturnPermissionNumber,
+              contact: {
+                id: result.ContactId,
+                postcode: result.Postcode
+              }
+            }
+            return h.response(mappedResult).code(200)
+          }
         } catch (e) {
-          console.log(e)
-          return h.response([]).code(403)
+          console.error(e)
+          throw e
         }
       },
+      validate: {
+        params: licenceLoginRequestParamSchema,
+        query: licenceLoginRequestQuerySchema
+      },
       description:
-        'Retrieve a licence and its associated contact based on the given licence and postcode',
+        'Retrieve a licence and its associated contact based on the given last 6 digits of the licence number and postcode',
       notes:
-        'Retrieve a licence and its associated contact based on the given licence and postcode',
+        'Retrieve a licence and its associated contact based on the given last 6 digits of the licence number and postcode',
       tags: ['api', 'licence']
     }
   }
