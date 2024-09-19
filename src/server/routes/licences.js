@@ -2,6 +2,7 @@ import {
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schema/licences.schema.js'
+import { StatusCodes } from 'http-status-codes'
 import { contactForLicensee } from '@defra-fish/dynamics-lib'
 
 export default [
@@ -21,7 +22,7 @@ export default [
       handler: async (request, h) => {
         const permissionReferenceNumberLast6Characters = request.params.licence
         const licenseePostcode = request.query.verification
-
+        // add debug library
         try {
           const result = await contactForLicensee(
             permissionReferenceNumberLast6Characters,
@@ -29,7 +30,7 @@ export default [
           )
 
           if (result.ReturnStatus !== 'success') {
-            return h.response().code(403)
+            return h.response().code(StatusCodes.FORBIDDEN)
           } else {
             const mappedResult = {
               licenceNumber: result.ReturnPermissionNumber,
@@ -38,7 +39,7 @@ export default [
                 postcode: result.Postcode
               }
             }
-            return h.response(mappedResult).code(200)
+            return h.response(mappedResult).code(StatusCodes.OK)
           }
         } catch (e) {
           console.error(e)
