@@ -5,6 +5,7 @@ import Inert from '@hapi/inert'
 import Routes from './routes/index.js'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
 export default async () => {
@@ -15,9 +16,9 @@ export default async () => {
 
   try {
     await sequelize.authenticate()
-    console.log('Connection has been established successfully.')
+    logger.info('Connection has been established successfully.')
   } catch (error) {
-    console.error('Unable to connect to the database:', error)
+    logger.error('Unable to connect to the database:', error)
   }
 
   await server.register([Inert, Vision, HealthCheck, Swagger])
@@ -25,14 +26,14 @@ export default async () => {
   server.route(Routes)
 
   await server.start()
-  console.log(
+  logger.info(
     'Server started at %s. Listening on %s',
     new Date(),
     server.info.uri
   )
 
   process.on('unhandledRejection', (err) => {
-    console.log(err)
+    logger.error(err)
     process.exit(1)
   })
 

@@ -47,6 +47,7 @@
     "@hapi/hapi": "^21.3.10",
     "@hapi/inert": "^7.1.0",
     "@hapi/vision": "^7.0.3",
+    "debug": "^4.3.7",
     "dotenv": "^16.4.5",
     "hapi-and-healthy": "^7.1.0",
     "hapi-swagger": "^17.3.0",

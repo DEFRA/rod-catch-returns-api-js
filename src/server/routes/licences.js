@@ -4,6 +4,9 @@ import {
 } from '../../schema/licences.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { contactForLicensee } from '@defra-fish/dynamics-lib'
+import logger from '../../utils/logger-utils.js'
+
+// TODO fix response @link licence
 
 export default [
   {
@@ -22,7 +25,7 @@ export default [
       handler: async (request, h) => {
         const permissionReferenceNumberLast6Characters = request.params.licence
         const licenseePostcode = request.query.verification
-        // add debug library
+
         try {
           const result = await contactForLicensee(
             permissionReferenceNumberLast6Characters,
@@ -30,6 +33,12 @@ export default [
           )
 
           if (result.ReturnStatus !== 'success') {
+            logger.info(
+              'Login unsuccessful with request %s and %s. Response: %s',
+              permissionReferenceNumberLast6Characters,
+              licenseePostcode,
+              JSON.stringify(result)
+            )
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
             const mappedResult = {
@@ -42,7 +51,7 @@ export default [
             return h.response(mappedResult).code(StatusCodes.OK)
           }
         } catch (e) {
-          console.error(e)
+          logger.error(e)
           throw e
         }
       },
