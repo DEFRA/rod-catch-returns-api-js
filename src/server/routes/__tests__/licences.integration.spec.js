@@ -49,13 +49,13 @@ describe('licences', () => {
     await server.stop()
   })
 
-  describe('GET /licence', () => {
+  describe('GET /api/licence', () => {
     it('should return 200 if licence number and postcode are valid', async () => {
       contactForLicensee.mockResolvedValue(mockResponse)
 
       const result = await server.inject({
         method: 'GET',
-        url: '/licence/B7A111?verification=WA4 1HT'
+        url: '/api/licence/B7A111?verification=WA4 1HT'
       })
 
       expect(result.statusCode).toBe(200)
@@ -73,7 +73,7 @@ describe('licences', () => {
 
       const result = await server.inject({
         method: 'GET',
-        url: '/licence/B7A118?verification=WA4 1HT'
+        url: '/api/licence/B7A118?verification=WA4 1HT'
       })
 
       expect(result.statusCode).toBe(403)
@@ -84,7 +84,7 @@ describe('licences', () => {
 
       const result = await server.inject({
         method: 'GET',
-        url: '/licence/B7A111?verification=WA4 1HT'
+        url: '/api/licence/B7A111?verification=WA4 1HT'
       })
 
       expect(result.statusCode).toBe(500)

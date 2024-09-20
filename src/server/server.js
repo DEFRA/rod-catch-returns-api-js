@@ -1,8 +1,8 @@
 import 'dotenv/config'
+import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
-import Routes from './routes/index.js'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
 import logger from '../utils/logger-utils.js'
@@ -23,7 +23,12 @@ export default async () => {
 
   await server.register([Inert, Vision, HealthCheck, Swagger])
 
-  server.route(Routes)
+  server.route(rootRoutes)
+
+  // prefix the routes below with /api
+  server.realm.modifiers.route.prefix = '/api'
+
+  server.route(apiPrefixRoutes)
 
   await server.start()
   logger.info(
