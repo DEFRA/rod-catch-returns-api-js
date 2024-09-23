@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { IS_PROD } from '../config.js'
 import { Sequelize } from 'sequelize'
 
