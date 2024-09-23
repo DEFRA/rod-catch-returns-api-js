@@ -5,9 +5,22 @@ import Inert from '@hapi/inert'
 import Routes from './routes/index.js'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import { envSchema } from '../config.js'
 import { sequelize } from '../services/database.service.js'
 
 export default async () => {
+  const { error } = envSchema.validate(process.env, {
+    abortEarly: false
+  })
+
+  if (error) {
+    console.error('Config validation error(s):')
+    error.details.forEach((detail) => {
+      console.error(`- ${detail.message}`)
+    })
+    throw new Error('Environment variables validation failed.')
+  }
+
   const server = Hapi.server({
     port: process.env.PORT || 5000,
     host: '0.0.0.0'
