@@ -1,7 +1,6 @@
 import 'dotenv/config'
-import { IS_DEV } from '../config.js'
+import { IS_PROD } from '../config.js'
 import { Sequelize } from 'sequelize'
-console.log(IS_DEV)
 
 const sequelize = new Sequelize(
   process.env.DATABASE_NAME,
@@ -11,16 +10,16 @@ const sequelize = new Sequelize(
     dialect: 'postgres',
     host: process.env.DATABASE_HOST,
     port: process.env.DATABASE_PORT || 5432,
-    ...(IS_DEV
-      ? {}
-      : {
+    ...(IS_PROD
+      ? {
           dialectOptions: {
             ssl: {
               require: true,
               rejectUnauthorized: false
             }
           }
-        })
+        }
+      : {})
   }
 )
 
