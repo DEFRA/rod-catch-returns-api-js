@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { IS_DEV } from '../config.js'
 import { Sequelize } from 'sequelize'
+console.log(IS_DEV)
 
 const sequelize = new Sequelize(
   process.env.DATABASE_NAME,
