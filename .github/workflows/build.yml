@@ -52,7 +52,14 @@ jobs:
             DATABASE_NAME=rcr_api\n\
             DATABASE_USERNAME=postgres\n\
             DATABASE_PASSWORD=password\n\
-            DATABASE_PORT=5432" > .env
+            DATABASE_PORT=5432\n\
+            OAUTH_CLIENT_ID=client_id\n\
+            OAUTH_CLIENT_SECRET=client_secret\n\
+            OAUTH_AUTHORITY_HOST_URL=https://auth.url\n\
+            OAUTH_TENANT=tenant_id\n\
+            OAUTH_SCOPE=scope\n\
+            DYNAMICS_API_PATH=/api/path\n\
+            DYNAMICS_API_VERSION=v9.0" > .env
       - name: Run migrations
         run: npm run migrate:build && npm run migrate:up
       - name: Run tests
