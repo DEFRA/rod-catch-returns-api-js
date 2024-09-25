@@ -50,7 +50,7 @@ describe('licences', () => {
   })
 
   describe('GET /api/licence', () => {
-    it('should return 200 if licence number and postcode are valid', async () => {
+    it('should return the licence and contact details and a 200 status code, if licence number and postcode are valid', async () => {
       contactForLicensee.mockResolvedValue(mockResponse)
 
       const result = await server.inject({
