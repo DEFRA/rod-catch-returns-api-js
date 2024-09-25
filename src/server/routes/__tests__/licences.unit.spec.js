@@ -1,4 +1,3 @@
-import { StatusCodes } from 'http-status-codes'
 import { contactForLicensee } from '@defra-fish/dynamics-lib'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../licences.js'
@@ -45,7 +44,7 @@ describe('licences.unit', () => {
           })
         })
       )
-      expect(h.code).toHaveBeenCalledWith(StatusCodes.OK)
+      expect(h.code).toHaveBeenCalledWith(200)
     })
 
     it('should return 403 when login is unsuccessful', async () => {
@@ -68,7 +67,7 @@ describe('licences.unit', () => {
         JSON.stringify(dynamicsResponse)
       )
       expect(h.response).toHaveBeenCalled()
-      expect(h.code).toHaveBeenCalledWith(StatusCodes.FORBIDDEN)
+      expect(h.code).toHaveBeenCalledWith(403)
     })
 
     it('should log and throw error when an exception occurs', async () => {
