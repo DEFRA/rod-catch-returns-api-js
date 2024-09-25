@@ -23,7 +23,7 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
-describe('Server Setup', () => {
+describe('server.unit', () => {
   it('should log a message saying the server has started successfully', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 

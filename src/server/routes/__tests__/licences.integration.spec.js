@@ -37,7 +37,7 @@ const noContactResponse = {
     'https://api.crm4.dynamics.com/api/data/v9.1/$metadata#Microsoft.Dynamics.CRM.defra_GetContactByLicenceAndPostcodeResponse'
 }
 
-describe('licences', () => {
+describe('licences.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 

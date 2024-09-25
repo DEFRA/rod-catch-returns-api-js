@@ -1,6 +1,6 @@
 import initialiseServer from '../server.js'
 
-describe('server', () => {
+describe('server.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server
 

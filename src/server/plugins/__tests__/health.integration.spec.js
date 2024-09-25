@@ -1,7 +1,7 @@
 import { dynamicsClient } from '@defra-fish/dynamics-lib'
 import initialiseServer from '../../server.js'
 
-describe('hapi healthcheck', () => {
+describe('health.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 

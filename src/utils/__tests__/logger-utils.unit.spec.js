@@ -7,7 +7,7 @@ jest.mock('debug', () =>
   }))
 )
 
-describe('logger-utils', () => {
+describe('logger-utils.unit', () => {
   it('should create an info logger with the correct namespace and color', () => {
     expect(debug).toHaveBeenCalledWith('rcr-api:info')
 

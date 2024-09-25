@@ -20,7 +20,7 @@ export default [
        *     @param {string} request.params.licence - The last 6 digits of the licence number
        *     @param {string} request.query.verification - The postcode to cross-check against the licence number
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
-       * @returns {import('@hapi/hapi').ResponseObject} - A response containing the target {@link Licence} or a 403 status if not found
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Licence} or a 403 status if not found
        */
       handler: async (request, h) => {
         const permissionReferenceNumberLast6Characters = request.params.licence
