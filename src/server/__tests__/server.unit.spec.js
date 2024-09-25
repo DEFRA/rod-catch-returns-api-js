@@ -1,7 +1,18 @@
+import HealthCheck from '../plugins/health.js'
+import Inert from '@hapi/inert'
+import Swagger from '../plugins/swagger.js'
+import Vision from '@hapi/vision'
 import initialiseServer from '../server.js'
+import logger from '../../utils/logger-utils.js'
+
 import { sequelize } from '../../services/database.service'
 
+jest.mock('../../utils/logger-utils.js')
 jest.mock('../../services/database.service.js')
+jest.mock('../plugins/swagger.js')
+jest.mock('../plugins/health.js')
+jest.mock('@hapi/inert')
+jest.mock('@hapi/vision')
 jest.mock('@hapi/hapi', () => {
   const Hapi = {
     server: jest.fn(() => ({
@@ -10,36 +21,66 @@ jest.mock('@hapi/hapi', () => {
       info: {
         uri: 'http://localhost:5000'
       },
-      register: jest.fn()
+      register: jest.fn(),
+      realm: { modifiers: { route: {} } }
     }))
   }
   return Hapi
 })
 
-describe('Server Setup', () => {
-  let logSpy
-  let errorSpy
+afterEach(() => {
+  jest.restoreAllMocks()
+})
 
-  beforeAll(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-  })
-
-  afterAll(() => {
-    logSpy.mockRestore()
-    errorSpy.mockRestore()
-  })
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('should log successful connection message when database connection is successful', async () => {
-    sequelize.authenticate.mockResolvedValue()
+describe('server.unit', () => {
+  it('should log a message saying the server has started successfully', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
 
     await initialiseServer()
 
-    expect(logSpy).toHaveBeenCalledWith(
+    expect(logger.info).toHaveBeenCalledWith(
+      'Server started at %s. Listening on %s',
+      expect.any(Date),
+      expect.any(String)
+    )
+  })
+
+  it('should configure the routes correctly', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.route).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ method: 'GET', path: '/{param*}' })
+      ])
+    )
+    expect(server.route).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ method: 'GET', path: '/{param*}' })
+      ])
+    )
+  })
+
+  it('should configure server with correct plugins', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.register).toHaveBeenCalledWith([
+      Inert,
+      Vision,
+      HealthCheck,
+      Swagger
+    ])
+  })
+
+  it('should log successful connection message when database connection is successful', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(logger.info).toHaveBeenCalledWith(
       'Connection has been established successfully.'
     )
   })
@@ -47,13 +88,29 @@ describe('Server Setup', () => {
   it('should log an error message when database connection fails', async () => {
     const errorMessage = 'Unable to connect to the database'
 
-    sequelize.authenticate.mockRejectedValue(new Error(errorMessage))
+    sequelize.authenticate.mockRejectedValueOnce(new Error(errorMessage))
 
     await initialiseServer()
 
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       'Unable to connect to the database:',
       expect.any(Error)
     )
+  })
+
+  it('should log an error and exit on unhandledRejection', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+    const mError = new Error('Unexpected error')
+    jest.spyOn(process, 'on').mockImplementation((event, handler) => {
+      if (event === 'unhandledRejection') {
+        handler(mError)
+      }
+    })
+    const exitSpy = jest.spyOn(process, 'exit').mockReturnValueOnce()
+
+    await initialiseServer()
+
+    expect(logger.error).toHaveBeenCalledWith(new Error('Unexpected error'))
+    expect(exitSpy).toHaveBeenCalledWith(1)
   })
 })

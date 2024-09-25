@@ -1,6 +1,6 @@
 import initialiseServer from '../../server.js'
 
-describe('swagger', () => {
+describe('swagger.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server
 
