@@ -33,6 +33,15 @@ afterEach(() => {
 })
 
 describe('server.unit', () => {
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = {
+      ...originalEnv
+    }
+  })
+
   it('should log a message saying the server has started successfully', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
@@ -112,5 +121,17 @@ describe('server.unit', () => {
 
     expect(logger.error).toHaveBeenCalledWith(new Error('Unexpected error'))
     expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  it('should log and throw an error if a required environment variable is missing', async () => {
+    delete process.env.DATABASE_HOST
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    expect(initialiseServer()).rejects.toThrow(
+      'Environment variables validation failed.'
+    )
+
+    expect(logger.error).toHaveBeenCalledWith('Config validation error(s):')
+    expect(logger.error).toHaveBeenCalledWith('- "DATABASE_HOST" is required')
   })
 })

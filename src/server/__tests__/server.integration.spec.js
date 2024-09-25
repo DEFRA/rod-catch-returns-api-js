@@ -3,10 +3,17 @@ import initialiseServer from '../server.js'
 describe('server.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = {
+      ...originalEnv
+    }
+  })
 
   afterEach(async () => {
     await server.stop()
-    process.env.PORT = 5000
   })
 
   it('successfully starts the server', async () => {

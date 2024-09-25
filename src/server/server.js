@@ -10,14 +10,14 @@ import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
 export default async () => {
-  const { error } = envSchema.validate(process.env, {
+  const envValidationResult = envSchema.validate(process.env, {
     abortEarly: false
   })
 
-  if (error) {
-    console.error('Config validation error(s):')
-    error.details.forEach((detail) => {
-      console.error(`- ${detail.message}`)
+  if (envValidationResult.error) {
+    logger.error('Config validation error(s):')
+    envValidationResult.error.details.forEach((detail) => {
+      logger.error(`- ${detail.message}`)
     })
     throw new Error('Environment variables validation failed.')
   }
