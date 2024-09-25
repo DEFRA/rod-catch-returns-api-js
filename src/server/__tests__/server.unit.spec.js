@@ -1,9 +1,18 @@
+import HealthCheck from '../plugins/health.js'
+import Inert from '@hapi/inert'
+import Swagger from '../plugins/swagger.js'
+import Vision from '@hapi/vision'
 import initialiseServer from '../server.js'
 import logger from '../../utils/logger-utils.js'
+
 import { sequelize } from '../../services/database.service'
 
 jest.mock('../../utils/logger-utils.js')
 jest.mock('../../services/database.service.js')
+jest.mock('../plugins/swagger.js')
+jest.mock('../plugins/health.js')
+jest.mock('@hapi/inert')
+jest.mock('@hapi/vision')
 jest.mock('@hapi/hapi', () => {
   const Hapi = {
     server: jest.fn(() => ({
@@ -34,6 +43,36 @@ describe('server.unit', () => {
       expect.any(Date),
       expect.any(String)
     )
+  })
+
+  it('should configure the routes correctly', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.route).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ method: 'GET', path: '/{param*}' })
+      ])
+    )
+    expect(server.route).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ method: 'GET', path: '/{param*}' })
+      ])
+    )
+  })
+
+  it('should configure server with correct plugins', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.register).toHaveBeenCalledWith([
+      Inert,
+      Vision,
+      HealthCheck,
+      Swagger
+    ])
   })
 
   it('should log successful connection message when database connection is successful', async () => {
