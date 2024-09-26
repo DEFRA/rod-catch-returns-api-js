@@ -4,11 +4,21 @@ import Swagger from '../plugins/swagger.js'
 import Vision from '@hapi/vision'
 import initialiseServer from '../server.js'
 import logger from '../../utils/logger-utils.js'
+import { sequelize } from '../../services/database.service.js'
 
-import { sequelize } from '../../services/database.service'
-
+jest.mock('../../services/database.service.js', () => ({
+  sequelize: {
+    authenticate: jest.fn(),
+    define: jest.fn(),
+    init: jest.fn(),
+    sync: jest.fn(),
+    close: jest.fn(),
+    transaction: jest.fn(),
+    query: jest.fn(),
+    literal: jest.fn()
+  }
+}))
 jest.mock('../../utils/logger-utils.js')
-jest.mock('../../services/database.service.js')
 jest.mock('../plugins/swagger.js')
 jest.mock('../plugins/health.js')
 jest.mock('@hapi/inert')
