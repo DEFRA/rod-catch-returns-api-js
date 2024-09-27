@@ -1,4 +1,5 @@
 import { River } from '../../entities/river.entity.js'
+import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -22,10 +23,12 @@ export default [
                 rivers
               }
             })
-            .code(200)
+            .code(StatusCodes.OK)
         } catch (error) {
           logger.error('Error fetching rivers:', error)
-          return h.response({ error: 'Unable to fetch rivers' }).code(500)
+          return h
+            .response({ error: 'Unable to fetch rivers' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
         }
       },
       description: 'Retrieve all the rivers in the database',
