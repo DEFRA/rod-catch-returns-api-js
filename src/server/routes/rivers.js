@@ -13,10 +13,9 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link River}
        */
-      handler: async (request, h) => {
+      handler: async (_request, h) => {
         try {
           const rivers = await River.findAll()
-          // const rivers = []
           return h
             .response({
               _embedded: {
