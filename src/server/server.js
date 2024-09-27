@@ -5,10 +5,23 @@ import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import { envSchema } from '../config.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
 export default async () => {
+  const envValidationResult = envSchema.validate(process.env, {
+    abortEarly: false
+  })
+
+  if (envValidationResult.error) {
+    logger.error('Config validation error(s):')
+    envValidationResult.error.details.forEach((detail) => {
+      logger.error(`- ${detail.message}`)
+    })
+    throw new Error('Environment variables validation failed.')
+  }
+
   const server = Hapi.server({
     port: process.env.PORT || 5000,
     host: '0.0.0.0'
