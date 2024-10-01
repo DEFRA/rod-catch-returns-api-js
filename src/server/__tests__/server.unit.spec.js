@@ -86,7 +86,8 @@ describe('server.unit', () => {
 
     expect(server.route).toHaveBeenCalledWith([
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
-      expect.objectContaining({ method: 'GET', path: '/rivers' })
+      expect.objectContaining({ method: 'GET', path: '/rivers' }),
+      expect.objectContaining({ method: 'GET', path: '/catchments' })
     ])
   })
 
