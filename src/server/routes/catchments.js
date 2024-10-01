@@ -1,4 +1,4 @@
-import { Catchment } from '../../entities/catchment.entity.js'
+import { Catchment } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 
@@ -17,6 +17,7 @@ export default [
       handler: async (_request, h) => {
         try {
           const catchments = await Catchment.findAll()
+
           return h
             .response({
               _embedded: {

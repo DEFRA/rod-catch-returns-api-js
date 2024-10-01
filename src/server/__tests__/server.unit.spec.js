@@ -9,7 +9,11 @@ import { sequelize } from '../../services/database.service.js'
 jest.mock('../../services/database.service.js', () => ({
   sequelize: {
     authenticate: jest.fn(),
-    define: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn()
+    })),
     init: jest.fn(),
     sync: jest.fn(),
     close: jest.fn(),

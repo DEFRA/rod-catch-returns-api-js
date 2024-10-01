@@ -26,3 +26,11 @@ export const River = sequelize.define(
   },
   { sequelize, modelName: 'River', tableName: 'rcr_river', underscored: true }
 )
+
+River.associate = (models) => {
+  River.belongsTo(models.Catchment, {
+    foreignKey: {
+      name: 'catchment_id'
+    }
+  })
+}

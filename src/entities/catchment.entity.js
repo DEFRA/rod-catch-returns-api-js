@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../services/database.service.js'
 
 export const Catchment = sequelize.define(
-  'River',
+  'Catchment',
   {
     id: {
       type: DataTypes.BIGINT,
@@ -28,3 +28,10 @@ export const Catchment = sequelize.define(
     underscored: true
   }
 )
+
+Catchment.associate = (models) => {
+  Catchment.hasMany(models.River, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  })
+}

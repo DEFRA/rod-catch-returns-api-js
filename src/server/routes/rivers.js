@@ -1,4 +1,4 @@
-import { River } from '../../entities/river.entity.js'
+import { River } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 
