@@ -1,3 +1,4 @@
+import Hapi from '@hapi/hapi'
 import HealthCheck from '../plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from '../plugins/swagger.js'
@@ -68,21 +69,25 @@ describe('server.unit', () => {
     )
   })
 
-  it('should configure the routes correctly', async () => {
+  it('should configure root routes correctly', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
-    expect(server.route).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/{param*}' })
-      ])
-    )
-    expect(server.route).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/{param*}' })
-      ])
-    )
+    expect(server.route).toHaveBeenCalledWith([
+      expect.objectContaining({ method: 'GET', path: '/{param*}' })
+    ])
+  })
+
+  it('should configure the /api routes correctly', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.route).toHaveBeenCalledWith([
+      expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
+      expect.objectContaining({ method: 'GET', path: '/rivers' })
+    ])
   })
 
   it('should configure server with correct plugins', async () => {
@@ -147,5 +152,19 @@ describe('server.unit', () => {
 
     expect(logger.error).toHaveBeenCalledWith('Config validation error(s):')
     expect(logger.error).toHaveBeenCalledWith('- "DATABASE_HOST" is required')
+  })
+
+  it('should use the default port if it is not set', async () => {
+    delete process.env.PORT
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(Hapi.server).toHaveBeenCalledWith(
+      expect.objectContaining({
+        port: 5000,
+        host: '0.0.0.0'
+      })
+    )
   })
 })
