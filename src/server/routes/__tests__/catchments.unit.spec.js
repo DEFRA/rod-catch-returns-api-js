@@ -47,7 +47,7 @@ describe('catchments.unit', () => {
       expect(h.code).toHaveBeenCalledWith(200)
     })
 
-    it('should log and return 500 if an error occurs while catchments', async () => {
+    it('should log and return 500 if an error occurs while fetching catchments', async () => {
       const error = new Error('Database error')
       Catchment.findAll.mockRejectedValueOnce(error)
 
