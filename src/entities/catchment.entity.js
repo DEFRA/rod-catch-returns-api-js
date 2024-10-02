@@ -34,4 +34,9 @@ Catchment.associate = (models) => {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
   })
+  Catchment.belongsTo(models.Region, {
+    foreignKey: {
+      name: 'region_id'
+    }
+  })
 }
