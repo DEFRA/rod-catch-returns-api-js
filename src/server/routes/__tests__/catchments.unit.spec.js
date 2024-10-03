@@ -1,12 +1,12 @@
-import { River } from '../../../entities/index.js'
+import { Catchment } from '../../../entities/index.js'
 import logger from '../../../utils/logger-utils.js'
-import routes from '../rivers.js'
+import routes from '../catchments.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 
-describe('rivers.unit', () => {
-  describe('GET /rivers', () => {
+describe('catchments.unit', () => {
+  describe('GET /catchments', () => {
     const h = {
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
@@ -16,51 +16,52 @@ describe('rivers.unit', () => {
       jest.clearAllMocks()
     })
 
-    it('should return all rivers with a 200 status code', async () => {
-      const riverData = [
+    it('should return all catchments with a 200 status code', async () => {
+      const catchmentData = [
         {
-          internal: false,
-          id: '1',
-          name: 'Aber',
-          createdAt: '2018-11-07T10:00:00.000Z',
-          updatedAt: '2018-11-07T10:00:00.000Z'
-        },
-        {
-          internal: false,
           id: '2',
           name: 'Adur',
           createdAt: '2018-11-07T10:00:00.000Z',
           updatedAt: '2018-11-07T10:00:00.000Z'
+        },
+        {
+          id: '6',
+          name: 'Annas',
+          createdAt: '2018-11-07T10:00:00.000Z',
+          updatedAt: '2018-11-07T10:00:00.000Z'
         }
       ]
-      River.findAll.mockResolvedValueOnce(riverData)
+      Catchment.findAll.mockResolvedValueOnce(catchmentData)
 
       const handler = routes[0].options.handler
       await handler({}, h)
 
-      expect(River.findAll).toHaveBeenCalled()
+      expect(Catchment.findAll).toHaveBeenCalled()
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
           _embedded: {
-            rivers: riverData
+            catchments: catchmentData
           }
         })
       )
       expect(h.code).toHaveBeenCalledWith(200)
     })
 
-    it('should log and return 500 if an error occurs while fetching rivers', async () => {
+    it('should log and return 500 if an error occurs while fetching catchments', async () => {
       const error = new Error('Database error')
-      River.findAll.mockRejectedValueOnce(error)
+      Catchment.findAll.mockRejectedValueOnce(error)
 
       const handler = routes[0].options.handler
       await handler({}, h)
 
-      expect(River.findAll).toHaveBeenCalled()
-      expect(logger.error).toHaveBeenCalledWith('Error fetching rivers:', error)
+      expect(Catchment.findAll).toHaveBeenCalled()
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error fetching catchments:',
+        error
+      )
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'Unable to fetch rivers'
+          error: 'Unable to fetch catchments'
         })
       )
       expect(h.code).toHaveBeenCalledWith(500)
