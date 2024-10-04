@@ -1,8 +1,8 @@
-import { River } from '../../../entities/river.entity.js'
+import { River } from '../../../entities/index.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../rivers.js'
 
-jest.mock('../../../entities/river.entity.js')
+jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 
 describe('rivers.unit', () => {

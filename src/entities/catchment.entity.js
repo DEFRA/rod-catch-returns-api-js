@@ -1,16 +1,13 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../services/database.service.js'
 
-export const River = sequelize.define(
-  'River',
+export const Catchment = sequelize.define(
+  'Catchment',
   {
-    internal: {
-      type: DataTypes.BOOLEAN
-    },
     id: {
       type: DataTypes.BIGINT,
       primaryKey: true,
-      defaultValue: sequelize.literal("nextval('rcr_river_id_seq')")
+      defaultValue: sequelize.literal("nextval('rcr_catchment_id_seq')")
     },
     name: {
       type: DataTypes.STRING
@@ -24,13 +21,17 @@ export const River = sequelize.define(
       field: 'last_modified'
     }
   },
-  { sequelize, modelName: 'River', tableName: 'rcr_river', underscored: true }
+  {
+    sequelize,
+    modelName: 'Catchment',
+    tableName: 'rcr_catchment',
+    underscored: true
+  }
 )
 
-River.associate = (models) => {
-  River.belongsTo(models.Catchment, {
-    foreignKey: {
-      name: 'catchment_id'
-    }
+Catchment.associate = (models) => {
+  Catchment.hasMany(models.River, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
   })
 }

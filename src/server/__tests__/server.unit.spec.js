@@ -10,7 +10,11 @@ import { sequelize } from '../../services/database.service.js'
 jest.mock('../../services/database.service.js', () => ({
   sequelize: {
     authenticate: jest.fn(),
-    define: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn()
+    })),
     init: jest.fn(),
     sync: jest.fn(),
     close: jest.fn(),
@@ -82,7 +86,8 @@ describe('server.unit', () => {
 
     expect(server.route).toHaveBeenCalledWith([
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
-      expect.objectContaining({ method: 'GET', path: '/rivers' })
+      expect.objectContaining({ method: 'GET', path: '/rivers' }),
+      expect.objectContaining({ method: 'GET', path: '/catchments' })
     ])
   })
 
