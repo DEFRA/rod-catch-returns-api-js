@@ -10,4 +10,5 @@ export const apiPrefixRoutes = [
   ...Rivers,
   ...Catchments
 ]
+
 export const rootRoutes = [...Static]

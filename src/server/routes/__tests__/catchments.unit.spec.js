@@ -7,12 +7,12 @@ jest.mock('../../../utils/logger-utils.js')
 
 describe('catchments.unit', () => {
   describe('GET /catchments', () => {
-    const h = {
+    const getResponseToolkit = () => ({
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
-    }
+    })
 
-    const catchmentData = [
+    const getCatchmentData = () => [
       {
         id: '2',
         name: 'Adur',
@@ -32,17 +32,21 @@ describe('catchments.unit', () => {
     })
 
     it('should return a 200 status code if the call to fetch all catchments is successful', async () => {
-      Catchment.findAll.mockResolvedValueOnce(catchmentData)
+      Catchment.findAll.mockResolvedValueOnce(getCatchmentData())
 
       const handler = routes[0].options.handler
+
+      const h = getResponseToolkit()
       await handler({}, h)
 
       expect(h.code).toHaveBeenCalledWith(200)
     })
 
     it('should return all catchments if the call to fetch all catchments is successfull', async () => {
+      const catchmentData = getCatchmentData()
       Catchment.findAll.mockResolvedValueOnce(catchmentData)
 
+      const h = getResponseToolkit()
       const handler = routes[0].options.handler
       await handler({}, h)
 
@@ -60,6 +64,7 @@ describe('catchments.unit', () => {
       Catchment.findAll.mockRejectedValueOnce(error)
 
       const handler = routes[0].options.handler
+      const h = getResponseToolkit()
       await handler({}, h)
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -73,6 +78,7 @@ describe('catchments.unit', () => {
       Catchment.findAll.mockRejectedValueOnce(error)
 
       const handler = routes[0].options.handler
+      const h = getResponseToolkit()
       await handler({}, h)
 
       expect(h.response).toHaveBeenCalledWith(
@@ -87,6 +93,7 @@ describe('catchments.unit', () => {
       Catchment.findAll.mockRejectedValueOnce(error)
 
       const handler = routes[0].options.handler
+      const h = getResponseToolkit()
       await handler({}, h)
 
       expect(h.response).toHaveBeenCalledWith(
