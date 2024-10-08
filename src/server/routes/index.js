@@ -4,11 +4,6 @@ import Region from './regions.js'
 import Rivers from './rivers.js'
 import Static from './static.js'
 
-export const apiPrefixRoutes = [
-  ...Licences,
-  ...Region,
-  ...Rivers,
-  ...Catchments
-]
+export const apiPrefixRoutes = [].concat(Licences, Region, Rivers, Catchments)
 
-export const rootRoutes = [...Static]
+export const rootRoutes = [].concat(Static)
