@@ -1,13 +1,13 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../services/database.service.js'
 
-export const Catchment = sequelize.define(
-  'Catchment',
+export const Region = sequelize.define(
+  'Region',
   {
     id: {
       type: DataTypes.BIGINT,
       primaryKey: true,
-      defaultValue: sequelize.literal("nextval('rcr_catchment_id_seq')")
+      defaultValue: sequelize.literal("nextval('rcr_region_id_seq')")
     },
     name: {
       type: DataTypes.STRING
@@ -23,20 +23,15 @@ export const Catchment = sequelize.define(
   },
   {
     sequelize,
-    modelName: 'Catchment',
-    tableName: 'rcr_catchment',
+    modelName: 'Region',
+    tableName: 'rcr_region',
     underscored: true
   }
 )
 
-Catchment.associate = (models) => {
-  Catchment.hasMany(models.River, {
+Region.associate = (models) => {
+  Region.hasMany(models.Catchment, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
-  })
-  Catchment.belongsTo(models.Region, {
-    foreignKey: {
-      name: 'region_id'
-    }
   })
 }
