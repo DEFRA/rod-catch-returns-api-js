@@ -1,4 +1,5 @@
 import { CONTACT_IDENTIFIER } from '../../../test-utils/constants.js'
+import { Submission } from '../../../entities/submission.entity.js'
 import initialiseServer from '../../server.js'
 
 describe('submissions.integration', () => {
@@ -6,6 +7,11 @@ describe('submissions.integration', () => {
   let server = null
 
   beforeAll(async () => {
+    await Submission.destroy({
+      where: {
+        contactId: CONTACT_IDENTIFIER
+      }
+    })
     server = await initialiseServer({ port: null })
   })
 
@@ -28,13 +34,15 @@ describe('submissions.integration', () => {
 
       expect(result.statusCode).toBe(201)
       expect(JSON.parse(result.payload)).toEqual({
-        contactId: 'contact-identifier-111"',
+        id: expect.any(String),
+        contactId: 'contact-identifier-111',
         season: 2023,
         status: 'INCOMPLETE',
         source: 'WEB',
         reportingExclude: false,
         createdAt: expect.any(String),
-        updatedAt: expect.any(String)
+        updatedAt: expect.any(String),
+        version: expect.any(String)
       })
     })
 

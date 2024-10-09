@@ -1,1 +1,1 @@
-export const CONTACT_IDENTIFIER = "contact-identifier-111"
+export const CONTACT_IDENTIFIER = 'contact-identifier-111'
