@@ -43,7 +43,7 @@ describe('species.unit', () => {
       expect(h.code).toHaveBeenCalledWith(200)
     })
 
-    it('should return all species with a 200 status code if the call to fetch all species is successful', async () => {
+    it('should return all species if the call to fetch all species is successfu', async () => {
       const speciesData = getSpeciesData()
       Species.findAll.mockResolvedValueOnce(speciesData)
 
