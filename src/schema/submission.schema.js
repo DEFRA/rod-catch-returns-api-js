@@ -1,5 +1,6 @@
 import Joi from 'joi'
 
+// TODO season must not be in the future, check others too
 export const createSubmissionSchema = Joi.object({
   contactId: Joi.string().description('The contact identifier'),
   season: Joi.number().description(

@@ -6,7 +6,7 @@ describe('Validation Schemas', () => {
       contactId: '123456',
       season: 2024,
       status: 'SUBMITTED',
-      source: 'WEB',
+      source: 'WEB'
     })
 
     it('should validate successfully when all fields are provided and valid', () => {
