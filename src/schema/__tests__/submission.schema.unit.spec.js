@@ -16,13 +16,6 @@ describe('Validation Schemas', () => {
       expect(error).toBeUndefined()
     })
 
-    it('should validate successfully when optional fields are omitted', () => {
-      const payload = {}
-      const { error } = createSubmissionSchema.validate(payload)
-
-      expect(error).toBeUndefined()
-    })
-
     it('should return an error if "contactId" is not a string', () => {
       const payload = { ...getValidPayload(), contactId: 123456 }
       const { error } = createSubmissionSchema.validate(payload)

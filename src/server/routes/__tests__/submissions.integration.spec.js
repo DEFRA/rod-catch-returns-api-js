@@ -2,7 +2,7 @@ import { CONTACT_IDENTIFIER } from '../../../test-utils/test-constants.js'
 import { Submission } from '../../../entities/submission.entity.js'
 import initialiseServer from '../../server.js'
 
-describe.skip('submissions.integration', () => {
+describe('submissions.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
@@ -58,7 +58,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"season" is required',
+            property: 'season',
+            value: undefined
+          }
+        ]
+      })
     })
 
     it('should return a 400 and error message season is invalid', async () => {
@@ -74,7 +82,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"season" must be a number',
+            property: 'season',
+            value: '20ab23'
+          }
+        ]
+      })
     })
 
     it('should return a 400 and error message if status is missing', async () => {
@@ -89,7 +105,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"status" is required',
+            property: 'status',
+            value: undefined
+          }
+        ]
+      })
     })
 
     it('should return a 400 and error message status is invalid', async () => {
@@ -105,7 +129,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"status" must be one of [INCOMPLETE, SUBMITTED]',
+            property: 'status',
+            value: 'INVALID'
+          }
+        ]
+      })
     })
 
     it('should return a 400 and error message if source is missing', async () => {
@@ -120,7 +152,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"source" is required',
+            property: 'source',
+            value: undefined
+          }
+        ]
+      })
     })
 
     it('should return a 400 and error message source is invalid', async () => {
@@ -136,7 +176,15 @@ describe.skip('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(400)
-      expect(JSON.parse(result.payload)).toEqual({})
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            message: '"source" must be one of [WEB, PAPER]',
+            property: 'source',
+            value: 'INVALID'
+          }
+        ]
+      })
     })
   })
 })
