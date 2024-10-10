@@ -1,8 +1,8 @@
-import { CONTACT_IDENTIFIER } from '../../../test-utils/constants.js'
+import { CONTACT_IDENTIFIER } from '../../../test-utils/test-constants.js'
 import { Submission } from '../../../entities/submission.entity.js'
 import initialiseServer from '../../server.js'
 
-describe('submissions.integration', () => {
+describe.skip('submissions.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 

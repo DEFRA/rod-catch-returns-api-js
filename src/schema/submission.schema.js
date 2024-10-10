@@ -1,11 +1,15 @@
 import Joi from 'joi'
 
-// TODO season must not be in the future, check others too
+const currentYear = new Date().getFullYear()
+
 export const createSubmissionSchema = Joi.object({
   contactId: Joi.string().description('The contact identifier'),
-  season: Joi.number().description(
-    'The season (year) pertaining to the submission'
-  ),
+  season: Joi.number()
+    .max(currentYear)
+    .description('The season (year) pertaining to the submission')
+    .messages({
+      'number.max': `Season must not be later than the current year (${currentYear}).`
+    }),
   status: Joi.string()
     .valid('INCOMPLETE', 'SUBMITTED')
     .description('The submission status'),

@@ -31,11 +31,48 @@ describe('Validation Schemas', () => {
       expect(error.details[0].message).toContain('"contactId" must be a string')
     })
 
-    it('should not return an error if "season" is a number passed in as a string', () => {
+    it('should validate successfully if "season" is a number passed in as a string', () => {
       const payload = { ...getValidPayload(), season: '2024' }
       const { error } = createSubmissionSchema.validate(payload)
 
       expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "season" a string without numbers', () => {
+      const payload = { ...getValidPayload(), season: 'abc123' }
+      const { error } = createSubmissionSchema.validate(payload)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"season" must be a number')
+    })
+
+    const currentYear = new Date().getFullYear()
+
+    it('should validate when the season is the current year', () => {
+      const result = createSubmissionSchema.validate({
+        ...getValidPayload(),
+        season: currentYear
+      })
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should validate when the season is a past year', () => {
+      const result = createSubmissionSchema.validate({
+        ...getValidPayload(),
+        season: currentYear - 1
+      })
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should return an error when the season is a future year', () => {
+      const result = createSubmissionSchema.validate({
+        ...getValidPayload(),
+        season: currentYear + 1
+      })
+      expect(result.error).toBeDefined()
+      expect(result.error.details[0].message).toBe(
+        `Season must not be later than the current year (${currentYear}).`
+      )
     })
 
     it('should return an error if "status" is not one of the allowed values', () => {

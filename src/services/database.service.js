@@ -12,21 +12,13 @@ const sequelize = new Sequelize(
     ...(IS_PROD
       ? {
           dialectOptions: {
-            useUTC: false,
-            timezone: 'Europe/London',
             ssl: {
               require: true,
               rejectUnauthorized: false
             }
           }
         }
-      : {
-          dialectOptions: {
-            useUTC: false,
-            timezone: 'Europe/London'
-          }
-        }),
-    timezone: 'Europe/London'
+      : {})
   }
 )
 
