@@ -5,6 +5,8 @@ import routes from '../submissions.js'
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 
+const postSubmissionHandler = routes[0].options.handler
+
 describe('submissions.unit', () => {
   describe('POST /submissions', () => {
     const getResponseToolkit = () => ({
@@ -37,10 +39,8 @@ describe('submissions.unit', () => {
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-
-      await handler({ payload }, h)
+      await postSubmissionHandler({ payload }, h)
 
       expect(h.code).toHaveBeenCalledWith(201)
     })
@@ -50,10 +50,8 @@ describe('submissions.unit', () => {
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-
-      await handler({ payload }, h)
+      await postSubmissionHandler({ payload }, h)
 
       expect(h.response).toHaveBeenCalledWith(createdSubmission)
     })
@@ -63,10 +61,8 @@ describe('submissions.unit', () => {
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-
-      await handler({ payload }, h)
+      await postSubmissionHandler({ payload }, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error creating submission:',
@@ -79,10 +75,8 @@ describe('submissions.unit', () => {
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-
-      await handler({ payload }, h)
+      await postSubmissionHandler({ payload }, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
