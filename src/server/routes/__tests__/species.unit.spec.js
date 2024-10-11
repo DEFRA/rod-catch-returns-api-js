@@ -33,10 +33,11 @@ describe('species.unit', () => {
       jest.clearAllMocks()
     })
 
+    const handler = routes[0].options.handler
+
     it('should return a 200 status code if the call to fetch all species is successful', async () => {
       Species.findAll.mockResolvedValueOnce(getSpeciesData())
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
       await handler({}, h)
 
@@ -47,7 +48,6 @@ describe('species.unit', () => {
       const speciesData = getSpeciesData()
       Species.findAll.mockResolvedValueOnce(speciesData)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
       await handler({}, h)
 
@@ -64,7 +64,6 @@ describe('species.unit', () => {
       const error = new Error('Database error')
       Species.findAll.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
       await handler({}, h)
 
@@ -78,7 +77,6 @@ describe('species.unit', () => {
       const error = new Error('Database error')
       Species.findAll.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
       await handler({}, h)
 
@@ -89,7 +87,6 @@ describe('species.unit', () => {
       const error = new Error('Database error')
       Species.findAll.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
       await handler({}, h)
 
