@@ -7,10 +7,13 @@ jest.mock('../../../utils/logger-utils.js')
 
 describe('licences.unit', () => {
   describe('GET /licence/{licence}', () => {
+    const getLicenceHandler = routes[0].options.handler
+
     const request = {
       params: { licence: 'B7A111' },
       query: { verification: 'WA4 1HT' }
     }
+
     const h = {
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
@@ -27,14 +30,11 @@ describe('licences.unit', () => {
         Postcode: 'WA4 1HT',
         ReturnPermissionNumber: '11100420-2WT1SFT-B7A111'
       }
-
       contactForLicensee.mockResolvedValueOnce(dynamicsResponse)
 
-      const handler = routes[0].options.handler
-      await handler(request, h)
+      await getLicenceHandler(request, h)
 
       expect(contactForLicensee).toHaveBeenCalledWith('B7A111', 'WA4 1HT')
-
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
           licenceNumber: '11100420-2WT1SFT-B7A111',
@@ -53,11 +53,9 @@ describe('licences.unit', () => {
         ContactId: null,
         Postcode: null
       }
-
       contactForLicensee.mockResolvedValueOnce(dynamicsResponse)
 
-      const handler = routes[0].options.handler
-      await handler(request, h)
+      await getLicenceHandler(request, h)
 
       expect(contactForLicensee).toHaveBeenCalledWith('B7A111', 'WA4 1HT')
       expect(logger.info).toHaveBeenCalledWith(
@@ -74,9 +72,7 @@ describe('licences.unit', () => {
       const error = new Error('Unexpected error')
       contactForLicensee.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
-
-      await expect(handler(request, h)).rejects.toThrow(error)
+      await expect(getLicenceHandler(request, h)).rejects.toThrow(error)
       expect(logger.error).toHaveBeenCalledWith(error)
     })
   })

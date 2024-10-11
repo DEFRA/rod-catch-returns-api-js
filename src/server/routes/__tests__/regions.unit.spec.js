@@ -7,6 +7,8 @@ jest.mock('../../../utils/logger-utils.js')
 
 describe('regions.unit', () => {
   describe('GET /regions', () => {
+    const getRegionsHandler = routes[0].options.handler
+
     const getResponseToolkit = () => ({
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
@@ -33,10 +35,9 @@ describe('regions.unit', () => {
 
     it('should return a 200 status code if the call to fetch all regions is successful', async () => {
       Region.findAll.mockResolvedValueOnce(getRegionsData())
-
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-      await handler({}, h)
+
+      await getRegionsHandler({}, h)
 
       expect(h.code).toHaveBeenCalledWith(200)
     })
@@ -44,10 +45,9 @@ describe('regions.unit', () => {
     it('should return all regions with a 200 status code if the call to fetch all regions is successful', async () => {
       const regionsData = getRegionsData()
       Region.findAll.mockResolvedValueOnce(regionsData)
-
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-      await handler({}, h)
+
+      await getRegionsHandler({}, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -61,10 +61,9 @@ describe('regions.unit', () => {
     it('should log an error if an error occurs while fetching regions', async () => {
       const error = new Error('Database error')
       Region.findAll.mockRejectedValueOnce(error)
-
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-      await handler({}, h)
+
+      await getRegionsHandler({}, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error fetching regions:',
@@ -75,10 +74,9 @@ describe('regions.unit', () => {
     it('should return 500 if an error occurs while fetching regions', async () => {
       const error = new Error('Database error')
       Region.findAll.mockRejectedValueOnce(error)
-
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-      await handler({}, h)
+
+      await getRegionsHandler({}, h)
 
       expect(h.code).toHaveBeenCalledWith(500)
     })
@@ -86,10 +84,9 @@ describe('regions.unit', () => {
     it('should return the error response in the body if an error occurs while fetching regions', async () => {
       const error = new Error('Database error')
       Region.findAll.mockRejectedValueOnce(error)
-
-      const handler = routes[0].options.handler
       const h = getResponseToolkit()
-      await handler({}, h)
+
+      await getRegionsHandler({}, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({

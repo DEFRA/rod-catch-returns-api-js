@@ -7,6 +7,8 @@ jest.mock('../../../utils/logger-utils.js')
 
 describe('rivers.unit', () => {
   describe('GET /rivers', () => {
+    const getRiversHandler = routes[0].options.handler
+
     const h = {
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
@@ -35,8 +37,7 @@ describe('rivers.unit', () => {
       ]
       River.findAll.mockResolvedValueOnce(riverData)
 
-      const handler = routes[0].options.handler
-      await handler({}, h)
+      await getRiversHandler({}, h)
 
       expect(River.findAll).toHaveBeenCalled()
       expect(h.response).toHaveBeenCalledWith(
@@ -53,8 +54,7 @@ describe('rivers.unit', () => {
       const error = new Error('Database error')
       River.findAll.mockRejectedValueOnce(error)
 
-      const handler = routes[0].options.handler
-      await handler({}, h)
+      await getRiversHandler({}, h)
 
       expect(River.findAll).toHaveBeenCalled()
       expect(logger.error).toHaveBeenCalledWith('Error fetching rivers:', error)

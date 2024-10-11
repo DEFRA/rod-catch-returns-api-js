@@ -5,10 +5,10 @@ import routes from '../submissions.js'
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 
-const postSubmissionHandler = routes[0].options.handler
-
 describe('submissions.unit', () => {
   describe('POST /submissions', () => {
+    const postSubmissionHandler = routes[0].options.handler
+
     const getResponseToolkit = () => ({
       response: jest.fn().mockReturnThis(),
       code: jest.fn()
