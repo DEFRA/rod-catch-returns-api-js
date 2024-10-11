@@ -3,10 +3,10 @@ import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
-import { StatusCodes } from 'http-status-codes'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
 import { envSchema } from '../config.js'
+import { failAction } from '../utils/error-utils.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
@@ -28,15 +28,7 @@ export default async () => {
     host: '0.0.0.0',
     routes: {
       validate: {
-        failAction: (_request, h, err) => {
-          // format all joi errors
-          const errors = err.details.map((detail) => ({
-            message: detail.message,
-            property: detail.path[0],
-            value: err._original[detail.path[0]]
-          }))
-          return h.response({ errors }).code(StatusCodes.BAD_REQUEST).takeover()
-        }
+        failAction
       }
     }
   })
