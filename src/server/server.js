@@ -6,6 +6,7 @@ import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
 import { envSchema } from '../config.js'
+import { failAction } from '../utils/error-utils.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
@@ -24,7 +25,12 @@ export default async () => {
 
   const server = Hapi.server({
     port: process.env.PORT || 5000,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    routes: {
+      validate: {
+        failAction
+      }
+    }
   })
 
   try {

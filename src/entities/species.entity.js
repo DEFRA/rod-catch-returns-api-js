@@ -24,5 +24,10 @@ export const Species = sequelize.define(
       field: 'last_modified'
     }
   },
-  { sequelize, modelName: 'Species', tableName: 'rcr_species', underscored: true }
+  {
+    sequelize,
+    modelName: 'Species',
+    tableName: 'rcr_species',
+    underscored: true
+  }
 )

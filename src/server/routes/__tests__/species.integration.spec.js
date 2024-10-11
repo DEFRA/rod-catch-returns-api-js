@@ -25,14 +25,14 @@ describe('species.integration', () => {
           expect.objectContaining({
             id: expect.any(String),
             name: 'Salmon',
-            smallCatchMass : '0.396893',
+            smallCatchMass: '0.396893',
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
           }),
           expect.objectContaining({
             id: expect.any(String),
             name: 'Sea Trout',
-            smallCatchMass : '0.396893',
+            smallCatchMass: '0.396893',
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
           })

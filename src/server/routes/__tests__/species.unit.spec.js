@@ -15,17 +15,17 @@ describe('species.unit', () => {
     const getSpeciesData = () => [
       {
         id: '1',
-        name : 'Salmon',
-        smallCatchMass : 0.396893,
-        createdAt : '2018-11-07T10:00:00.000+0000',
-        updatedAt : '2018-11-07T10:00:00.000+0000'
+        name: 'Salmon',
+        smallCatchMass: 0.396893,
+        createdAt: '2018-11-07T10:00:00.000+0000',
+        updatedAt: '2018-11-07T10:00:00.000+0000'
       },
       {
         id: '2',
-        name : 'Sea Trout',
-        smallCatchMass : 0.396893,
-        createdAt : '2018-11-07T10:00:00.000+0000',
-        updatedAt : '2018-11-07T10:00:00.000+0000'
+        name: 'Sea Trout',
+        smallCatchMass: 0.396893,
+        createdAt: '2018-11-07T10:00:00.000+0000',
+        updatedAt: '2018-11-07T10:00:00.000+0000'
       }
     ]
 
