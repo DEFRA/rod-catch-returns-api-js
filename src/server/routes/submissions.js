@@ -4,6 +4,7 @@ import {
 } from '../../schema/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { Submission } from '../../entities/index.js'
+import { getBaseUrl } from '../../utils/url-utils.js'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -28,7 +29,25 @@ export default [
             source,
             version: Date.now()
           })
-          return h.response(createdSubmission).code(StatusCodes.CREATED)
+
+          const baseUrl = getBaseUrl(request)
+
+          const response = {
+            ...createdSubmission.dataValues,
+            _links: {
+              self: {
+                href: `${baseUrl}/api/submissions/${createdSubmission.id}`
+              },
+              submission: {
+                href: `${baseUrl}/api/submissions/${createdSubmission.id}`
+              },
+              activities: {
+                href: `${baseUrl}/api/submissions/${createdSubmission.id}/activities`
+              }
+            }
+          }
+
+          return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
           logger.error('Error creating submission:', error)
           return h
@@ -68,8 +87,24 @@ export default [
               season
             }
           })
+
           if (foundSubmission) {
-            return h.response(foundSubmission).code(StatusCodes.OK)
+            const baseUrl = getBaseUrl(request)
+            const response = {
+              ...foundSubmission.dataValues,
+              _links: {
+                self: {
+                  href: `${baseUrl}/api/submissions/${foundSubmission.id}`
+                },
+                submission: {
+                  href: `${baseUrl}/api/submissions/${foundSubmission.id}`
+                },
+                activities: {
+                  href: `${baseUrl}/api/submissions/${foundSubmission.id}/activities`
+                }
+              }
+            }
+            return h.response(response).code(StatusCodes.OK)
           }
           return h.response().code(StatusCodes.NOT_FOUND)
         } catch (error) {
