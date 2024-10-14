@@ -1,4 +1,3 @@
-import { CONTACT_IDENTIFIER } from '../../../test-utils/test-constants.js'
 import { Submission } from '../../../entities/submission.entity.js'
 import initialiseServer from '../../server.js'
 
@@ -7,11 +6,6 @@ describe('submissions.integration', () => {
   let server = null
 
   beforeAll(async () => {
-    await Submission.destroy({
-      where: {
-        contactId: CONTACT_IDENTIFIER
-      }
-    })
     server = await initialiseServer({ port: null })
   })
 
@@ -20,12 +14,30 @@ describe('submissions.integration', () => {
   })
 
   describe('POST /api/submissions ', () => {
+    const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
+      'contact-identifier-create-submission'
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION
+        }
+      })
+    })
+
     it('should successfully create a submission with a valid request', async () => {
       const result = await server.inject({
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '2023',
           status: 'INCOMPLETE',
           source: 'WEB'
@@ -51,7 +63,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           status: 'INCOMPLETE',
           source: 'WEB'
         }
@@ -74,7 +86,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '20ab23',
           status: 'INCOMPLETE',
           source: 'WEB'
@@ -98,7 +110,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '2023',
           source: 'WEB'
         }
@@ -121,7 +133,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '2023',
           status: 'INVALID',
           source: 'WEB'
@@ -145,7 +157,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '2023',
           status: 'INCOMPLETE'
         }
@@ -168,7 +180,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER,
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
           season: '2023',
           status: 'INCOMPLETE',
           source: 'INVALID'
@@ -185,6 +197,89 @@ describe('submissions.integration', () => {
           }
         ]
       })
+    })
+  })
+
+  describe.skip('GET /api/submissions/search/getByContactIdAndSeason?contact_id={contactId}&season={season}', () => {
+    const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT =
+      'contact-identifier-get-submission-by-contact'
+
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT
+        }
+      })
+    })
+
+    it('should successfully get as submission with a valid contactId and season', async () => {
+      await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT}&season=2023`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        id: expect.any(String),
+        contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+        season: 2024,
+        status: 'INCOMPLETE',
+        source: 'WEB',
+        reportingExclude: false,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String)
+      })
+    })
+
+    it('should return a 404 and an empty body if the contactId does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=contact-identifier-unknown&season=2023`
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(JSON.parse(result.payload)).toEqual()
+    })
+
+    it('should return a 404 and an empty body if the contact exists, but the season does not exist', async () => {
+      await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT}&season=2022`
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(JSON.parse(result.payload)).toEqual()
     })
   })
 })
