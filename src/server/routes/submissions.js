@@ -52,6 +52,8 @@ export default [
        * Get a submission by contactId and season from the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.query.contact_id - The ID of the contact for which the submission is being retrieved.
+       *     @param {string} request.query.season - The season year for which the submission is being retrieved.
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
        */
