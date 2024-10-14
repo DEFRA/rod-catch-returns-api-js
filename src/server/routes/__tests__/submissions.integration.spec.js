@@ -47,7 +47,7 @@ describe('submissions.integration', () => {
       expect(result.statusCode).toBe(201)
       expect(JSON.parse(result.payload)).toEqual({
         id: expect.any(String),
-        contactId: 'contact-identifier-111',
+        contactId: 'contact-identifier-create-submission',
         season: 2023,
         status: 'INCOMPLETE',
         source: 'WEB',
