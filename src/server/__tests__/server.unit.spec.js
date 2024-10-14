@@ -90,7 +90,11 @@ describe('server.unit', () => {
       expect.objectContaining({ method: 'GET', path: '/rivers' }),
       expect.objectContaining({ method: 'GET', path: '/catchments' }),
       expect.objectContaining({ method: 'GET', path: '/species' }),
-      expect.objectContaining({ method: 'POST', path: '/submissions' })
+      expect.objectContaining({ method: 'POST', path: '/submissions' }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/submissions/search/getByContactIdAndSeason'
+      })
     ])
   })
 

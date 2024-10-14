@@ -1,6 +1,9 @@
+import {
+  createSubmissionSchema,
+  getSubmissionByContactAndSeasonSchema
+} from '../../schema/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { Submission } from '../../entities/index.js'
-import { createSubmissionSchema } from '../../schema/submission.schema.js'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -38,6 +41,47 @@ export default [
       },
       description: 'Create a submission',
       notes: 'Create a submission',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/submissions/search/getByContactIdAndSeason',
+    options: {
+      /**
+       * Get a submission by contactId and season from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const contactId = request.query.contact_id
+        const season = request.query.season
+
+        try {
+          const foundSubmission = await Submission.findOne({
+            where: {
+              contactId,
+              season
+            }
+          })
+          if (foundSubmission) {
+            return h.response(foundSubmission).code(StatusCodes.OK)
+          }
+          return h.response().code(StatusCodes.NOT_FOUND)
+        } catch (error) {
+          logger.error('Error finding submission:', error)
+          return h
+            .response({ error: 'Unable find submission' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+      },
+      validate: {
+        query: getSubmissionByContactAndSeasonSchema
+      },
+      description: 'Get a submission by contactId and season',
+      notes: 'Get a submission by contactId and season',
       tags: ['api', 'submissions']
     }
   }

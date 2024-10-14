@@ -200,7 +200,7 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe.skip('GET /api/submissions/search/getByContactIdAndSeason?contact_id={contactId}&season={season}', () => {
+  describe('GET /api/submissions/search/getByContactIdAndSeason?contact_id={contactId}&season={season}', () => {
     const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT =
       'contact-identifier-get-submission-by-contact'
 
@@ -241,7 +241,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         id: expect.any(String),
         contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
-        season: 2024,
+        season: 2023,
         status: 'INCOMPLETE',
         source: 'WEB',
         reportingExclude: false,
@@ -258,7 +258,7 @@ describe('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(404)
-      expect(JSON.parse(result.payload)).toEqual()
+      expect(result.payload).toBe('')
     })
 
     it('should return a 404 and an empty body if the contact exists, but the season does not exist', async () => {
@@ -279,7 +279,7 @@ describe('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(404)
-      expect(JSON.parse(result.payload)).toEqual()
+      expect(result.payload).toBe('')
     })
   })
 })
