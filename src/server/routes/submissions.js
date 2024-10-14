@@ -4,8 +4,8 @@ import {
 } from '../../schema/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { Submission } from '../../entities/index.js'
-import { getBaseUrl } from '../../utils/url-utils.js'
 import logger from '../../utils/logger-utils.js'
+import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 
 export default [
   {
@@ -30,22 +30,7 @@ export default [
             version: Date.now()
           })
 
-          const baseUrl = getBaseUrl(request)
-
-          const response = {
-            ...createdSubmission.dataValues,
-            _links: {
-              self: {
-                href: `${baseUrl}/api/submissions/${createdSubmission.id}`
-              },
-              submission: {
-                href: `${baseUrl}/api/submissions/${createdSubmission.id}`
-              },
-              activities: {
-                href: `${baseUrl}/api/submissions/${createdSubmission.id}/activities`
-              }
-            }
-          }
+          const response = mapSubmissionToResponse(request, createdSubmission)
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -89,21 +74,7 @@ export default [
           })
 
           if (foundSubmission) {
-            const baseUrl = getBaseUrl(request)
-            const response = {
-              ...foundSubmission.dataValues,
-              _links: {
-                self: {
-                  href: `${baseUrl}/api/submissions/${foundSubmission.id}`
-                },
-                submission: {
-                  href: `${baseUrl}/api/submissions/${foundSubmission.id}`
-                },
-                activities: {
-                  href: `${baseUrl}/api/submissions/${foundSubmission.id}/activities`
-                }
-              }
-            }
+            const response = mapSubmissionToResponse(request, foundSubmission)
             return h.response(response).code(StatusCodes.OK)
           }
           return h.response().code(StatusCodes.NOT_FOUND)

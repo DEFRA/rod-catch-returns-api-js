@@ -14,11 +14,21 @@ describe('submissions.unit', () => {
       code: jest.fn()
     })
 
-    const getSubmissionPayload = () => ({
-      contactId: 'contact-identifier-111',
-      season: '2024',
-      status: 'INCOMPLETE',
-      source: 'WEB'
+    const getSubmissionRequest = () => ({
+      info: {
+        host: 'localhost:3000'
+      },
+      server: {
+        info: {
+          protocol: 'http'
+        }
+      },
+      payload: {
+        contactId: 'contact-identifier-111',
+        season: '2024',
+        status: 'INCOMPLETE',
+        source: 'WEB'
+      }
     })
 
     const getCreatedSubmission = () => ({
@@ -27,10 +37,10 @@ describe('submissions.unit', () => {
       season: '2024',
       status: 'INCOMPLETE',
       source: 'WEB',
-      version: Date.now(),
+      version: '2024-10-10T13:13:11.000Z',
       reportingExclude: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z'
     })
 
     afterEach(() => {
@@ -38,34 +48,55 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 201 status code if the submission is created successfully', async () => {
-      const payload = getSubmissionPayload()
+      const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const h = getResponseToolkit()
 
-      await postSubmissionHandler({ payload }, h)
+      await postSubmissionHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(201)
     })
 
     it('should return the created submission in the response body', async () => {
-      const payload = getSubmissionPayload()
+      const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const h = getResponseToolkit()
 
-      await postSubmissionHandler({ payload }, h)
+      await postSubmissionHandler(request, h)
 
-      expect(h.response).toHaveBeenCalledWith(createdSubmission)
+      expect(h.response).toHaveBeenCalledWith({
+        contactId: 'contact-identifier-111',
+        createdAt: '2024-10-10T13:13:11.000Z',
+        id: '1',
+        reportingExclude: false,
+        season: '2024',
+        source: 'WEB',
+        status: 'INCOMPLETE',
+        updatedAt: '2024-10-10T13:13:11.000Z',
+        version: '2024-10-10T13:13:11.000Z',
+        _links: {
+          activities: {
+            href: 'http://localhost:3000/api/submissions/1/activities'
+          },
+          self: {
+            href: 'http://localhost:3000/api/submissions/1'
+          },
+          submission: {
+            href: 'http://localhost:3000/api/submissions/1'
+          }
+        }
+      })
     })
 
     it('should log an error if submission creation fails', async () => {
-      const payload = getSubmissionPayload()
+      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await postSubmissionHandler({ payload }, h)
+      await postSubmissionHandler(request, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error creating submission:',
@@ -74,12 +105,12 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error if an error occurs while creating submission', async () => {
-      const payload = getSubmissionPayload()
+      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await postSubmissionHandler({ payload }, h)
+      await postSubmissionHandler(request, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -98,9 +129,19 @@ describe('submissions.unit', () => {
       code: jest.fn()
     })
 
-    const getQuery = () => ({
-      contact_id: 'contact-identifier-111',
-      season: '2024'
+    const getSubmissionRequest = () => ({
+      info: {
+        host: 'localhost:3000'
+      },
+      server: {
+        info: {
+          protocol: 'http'
+        }
+      },
+      query: {
+        contact_id: 'contact-identifier-111',
+        season: '2024'
+      }
     })
 
     const getFoundSubmission = () => ({
@@ -109,10 +150,10 @@ describe('submissions.unit', () => {
       season: '2024',
       status: 'COMPLETE',
       source: 'WEB',
-      version: Date.now(),
+      version: '2024-10-10T13:13:11.000Z',
       reportingExclude: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z'
     })
 
     afterEach(() => {
@@ -120,44 +161,65 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 200 status code if the submission is found', async () => {
-      const query = getQuery()
+      const request = getSubmissionRequest()
       const foundSubmission = getFoundSubmission()
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler({ query }, h)
+      await getSubmissionHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(200)
     })
 
     it('should return the found submission in the response body', async () => {
-      const query = getQuery()
+      const request = getSubmissionRequest()
       const foundSubmission = getFoundSubmission()
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler({ query }, h)
+      await getSubmissionHandler(request, h)
 
-      expect(h.response).toHaveBeenCalledWith(foundSubmission)
+      expect(h.response).toHaveBeenCalledWith({
+        contactId: 'contact-identifier-111',
+        createdAt: '2024-10-10T13:13:11.000Z',
+        id: '1',
+        reportingExclude: false,
+        season: '2024',
+        source: 'WEB',
+        status: 'COMPLETE',
+        updatedAt: '2024-10-10T13:13:11.000Z',
+        version: '2024-10-10T13:13:11.000Z',
+        _links: {
+          activities: {
+            href: 'http://localhost:3000/api/submissions/1/activities'
+          },
+          self: {
+            href: 'http://localhost:3000/api/submissions/1'
+          },
+          submission: {
+            href: 'http://localhost:3000/api/submissions/1'
+          }
+        }
+      })
     })
 
     it('should return 404 if the submission is not found', async () => {
-      const query = getQuery()
+      const request = getSubmissionRequest()
       Submission.findOne.mockResolvedValueOnce(null)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler({ query }, h)
+      await getSubmissionHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(404)
     })
 
     it('should log an error if fetching submission fails', async () => {
-      const query = getQuery()
+      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler({ query }, h)
+      await getSubmissionHandler(request, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error finding submission:',
@@ -166,12 +228,12 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error if an error occurs while fetching submission', async () => {
-      const query = getQuery()
+      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler({ query }, h)
+      await getSubmissionHandler(request, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
