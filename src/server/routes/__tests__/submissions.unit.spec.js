@@ -32,15 +32,17 @@ describe('submissions.unit', () => {
     })
 
     const getCreatedSubmission = () => ({
-      id: '1',
-      contactId: 'contact-identifier-111',
-      season: '2024',
-      status: 'INCOMPLETE',
-      source: 'WEB',
-      version: '2024-10-10T13:13:11.000Z',
-      reportingExclude: false,
-      createdAt: '2024-10-10T13:13:11.000Z',
-      updatedAt: '2024-10-10T13:13:11.000Z'
+      toJSON: jest.fn().mockReturnValue({
+        id: '1',
+        contactId: 'contact-identifier-111',
+        season: '2024',
+        status: 'INCOMPLETE',
+        source: 'WEB',
+        version: '2024-10-10T13:13:11.000Z',
+        reportingExclude: false,
+        createdAt: '2024-10-10T13:13:11.000Z',
+        updatedAt: '2024-10-10T13:13:11.000Z'
+      })
     })
 
     afterEach(() => {
@@ -145,15 +147,17 @@ describe('submissions.unit', () => {
     })
 
     const getFoundSubmission = () => ({
-      id: '1',
-      contactId: 'contact-identifier-111',
-      season: '2024',
-      status: 'COMPLETE',
-      source: 'WEB',
-      version: '2024-10-10T13:13:11.000Z',
-      reportingExclude: false,
-      createdAt: '2024-10-10T13:13:11.000Z',
-      updatedAt: '2024-10-10T13:13:11.000Z'
+      toJSON: jest.fn().mockReturnValue({
+        id: '1',
+        contactId: 'contact-identifier-111',
+        season: '2024',
+        status: 'COMPLETE',
+        source: 'WEB',
+        version: '2024-10-10T13:13:11.000Z',
+        reportingExclude: false,
+        createdAt: '2024-10-10T13:13:11.000Z',
+        updatedAt: '2024-10-10T13:13:11.000Z'
+      })
     })
 
     afterEach(() => {

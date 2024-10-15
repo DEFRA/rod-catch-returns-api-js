@@ -30,7 +30,10 @@ export default [
             version: Date.now()
           })
 
-          const response = mapSubmissionToResponse(request, createdSubmission)
+          const response = mapSubmissionToResponse(
+            request,
+            createdSubmission.toJSON()
+          )
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -74,7 +77,10 @@ export default [
           })
 
           if (foundSubmission) {
-            const response = mapSubmissionToResponse(request, foundSubmission)
+            const response = mapSubmissionToResponse(
+              request,
+              foundSubmission.toJSON()
+            )
             return h.response(response).code(StatusCodes.OK)
           }
           return h.response().code(StatusCodes.NOT_FOUND)

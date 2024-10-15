@@ -54,7 +54,18 @@ describe('submissions.integration', () => {
         reportingExclude: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
-        version: expect.any(String)
+        version: expect.any(String),
+        _links: {
+          activities: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+\/activities/)
+          },
+          self: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          },
+          submission: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          }
+        }
       })
     })
 
@@ -247,7 +258,18 @@ describe('submissions.integration', () => {
         reportingExclude: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
-        version: expect.any(String)
+        version: expect.any(String),
+        _links: {
+          activities: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+\/activities/)
+          },
+          self: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          },
+          submission: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          }
+        }
       })
     })
 

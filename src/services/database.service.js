@@ -9,9 +9,6 @@ const sequelize = new Sequelize(
     dialect: 'postgres',
     host: process.env.DATABASE_HOST,
     port: process.env.DATABASE_PORT || 5432,
-    query: {
-      raw: true
-    },
     ...(IS_PROD
       ? {
           dialectOptions: {
