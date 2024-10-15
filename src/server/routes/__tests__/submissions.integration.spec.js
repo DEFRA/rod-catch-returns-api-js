@@ -304,4 +304,81 @@ describe('submissions.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe.skip('GET /api/submissions/{submissionId}', () => {
+    const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID =
+      'contact-identifier-get-submission-by-id'
+
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID
+        }
+      })
+    })
+
+    it('should successfully get as submission with a valid id', async () => {
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        id: expect.any(String),
+        contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID,
+        season: 2023,
+        status: 'INCOMPLETE',
+        source: 'WEB',
+        reportingExclude: false,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          activities: {
+            href: expect.stringMatching(
+              `api/submissions/${submissionId}/activities`
+            )
+          },
+          self: {
+            href: expect.stringMatching(`api/submissions/${submissionId}`)
+          },
+          submission: {
+            href: expect.stringMatching(`api/submissions/${submissionId}`)
+          }
+        }
+      })
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/001'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
