@@ -26,26 +26,18 @@ describe('submission.mapper.unit', () => {
       season: '2024',
       status: 'SUBMITTED',
       source: 'PAPER',
-      version: 1696958452341,
-      dataValues: {
-        id: 1,
-        contactId: 'contact-123',
-        season: '2024',
-        status: 'SUBMITTED',
-        source: 'PAPER',
-        version: 1696958452341
-      }
+      version: '2024-10-10T13:13:11.000Z'
     }
 
     it('should map a submission to a response object with correct links', () => {
       const result = mapSubmissionToResponse(mockRequest, mockSubmission)
 
-      expect(result).toHaveProperty('id', mockSubmission.id)
-      expect(result).toHaveProperty('contactId', mockSubmission.contactId)
-      expect(result).toHaveProperty('season', mockSubmission.season)
-      expect(result).toHaveProperty('status', mockSubmission.status)
-      expect(result).toHaveProperty('source', mockSubmission.source)
-      expect(result).toHaveProperty('version', mockSubmission.version)
+      expect(result).toHaveProperty('id', 1)
+      expect(result).toHaveProperty('contactId', 'contact-123')
+      expect(result).toHaveProperty('season', '2024')
+      expect(result).toHaveProperty('status', 'SUBMITTED')
+      expect(result).toHaveProperty('source', 'PAPER')
+      expect(result).toHaveProperty('version', '2024-10-10T13:13:11.000Z')
 
       expect(result._links).toBeDefined()
       expect(result._links.self).toHaveProperty(
