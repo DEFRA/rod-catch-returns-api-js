@@ -305,7 +305,7 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe.skip('GET /api/submissions/{submissionId}', () => {
+  describe('GET /api/submissions/{submissionId}', () => {
     const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_ID =
       'contact-identifier-get-submission-by-id'
 
