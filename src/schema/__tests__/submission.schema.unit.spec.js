@@ -1,4 +1,7 @@
-import { createSubmissionSchema } from '../submission.schema.js'
+import {
+  createSubmissionSchema,
+  getSubmissionByContactAndSeasonSchema
+} from '../submission.schema.js'
 
 describe('Validation Schemas', () => {
   describe('createSubmissionSchema', () => {
@@ -86,6 +89,61 @@ describe('Validation Schemas', () => {
       expect(error.details[0].message).toContain(
         '"source" must be one of [WEB, PAPER]'
       )
+    })
+  })
+
+  describe('getSubmissionByContactAndSeasonSchema', () => {
+    const getValidQuery = () => ({
+      contact_id: 'contact-identifier-111',
+      season: 2024
+    })
+
+    it('should validate successfully when all fields are provided and valid', () => {
+      const query = getValidQuery()
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "contact_id" is not a string', () => {
+      const query = { ...getValidQuery(), contact_id: 123456 }
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain(
+        '"contact_id" must be a string'
+      )
+    })
+
+    it('should validate successfully if "season" is a number passed in as a string', () => {
+      const query = { ...getValidQuery(), season: '2024' }
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "season" is not a number', () => {
+      const query = { ...getValidQuery(), season: 'invalidYear' }
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"season" must be a number')
+    })
+
+    it('should return an error if "season" is missing', () => {
+      const query = { ...getValidQuery(), season: undefined }
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"season" is required')
+    })
+
+    it('should return an error if "contact_id" is missing', () => {
+      const query = { ...getValidQuery(), contact_id: undefined }
+      const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"contact_id" is required')
     })
   })
 })

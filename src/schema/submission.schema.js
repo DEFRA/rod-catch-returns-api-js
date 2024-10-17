@@ -20,3 +20,10 @@ export const createSubmissionSchema = Joi.object({
     .valid('WEB', 'PAPER')
     .description('The submission source')
 })
+
+export const getSubmissionByContactAndSeasonSchema = Joi.object({
+  contact_id: Joi.string().required().description('The contact identifier'),
+  season: Joi.number()
+    .required()
+    .description('The season (year) pertaining to the submission')
+})
