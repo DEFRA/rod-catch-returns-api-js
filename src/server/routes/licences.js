@@ -1,7 +1,7 @@
 import {
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
-} from '../../schema/licences.schema.js'
+} from '../../schemas/licences.schema.js'
 import { Contact } from '../../models/contact.model.js'
 import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'

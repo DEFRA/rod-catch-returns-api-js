@@ -1,7 +1,7 @@
 import { Submission } from '../../../entities/submission.entity.js'
 import initialiseServer from '../../server.js'
 
-describe.skip('activities.integration', () => {
+describe('activities.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
@@ -32,7 +32,7 @@ describe.skip('activities.integration', () => {
       })
     })
 
-    it('should successfully create a activity for a submission with a valid request', async () => {
+    it.skip('should successfully create a activity for a submission with a valid request', async () => {
       const submission = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -48,7 +48,7 @@ describe.skip('activities.integration', () => {
 
       const activity = await server.inject({
         method: 'POST',
-        url: '/api/submissions',
+        url: '/api/activities',
         payload: {
           submission: `submissions/${submissionId}`,
           daysFishedWithMandatoryRelease: '20',
@@ -60,8 +60,8 @@ describe.skip('activities.integration', () => {
       const activitiyId = JSON.parse(activity.payload).id
       expect(activity.statusCode).toBe(201)
       expect(JSON.parse(activity.payload)).toEqual({
-        daysFishedWithMandatoryRelease: 1,
-        daysFishedOther: 0,
+        daysFishedWithMandatoryRelease: 20,
+        daysFishedOther: 10,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         _links: {
