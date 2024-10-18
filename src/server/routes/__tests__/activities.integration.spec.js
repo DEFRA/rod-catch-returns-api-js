@@ -1,4 +1,4 @@
-import { Submission } from '../../../entities/submission.entity.js'
+import { Activity, Submission } from '../../../entities/index.js'
 import initialiseServer from '../../server.js'
 
 describe('activities.integration', () => {
@@ -13,26 +13,36 @@ describe('activities.integration', () => {
     await server.stop()
   })
 
+  const deleteActivitiesAndSubmissions = async (contactId) => {
+    const submission = await Submission.findOne({
+      where: {
+        contactId
+      }
+    })
+    if (submission) {
+      await Activity.destroy({
+        where: { submission_id: submission.id }
+      })
+    }
+    await Submission.destroy({
+      where: {
+        contactId
+      }
+    })
+  }
+
   describe('POST /api/activities ', () => {
     const CONTACT_IDENTIFIER_CREATE_ACTIVITY =
       'contact-identifier-create-activity'
-    beforeEach(async () => {
-      await Submission.destroy({
-        where: {
-          contactId: CONTACT_IDENTIFIER_CREATE_ACTIVITY
-        }
-      })
-    })
+    beforeEach(() =>
+      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+    )
 
-    afterAll(async () => {
-      await Submission.destroy({
-        where: {
-          contactId: CONTACT_IDENTIFIER_CREATE_ACTIVITY
-        }
-      })
-    })
+    afterAll(() =>
+      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+    )
 
-    it.skip('should successfully create a activity for a submission with a valid request', async () => {
+    it('should successfully create a activity for a submission with a valid request', async () => {
       const submission = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -43,9 +53,7 @@ describe('activities.integration', () => {
           source: 'WEB'
         }
       })
-
       const submissionId = JSON.parse(submission.payload).id
-
       const activity = await server.inject({
         method: 'POST',
         url: '/api/activities',
@@ -56,14 +64,15 @@ describe('activities.integration', () => {
           river: 'rivers/3'
         }
       })
-
       const activitiyId = JSON.parse(activity.payload).id
       expect(activity.statusCode).toBe(201)
       expect(JSON.parse(activity.payload)).toEqual({
+        id: expect.any(String),
         daysFishedWithMandatoryRelease: 20,
         daysFishedOther: 10,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        version: expect.any(String),
         _links: {
           self: {
             href: expect.stringMatching(`/api/activities/${activitiyId}`)

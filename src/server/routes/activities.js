@@ -2,6 +2,7 @@ import { Activity } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivitySchema } from '../../schemas/activities.schema.js'
 import logger from '../../utils/logger-utils.js'
+import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 
 export default [
   {
@@ -31,13 +32,18 @@ export default [
           const submissionId = submission.replace('submissions/', '')
           const riverId = river.replace('rivers/', '')
 
-          const response = await Activity.create({
+          const createdActivity = await Activity.create({
             daysFishedOther,
             daysFishedWithMandatoryRelease,
             submission_id: submissionId,
             river_id: riverId,
             version: Date.now()
           })
+
+          const response = mapActivityToResponse(
+            request,
+            createdActivity.toJSON()
+          )
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
