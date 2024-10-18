@@ -1,4 +1,4 @@
-import { Submission } from '../../../entities/submission.entity.js'
+import { Submission } from '../../../entities/index.js'
 import initialiseServer from '../../server.js'
 
 describe('submissions.integration', () => {
