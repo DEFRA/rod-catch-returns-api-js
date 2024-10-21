@@ -178,28 +178,7 @@ describe('submissions.unit', () => {
 
       await getSubmissionHandler(request, h)
 
-      expect(h.response).toHaveBeenCalledWith({
-        contactId: 'contact-identifier-111',
-        createdAt: '2024-10-10T13:13:11.000Z',
-        id: '1',
-        reportingExclude: false,
-        season: '2024',
-        source: 'WEB',
-        status: 'COMPLETE',
-        updatedAt: '2024-10-10T13:13:11.000Z',
-        version: '2024-10-10T13:13:11.000Z',
-        _links: {
-          activities: {
-            href: 'http://localhost:3000/api/submissions/1/activities'
-          },
-          self: {
-            href: 'http://localhost:3000/api/submissions/1'
-          },
-          submission: {
-            href: 'http://localhost:3000/api/submissions/1'
-          }
-        }
-      })
+      expect(h.response.mock.calls[0][0]).toMatchSnapshot()
     })
 
     it('should return 404 if the submission is not found', async () => {
