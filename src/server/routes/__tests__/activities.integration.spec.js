@@ -31,6 +31,21 @@ describe('activities.integration', () => {
     })
   }
 
+  const createSubmission = async (contactId) => {
+    const submission = await server.inject({
+      method: 'POST',
+      url: '/api/submissions',
+      payload: {
+        contactId,
+        season: '2023',
+        status: 'INCOMPLETE',
+        source: 'WEB'
+      }
+    })
+    const submissionId = JSON.parse(submission.payload).id
+    return submissionId
+  }
+
   describe('POST /api/activities ', () => {
     const CONTACT_IDENTIFIER_CREATE_ACTIVITY =
       'contact-identifier-create-activity'
@@ -43,17 +58,9 @@ describe('activities.integration', () => {
     )
 
     it('should successfully create a activity for a submission with a valid request', async () => {
-      const submission = await server.inject({
-        method: 'POST',
-        url: '/api/submissions',
-        payload: {
-          contactId: CONTACT_IDENTIFIER_CREATE_ACTIVITY,
-          season: '2023',
-          status: 'INCOMPLETE',
-          source: 'WEB'
-        }
-      })
-      const submissionId = JSON.parse(submission.payload).id
+      const submissionId = await createSubmission(
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
       const activity = await server.inject({
         method: 'POST',
         url: '/api/activities',
@@ -99,6 +106,57 @@ describe('activities.integration', () => {
             )
           }
         }
+      })
+    })
+
+    it('should return a 400 status code and error if the submission does not exist', async () => {
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: 'submissions/123',
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+
+      expect(activity.statusCode).toBe(400)
+      expect(JSON.parse(activity.payload)).toEqual({
+        errors: [
+          {
+            message: 'The submission does not exist',
+            property: 'submission',
+            value: 'submissions/123'
+          }
+        ]
+      })
+    })
+
+    it('should return a 400 status code and error if the river is internal', async () => {
+      const submissionId = await createSubmission(
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/229' // This river is internal (Unknown Anglian)
+        }
+      })
+
+      expect(activity.statusCode).toBe(400)
+      expect(JSON.parse(activity.payload)).toEqual({
+        errors: [
+          {
+            message: 'This river is restricted',
+            property: 'river',
+            value: 'rivers/229'
+          }
+        ]
       })
     })
   })
