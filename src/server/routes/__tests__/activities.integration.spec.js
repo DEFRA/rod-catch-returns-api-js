@@ -159,5 +159,43 @@ describe('activities.integration', () => {
         ]
       })
     })
+
+    it('should return a 400 status code and error if the river has already been added', async () => {
+      const submissionId = await createSubmission(
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
+      const activityPass = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      expect(activityPass.statusCode).toBe(201)
+
+      const activityFail = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      expect(activityFail.statusCode).toBe(400)
+      expect(JSON.parse(activityFail.payload)).toEqual({
+        errors: [
+          {
+            message: 'River duplicate found',
+            property: 'river',
+            value: 'rivers/3'
+          }
+        ]
+      })
+    })
   })
 })

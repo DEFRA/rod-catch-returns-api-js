@@ -15,10 +15,15 @@ import { StatusCodes } from 'http-status-codes'
  */
 
 export const failAction = (_request, h, err) => {
-  const errors = err.details.map((detail) => ({
-    message: detail.message,
-    property: detail.path[0],
-    value: err._original[detail.path[0]]
-  }))
+  let errors
+  if (err.details) {
+    errors = err.details.map((detail) => ({
+      message: detail.message,
+      property: detail?.context?.path || detail.path[0],
+      value: detail?.context?.value || err._original[detail.path[0]]
+    }))
+  } else {
+    errors = { err }
+  }
   return h.response({ errors }).code(StatusCodes.BAD_REQUEST).takeover()
 }

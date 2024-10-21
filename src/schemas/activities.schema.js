@@ -1,13 +1,14 @@
 import Joi from 'joi'
-import { checkSubmissionExistsById } from '../services/submissions.service.js'
+import { isActivityExists } from '../services/activities.service.js'
 import { isRiverInternal } from '../services/rivers.service.js'
+import { isSubmissionExists } from '../services/submissions.service.js'
 
 export const createActivitySchema = Joi.object({
   submission: Joi.string()
     .required()
     .external(async (value, helper) => {
       const submissionId = value.replace('submissions/', '')
-      const submissionExists = await checkSubmissionExistsById(submissionId)
+      const submissionExists = await isSubmissionExists(submissionId)
       if (!submissionExists) {
         return helper.message('The submission does not exist')
       }
@@ -15,6 +16,7 @@ export const createActivitySchema = Joi.object({
     })
     .pattern(/^submissions\//)
     .description('The submission id prefixed with submissions/'),
+
   daysFishedWithMandatoryRelease: Joi.number()
     .required()
     .min(0)
@@ -31,11 +33,13 @@ export const createActivitySchema = Joi.object({
     .description(
       'The number of days fished during the mandatory release period'
     ),
+
   daysFishedOther: Joi.number()
     .min(0)
     .max(198)
     .required()
     .description('The number of days fished at other times during the season'),
+
   river: Joi.string()
     .required()
     .external(async (value, helper) => {
@@ -49,4 +53,17 @@ export const createActivitySchema = Joi.object({
     })
     .pattern(/^rivers\//)
     .description('The submission id prefixed with rivers/')
+}).external(async (value, helper) => {
+  const submissionId = value.submission.replace('submissions/', '')
+  const riverId = value.river.replace('rivers/', '')
+
+  const activityExists = await isActivityExists(submissionId, riverId)
+
+  if (activityExists) {
+    return helper.message('River duplicate found', {
+      path: 'river',
+      value: value.river
+    })
+  }
+  return value
 })

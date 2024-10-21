@@ -1,4 +1,4 @@
-import { River } from '../entities'
+import { River } from '../entities/index.js'
 
 export const isRiverInternal = async (riverId) => {
   const foundRiver = await River.findOne({ where: { id: riverId } })
