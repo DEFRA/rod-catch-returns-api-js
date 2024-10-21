@@ -22,7 +22,6 @@ describe('activities.schema.unit', () => {
     it('should validate successfully when all fields are provided and valid', () => {
       const payload = getValidPayload()
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeUndefined()
@@ -31,7 +30,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "submission" is missing', () => {
       const payload = { ...getValidPayload(), submission: undefined }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -44,7 +42,6 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 'five'
       }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -56,7 +53,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "daysFishedOther" is not a number', () => {
       const payload = { ...getValidPayload(), daysFishedOther: 'three' }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -68,7 +64,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "river" is missing', () => {
       const payload = { ...getValidPayload(), river: undefined }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -78,7 +73,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "submission" does not start with "submissions/"', () => {
       const payload = { ...getValidPayload(), submission: 'invalid/123' }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -88,7 +82,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "river" does not start with "rivers/"', () => {
       const payload = { ...getValidPayload(), river: 'invalid/456' }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -101,7 +94,6 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: -1
       }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -113,7 +105,6 @@ describe('activities.schema.unit', () => {
     it('should return an error if "daysFishedOther" is negative', () => {
       const payload = { ...getValidPayload(), daysFishedOther: -1 }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
@@ -130,7 +121,6 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 167
       }
 
-      const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeUndefined()
@@ -144,8 +134,7 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 168
       }
 
-      const schema = require('../activities.schema.js')
-      const { error } = schema.createActivitySchema.validate(payload)
+      const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
@@ -160,8 +149,7 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 168
       }
 
-      const schema = require('../activities.schema.js')
-      const { error } = schema.createActivitySchema.validate(payload)
+      const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeUndefined()
     })
@@ -173,7 +161,6 @@ describe('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 169
       }
 
-      //   const { createActivitySchema } = require('../activities.schema.js')
       const { error } = createActivitySchema.validate(payload)
 
       expect(error).toBeDefined()
