@@ -7,9 +7,5 @@ export const isRiverInternal = async (riverId) => {
   }
 
   // Normal users cannot add internal rivers, but admin users can
-  if (foundRiver.toJSON().internal) {
-    return true
-  }
-
-  return false
+  return foundRiver.toJSON().internal || false
 }

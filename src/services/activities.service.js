@@ -1,16 +1,11 @@
 import { Activity } from '../entities/activity.entity.js'
 
 export const isActivityExists = async (submissionId, riverId) => {
-  const activity = await Activity.findOne({
+  const count = await Activity.count({
     where: {
       submission_id: submissionId,
       river_id: riverId
     }
   })
-
-  if (activity) {
-    return true
-  }
-
-  return false
+  return count > 0
 }
