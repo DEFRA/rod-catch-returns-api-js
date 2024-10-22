@@ -37,6 +37,7 @@ export const createActivitySchema = Joi.object({
     .description('The submission id prefixed with submissions/'),
 
   daysFishedWithMandatoryRelease: Joi.number()
+    .integer()
     .required()
     .min(0)
     .custom(validateDaysFished)
@@ -45,6 +46,7 @@ export const createActivitySchema = Joi.object({
     ),
 
   daysFishedOther: Joi.number()
+    .integer()
     .min(0)
     .max(198)
     .required()

@@ -188,5 +188,78 @@ describe('activities.schema.unit', () => {
         '"daysFishedWithMandatoryRelease" must be less than or equal to 168'
       )
     })
+
+    it('should return an error if "daysFishedWithMandatoryRelease" is missing', async () => {
+      getSuccessMocks()
+      const payload = {
+        ...getValidPayload(),
+        daysFishedWithMandatoryRelease: undefined
+      }
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"daysFishedWithMandatoryRelease" is required'
+      )
+    })
+
+    it('should return an error if "daysFishedOther" is missing', async () => {
+      getSuccessMocks()
+      const payload = { ...getValidPayload(), daysFishedOther: undefined }
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"daysFishedOther" is required'
+      )
+    })
+
+    it('should return an error if "daysFishedOther" is a non-integer number', async () => {
+      getSuccessMocks()
+      const payload = { ...getValidPayload(), daysFishedOther: 3.5 }
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"daysFishedOther" must be an integer'
+      )
+    })
+
+    it('should return an error if "daysFishedWithMandatoryRelease" is a non-integer number', async () => {
+      getSuccessMocks()
+      const payload = {
+        ...getValidPayload(),
+        daysFishedWithMandatoryRelease: 1.5
+      }
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"daysFishedWithMandatoryRelease" must be an integer'
+      )
+    })
+
+    it('should return an error if submission does not exist', async () => {
+      isSubmissionExists.mockResolvedValue(false)
+      const payload = getValidPayload()
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        'The submission does not exist'
+      )
+    })
+
+    it('should return an error if river is restricted', async () => {
+      isSubmissionExists.mockResolvedValue(true)
+      isRiverInternal.mockResolvedValue(true)
+      const payload = getValidPayload()
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        'This river is restricted'
+      )
+    })
+
+    it('should return an error if the activity already exists for the same submission and river', async () => {
+      isSubmissionExists.mockResolvedValue(true)
+      isRiverInternal.mockResolvedValue(false)
+      isActivityExists.mockResolvedValue(true)
+
+      const payload = getValidPayload()
+
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        'River duplicate found'
+      )
+    })
   })
 })
