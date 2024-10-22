@@ -105,11 +105,7 @@ export default [
     path: '/submissions/{submissionId}',
     options: {
       /**
-<<<<<<< HEAD
-       * Get a submission by it's submissionId from the database
-=======
        * Get a submission by its submissionId from the database
->>>>>>> develop
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        *     @param {string} request.params.submissionId - The ID of the submission to be retrieved.
