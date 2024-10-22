@@ -1,5 +1,7 @@
 # Rod Catch Returns API JS
 
+TODO do one last check and compare JAVA API to js, then update requirements
+
 The JavaScript version of the Rod Catch Returns API.
 
 ## Prerequisites
