@@ -27,3 +27,7 @@ export const getSubmissionByContactAndSeasonSchema = Joi.object({
     .required()
     .description('The season (year) pertaining to the submission')
 })
+
+export const getSubmissionBySubmissionIdSchema = Joi.object({
+  submissionId: Joi.number().required().description('The id of the submissions')
+})

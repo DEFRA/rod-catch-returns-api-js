@@ -6,13 +6,27 @@ jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 
 describe('submissions.unit', () => {
+  const getResponseToolkit = () => ({
+    response: jest.fn().mockReturnThis(),
+    code: jest.fn()
+  })
+
+  const getFoundSubmission = () => ({
+    toJSON: jest.fn().mockReturnValue({
+      id: '1',
+      contactId: 'contact-identifier-111',
+      season: '2024',
+      status: 'COMPLETE',
+      source: 'WEB',
+      version: '2024-10-10T13:13:11.000Z',
+      reportingExclude: false,
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z'
+    })
+  })
+
   describe('POST /submissions', () => {
     const postSubmissionHandler = routes[0].options.handler
-
-    const getResponseToolkit = () => ({
-      response: jest.fn().mockReturnThis(),
-      code: jest.fn()
-    })
 
     const getSubmissionRequest = () => ({
       info: {
@@ -126,11 +140,6 @@ describe('submissions.unit', () => {
   describe('GET /submissions/search/getByContactIdAndSeason', () => {
     const getSubmissionHandler = routes[1].options.handler
 
-    const getResponseToolkit = () => ({
-      response: jest.fn().mockReturnThis(),
-      code: jest.fn()
-    })
-
     const getSubmissionRequest = () => ({
       info: {
         host: 'localhost:3000'
@@ -146,18 +155,88 @@ describe('submissions.unit', () => {
       }
     })
 
-    const getFoundSubmission = () => ({
-      toJSON: jest.fn().mockReturnValue({
-        id: '1',
-        contactId: 'contact-identifier-111',
-        season: '2024',
-        status: 'COMPLETE',
-        source: 'WEB',
-        version: '2024-10-10T13:13:11.000Z',
-        reportingExclude: false,
-        createdAt: '2024-10-10T13:13:11.000Z',
-        updatedAt: '2024-10-10T13:13:11.000Z'
-      })
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the submission is found', async () => {
+      const request = getSubmissionRequest()
+      const foundSubmission = getFoundSubmission()
+      Submission.findOne.mockResolvedValueOnce(foundSubmission)
+      const h = getResponseToolkit()
+
+      await getSubmissionHandler(request, h)
+
+      expect(h.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should return the found submission in the response body', async () => {
+      const request = getSubmissionRequest()
+      const foundSubmission = getFoundSubmission()
+      Submission.findOne.mockResolvedValueOnce(foundSubmission)
+      const h = getResponseToolkit()
+
+      await getSubmissionHandler(request, h)
+
+      expect(h.response.mock.calls[0][0]).toMatchSnapshot()
+    })
+
+    it('should return 404 if the submission is not found', async () => {
+      const request = getSubmissionRequest()
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getResponseToolkit()
+
+      await getSubmissionHandler(request, h)
+
+      expect(h.code).toHaveBeenCalledWith(404)
+    })
+
+    it('should log an error if fetching submission fails', async () => {
+      const request = getSubmissionRequest()
+      const error = new Error('Database error')
+      Submission.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getSubmissionHandler(request, h)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error finding submission:',
+        error
+      )
+    })
+
+    it('should return 500 and an error if an error occurs while fetching submission', async () => {
+      const request = getSubmissionRequest()
+      const error = new Error('Database error')
+      Submission.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getSubmissionHandler(request, h)
+
+      expect(h.response).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Unable find submission'
+        })
+      )
+      expect(h.code).toHaveBeenCalledWith(500)
+    })
+  })
+
+  describe('GET /submissions/{submissionId}', () => {
+    const getSubmissionHandler = routes[2].options.handler
+
+    const getSubmissionRequest = () => ({
+      info: {
+        host: 'localhost:3000'
+      },
+      server: {
+        info: {
+          protocol: 'http'
+        }
+      },
+      params: {
+        submissionId: '1'
+      }
     })
 
     afterEach(() => {

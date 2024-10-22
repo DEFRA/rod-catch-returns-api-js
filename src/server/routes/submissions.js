@@ -1,6 +1,7 @@
 import {
   createSubmissionSchema,
-  getSubmissionByContactAndSeasonSchema
+  getSubmissionByContactAndSeasonSchema,
+  getSubmissionBySubmissionIdSchema
 } from '../../schema/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { Submission } from '../../entities/index.js'
@@ -96,6 +97,51 @@ export default [
       },
       description: 'Get a submission by contactId and season',
       notes: 'Get a submission by contactId and season',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/submissions/{submissionId}',
+    options: {
+      /**
+       * Get a submission by its submissionId from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.submissionId - The ID of the submission to be retrieved.
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const submissionId = request.params.submissionId
+
+        try {
+          const foundSubmission = await Submission.findOne({
+            where: {
+              id: submissionId
+            }
+          })
+
+          if (foundSubmission) {
+            const response = mapSubmissionToResponse(
+              request,
+              foundSubmission.toJSON()
+            )
+            return h.response(response).code(StatusCodes.OK)
+          }
+          return h.response().code(StatusCodes.NOT_FOUND)
+        } catch (error) {
+          logger.error('Error finding submission:', error)
+          return h
+            .response({ error: 'Unable find submission' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+      },
+      validate: {
+        params: getSubmissionBySubmissionIdSchema
+      },
+      description: 'Get a submission by submissionId',
+      notes: 'Get a submission by submissionId',
       tags: ['api', 'submissions']
     }
   }
