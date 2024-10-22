@@ -1,6 +1,14 @@
 import { createActivitySchema } from '../activities.schema.js'
+import { isActivityExists } from '../../services/activities.service.js'
+import { isRiverInternal } from '../../services/rivers.service.js'
+import { isSubmissionExists } from '../../services/submissions.service.js'
 
-describe.skip('activities.schema.unit', () => {
+// Mock external service calls
+jest.mock('../../services/activities.service.js')
+jest.mock('../../services/rivers.service.js')
+jest.mock('../../services/submissions.service.js')
+
+describe('activities.schema.unit', () => {
   describe('createActivitySchema', () => {
     const mockCurrentYear = (year) => {
       jest.useFakeTimers('modern')
@@ -19,101 +27,106 @@ describe.skip('activities.schema.unit', () => {
       river: 'rivers/456'
     })
 
-    it('should validate successfully when all fields are provided and valid', () => {
+    const getSuccessMocks = () => {
+      isSubmissionExists.mockResolvedValue(true)
+      isRiverInternal.mockResolvedValue(false)
+      isActivityExists.mockResolvedValue(false)
+    }
+
+    it('should validate successfully when all fields are provided and valid', async () => {
+      getSuccessMocks()
       const payload = getValidPayload()
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeUndefined()
+      await expect(
+        createActivitySchema.validateAsync(payload)
+      ).resolves.toStrictEqual({
+        daysFishedOther: 3,
+        daysFishedWithMandatoryRelease: 5,
+        river: 'rivers/456',
+        submission: 'submissions/123'
+      })
     })
 
-    it('should return an error if "submission" is missing', () => {
+    it('should return an error if "submission" is missing', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), submission: undefined }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"submission" is required')
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"submission" is required'
+      )
     })
 
-    it('should return an error if "daysFishedWithMandatoryRelease" is not a number', () => {
+    it('should return an error if "daysFishedWithMandatoryRelease" is not a number', async () => {
+      getSuccessMocks()
       const payload = {
         ...getValidPayload(),
         daysFishedWithMandatoryRelease: 'five'
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedWithMandatoryRelease" must be a number'
       )
     })
 
-    it('should return an error if "daysFishedOther" is not a number', () => {
+    it('should return an error if "daysFishedOther" is not a number', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), daysFishedOther: 'three' }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedOther" must be a number'
       )
     })
 
-    it('should return an error if "river" is missing', () => {
+    it('should return an error if "river" is missing', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), river: undefined }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"river" is required')
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"river" is required'
+      )
     })
 
-    it('should return an error if "submission" does not start with "submissions/"', () => {
+    it('should return an error if "submission" does not start with "submissions/"', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), submission: 'invalid/123' }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"submission"')
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"submission"'
+      )
     })
 
-    it('should return an error if "river" does not start with "rivers/"', () => {
+    it('should return an error if "river" does not start with "rivers/"', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), river: 'invalid/456' }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"river"')
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
+        '"river"'
+      )
     })
 
-    it('should return an error if "daysFishedWithMandatoryRelease" is negative', () => {
+    it('should return an error if "daysFishedWithMandatoryRelease" is negative', async () => {
+      getSuccessMocks()
       const payload = {
         ...getValidPayload(),
         daysFishedWithMandatoryRelease: -1
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedWithMandatoryRelease" must be greater than or equal to 0'
       )
     })
 
-    it('should return an error if "daysFishedOther" is negative', () => {
+    it('should return an error if "daysFishedOther" is negative', async () => {
+      getSuccessMocks()
       const payload = { ...getValidPayload(), daysFishedOther: -1 }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedOther" must be greater than or equal to 0'
       )
     })
 
-    it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a non-leap year', () => {
+    it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a non-leap year', async () => {
+      getSuccessMocks()
       mockCurrentYear(2023) // 2023 is not a leap year
 
       const payload = {
@@ -121,12 +134,18 @@ describe.skip('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 167
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeUndefined()
+      await expect(
+        createActivitySchema.validateAsync(payload)
+      ).resolves.toStrictEqual({
+        daysFishedOther: 3,
+        daysFishedWithMandatoryRelease: 167,
+        river: 'rivers/456',
+        submission: 'submissions/123'
+      })
     })
 
-    it('should return an error if daysFishedWithMandatoryRelease exceeds 167 for a non-leap year', () => {
+    it('should return an error if daysFishedWithMandatoryRelease exceeds 167 for a non-leap year', async () => {
+      getSuccessMocks()
       mockCurrentYear(2023) // 2023 is not a leap year
 
       const payload = {
@@ -134,37 +153,38 @@ describe.skip('activities.schema.unit', () => {
         daysFishedWithMandatoryRelease: 168
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedWithMandatoryRelease" must be less than or equal to 167'
       )
     })
 
-    it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', () => {
+    it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
+      getSuccessMocks()
       mockCurrentYear(2024) // 2024 is a leap year
       const payload = {
         ...getValidPayload(),
         daysFishedWithMandatoryRelease: 168
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeUndefined()
+      await expect(
+        createActivitySchema.validateAsync(payload)
+      ).resolves.toStrictEqual({
+        daysFishedOther: 3,
+        daysFishedWithMandatoryRelease: 168,
+        river: 'rivers/456',
+        submission: 'submissions/123'
+      })
     })
 
-    it('should return an error if daysFishedWithMandatoryRelease exceeds 168 for a leap year', () => {
+    it('should return an error if daysFishedWithMandatoryRelease exceeds 168 for a leap year', async () => {
+      getSuccessMocks()
       mockCurrentYear(2024) // 2024 is a leap year
       const payload = {
         ...getValidPayload(),
         daysFishedWithMandatoryRelease: 169
       }
 
-      const { error } = createActivitySchema.validate(payload)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
+      await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         '"daysFishedWithMandatoryRelease" must be less than or equal to 168'
       )
     })
