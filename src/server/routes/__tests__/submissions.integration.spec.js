@@ -374,7 +374,7 @@ describe('submissions.integration', () => {
     it('should return a 404 and an empty body if the submission does not exist', async () => {
       const result = await server.inject({
         method: 'GET',
-        url: '/api/submissions/001'
+        url: '/api/submissions/0'
       })
 
       expect(result.statusCode).toBe(404)

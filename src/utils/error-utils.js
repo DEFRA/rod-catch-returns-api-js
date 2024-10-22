@@ -15,15 +15,22 @@ import { StatusCodes } from 'http-status-codes'
  */
 
 export const failAction = (_request, h, err) => {
-  let errors
-  if (err.details) {
-    errors = err.details.map((detail) => ({
-      message: detail.message,
-      property: detail?.context?.path || detail.path[0],
-      value: detail?.context?.value || err._original[detail.path[0]]
-    }))
-  } else {
-    errors = { err }
-  }
-  return h.response({ errors }).code(StatusCodes.BAD_REQUEST).takeover()
+  const formattedErrors =
+    err?.details?.map((detail) => {
+      const detailPath =
+        detail.path && detail.path.length > 0 ? detail.path[0] : undefined
+
+      return {
+        message: detail.message,
+        property: detail?.context?.path || detailPath,
+        value:
+          detail?.context?.value ||
+          (err._original && detailPath ? err._original[detailPath] : undefined)
+      }
+    }) || err
+
+  return h
+    .response({ errors: formattedErrors })
+    .code(StatusCodes.BAD_REQUEST)
+    .takeover()
 }
