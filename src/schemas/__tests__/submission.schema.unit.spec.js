@@ -163,5 +163,15 @@ describe('Validation Schemas', () => {
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"submissionId" is required')
     })
+
+    it('should return an error if "submissionId" is not a number', () => {
+      const params = { submissionId: 'abc' }
+      const { error } = getSubmissionBySubmissionIdSchema.validate(params)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain(
+        '"submissionId" must be a number'
+      )
+    })
   })
 })
