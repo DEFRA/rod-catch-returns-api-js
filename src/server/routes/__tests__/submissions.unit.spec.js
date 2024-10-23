@@ -223,7 +223,7 @@ describe('submissions.unit', () => {
   })
 
   describe('GET /submissions/{submissionId}', () => {
-    const getSubmissionHandler = routes[2].options.handler
+    const getSubmissionHandler = routes[3].options.handler
 
     const getSubmissionRequest = () => ({
       info: {

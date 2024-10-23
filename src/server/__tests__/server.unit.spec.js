@@ -101,6 +101,10 @@ describe('server.unit', () => {
       }),
       expect.objectContaining({
         method: 'GET',
+        path: '/submissions/{submissionId}/activities'
+      }),
+      expect.objectContaining({
+        method: 'GET',
         path: '/submissions/{submissionId}'
       })
     ])

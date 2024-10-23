@@ -1,4 +1,5 @@
 import { Submission } from '../../../entities/index.js'
+import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-helpers.js'
 import initialiseServer from '../../server.js'
 
 describe('submissions.integration', () => {
@@ -382,26 +383,22 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe.skip('GET /api/submissions/{submissionId}/activites', () => {
+  describe('GET /api/submissions/{submissionId}/activites', () => {
+    // TODO add tests if submission does not exist and if submission exists, but activities are empty
     const CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION =
       'contact-identifier-get-activities-for-submission'
 
-    beforeEach(async () => {
-      await Submission.destroy({
-        where: {
-          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
-        }
-      })
-    })
+    beforeEach(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
 
-    afterAll(async () => {
-      await Submission.destroy({
-        where: {
-          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
-        }
-      })
-    })
-
+    afterAll(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
     it('should successfully get all activivities for a submission with a valid submission id', async () => {
       // create a submission
       const createdSubmission = await server.inject({
@@ -418,7 +415,7 @@ describe('submissions.integration', () => {
       const submissionId = JSON.parse(createdSubmission.payload).id
 
       // add 2 activities with different rivers
-      await server.inject({
+      const createdActivity1 = await server.inject({
         method: 'POST',
         url: '/api/activities',
         payload: {
@@ -428,7 +425,9 @@ describe('submissions.integration', () => {
           river: 'rivers/3'
         }
       })
-      await server.inject({
+      const createdActivity1Id = JSON.parse(createdActivity1.payload).id
+
+      const createdActivity2 = await server.inject({
         method: 'POST',
         url: '/api/activities',
         payload: {
@@ -438,6 +437,7 @@ describe('submissions.integration', () => {
           river: 'rivers/1'
         }
       })
+      const createdActivity2Id = JSON.parse(createdActivity2.payload).id
 
       const result = await server.inject({
         method: 'GET',
@@ -451,7 +451,92 @@ describe('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(200)
-      expect(JSON.parse(result.payload)).toEqual([])
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          activities: expect.arrayContaining([
+            {
+              _links: {
+                activity: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}`
+                  )
+                },
+                catches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/catches`
+                  )
+                },
+                river: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/river`
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}`
+                  )
+                },
+                smallCatches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/smallCatches`
+                  )
+                },
+                submission: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/submission`
+                  )
+                }
+              },
+              createdAt: expect.any(String),
+              daysFishedOther: 10,
+              daysFishedWithMandatoryRelease: 20,
+              id: createdActivity1Id,
+              updatedAt: expect.any(String),
+              version: expect.any(String)
+            },
+            {
+              _links: {
+                activity: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}`
+                  )
+                },
+                catches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/catches`
+                  )
+                },
+                river: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/river`
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}`
+                  )
+                },
+                smallCatches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/smallCatches`
+                  )
+                },
+                submission: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/submission`
+                  )
+                }
+              },
+              createdAt: expect.any(String),
+              daysFishedOther: 3,
+              daysFishedWithMandatoryRelease: 5,
+              id: createdActivity2Id,
+              updatedAt: expect.any(String),
+              version: expect.any(String)
+            }
+          ])
+        }
+      })
     })
   })
 })
