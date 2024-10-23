@@ -114,7 +114,7 @@ describe('activities.integration', () => {
         method: 'POST',
         url: '/api/activities',
         payload: {
-          submission: 'submissions/123',
+          submission: 'submissions/0',
           daysFishedWithMandatoryRelease: '20',
           daysFishedOther: '10',
           river: 'rivers/3'
@@ -127,7 +127,7 @@ describe('activities.integration', () => {
           {
             message: 'The submission does not exist',
             property: 'submission',
-            value: 'submissions/123'
+            value: 'submissions/0'
           }
         ]
       })
