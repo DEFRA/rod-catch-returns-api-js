@@ -47,7 +47,6 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
-          console.log(error)
           logger.error('Error create activity:', error)
           return h
             .response({ error: 'Unable to create activity' })
