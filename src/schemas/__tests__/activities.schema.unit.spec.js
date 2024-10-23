@@ -139,7 +139,21 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow(
-          '"daysFishedWithMandatoryRelease" must be greater than or equal to 0'
+          '"daysFishedWithMandatoryRelease" must be greater than or equal to 1'
+        )
+      })
+
+      it('should return an error if "daysFishedWithMandatoryRelease" is 0', async () => {
+        getSuccessMocks()
+        const payload = {
+          ...getValidPayload(),
+          daysFishedWithMandatoryRelease: 0
+        }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow(
+          '"daysFishedWithMandatoryRelease" must be greater than or equal to 1'
         )
       })
 

@@ -39,7 +39,7 @@ export const createActivitySchema = Joi.object({
   daysFishedWithMandatoryRelease: Joi.number()
     .integer()
     .required()
-    .min(0)
+    .min(1)
     .custom(validateDaysFished)
     .description(
       'The number of days fished during the mandatory release period'
