@@ -325,7 +325,7 @@ describe('submissions.integration', () => {
       })
     })
 
-    it('should successfully get as submission with a valid id', async () => {
+    it('should successfully get a submission with a valid id', async () => {
       const createdSubmission = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -379,6 +379,79 @@ describe('submissions.integration', () => {
 
       expect(result.statusCode).toBe(404)
       expect(result.payload).toBe('')
+    })
+  })
+
+  describe.skip('GET /api/submissions/{submissionId}/activites', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION =
+      'contact-identifier-get-activities-for-submission'
+
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+        }
+      })
+    })
+
+    it('should successfully get all activivities for a submission with a valid submission id', async () => {
+      // create a submission
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      // add 2 activities with different rivers
+      await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '5',
+          daysFishedOther: '3',
+          river: 'rivers/1'
+        }
+      })
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`,
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '5',
+          daysFishedOther: '3',
+          river: 'rivers/1'
+        }
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual([])
     })
   })
 })
