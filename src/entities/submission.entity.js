@@ -44,3 +44,10 @@ export const Submission = sequelize.define(
     underscored: true
   }
 )
+
+Submission.associate = (models) => {
+  Submission.hasMany(models.Activity, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  })
+}

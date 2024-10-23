@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`activities.unit POST /activities should return the created activity if the call to create the activity is successful 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/activities/1",
+    },
+    "catches": {
+      "href": "http://localhost:3000/api/activities/1/catches",
+    },
+    "river": {
+      "href": "http://localhost:3000/api/activities/1/river",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/activities/1",
+    },
+    "smallCatches": {
+      "href": "http://localhost:3000/api/activities/1/smallCatches",
+    },
+    "submission": {
+      "href": "http://localhost:3000/api/activities/1/submission",
+    },
+  },
+  "createdAt": "2024-10-10T13:13:11.000Z",
+  "daysFishedOther": 10,
+  "daysFishedWithMandatoryRelease": 5,
+  "id": 1,
+  "updatedAt": "2024-10-10T13:13:11.000Z",
+  "version": "2024-10-10T13:13:11.000Z",
+}
+`;

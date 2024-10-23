@@ -2,7 +2,7 @@ import {
   createSubmissionSchema,
   getSubmissionByContactAndSeasonSchema,
   getSubmissionBySubmissionIdSchema
-} from '../../schema/submission.schema.js'
+} from '../../schemas/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { Submission } from '../../entities/index.js'
 import logger from '../../utils/logger-utils.js'

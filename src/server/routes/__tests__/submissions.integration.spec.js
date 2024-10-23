@@ -1,4 +1,4 @@
-import { Submission } from '../../../entities/submission.entity.js'
+import { Submission } from '../../../entities/index.js'
 import initialiseServer from '../../server.js'
 
 describe('submissions.integration', () => {
@@ -374,7 +374,7 @@ describe('submissions.integration', () => {
     it('should return a 404 and an empty body if the submission does not exist', async () => {
       const result = await server.inject({
         method: 'GET',
-        url: '/api/submissions/001'
+        url: '/api/submissions/0'
       })
 
       expect(result.statusCode).toBe(404)

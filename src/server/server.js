@@ -28,7 +28,10 @@ export default async () => {
     host: '0.0.0.0',
     routes: {
       validate: {
-        failAction
+        failAction,
+        options: {
+          abortEarly: false // Return all validation errors
+        }
       }
     }
   })
