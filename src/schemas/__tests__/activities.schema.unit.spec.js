@@ -16,6 +16,7 @@ describe('activities.schema.unit', () => {
 
     afterEach(() => {
       jest.useRealTimers()
+      jest.resetAllMocks()
     })
 
     const getValidPayload = () => ({

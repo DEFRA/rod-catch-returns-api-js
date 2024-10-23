@@ -17,15 +17,14 @@ import { StatusCodes } from 'http-status-codes'
 export const failAction = (_request, h, err) => {
   const formattedErrors =
     err?.details?.map((detail) => {
-      const detailPath =
-        detail.path && detail.path.length > 0 ? detail.path[0] : undefined
+      const detailPath = detail?.path?.length > 0 ? detail.path[0] : undefined
+      const value =
+        err._original && detailPath ? err._original[detailPath] : undefined
 
       return {
         message: detail.message,
         property: detail?.context?.path || detailPath,
-        value:
-          detail?.context?.value ||
-          (err._original && detailPath ? err._original[detailPath] : undefined)
+        value: detail?.context?.value || value
       }
     }) || err
 
