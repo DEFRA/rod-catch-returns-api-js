@@ -1,4 +1,4 @@
-import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-helpers.js'
+import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('activities.integration', () => {
