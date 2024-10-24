@@ -1,4 +1,5 @@
 import { Submission } from '../../../entities/index.js'
+import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('submissions.integration', () => {
@@ -325,7 +326,7 @@ describe('submissions.integration', () => {
       })
     })
 
-    it('should successfully get as submission with a valid id', async () => {
+    it('should successfully get a submission with a valid id', async () => {
       const createdSubmission = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -379,6 +380,198 @@ describe('submissions.integration', () => {
 
       expect(result.statusCode).toBe(404)
       expect(result.payload).toBe('')
+    })
+  })
+
+  describe('GET /api/submissions/{submissionId}/activites', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION =
+      'contact-identifier-get-activities-for-submission'
+
+    beforeEach(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
+
+    afterAll(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
+    it('should successfully get all activivities for a submission with a valid submission id', async () => {
+      // create a submission
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      // add 2 activities with different rivers
+      const createdActivity1 = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      const createdActivity1Id = JSON.parse(createdActivity1.payload).id
+
+      const createdActivity2 = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '5',
+          daysFishedOther: '3',
+          river: 'rivers/1'
+        }
+      })
+      const createdActivity2Id = JSON.parse(createdActivity2.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`,
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '5',
+          daysFishedOther: '3',
+          river: 'rivers/1'
+        }
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          activities: expect.arrayContaining([
+            {
+              _links: {
+                activity: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}`
+                  )
+                },
+                catches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/catches`
+                  )
+                },
+                river: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/river`
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}`
+                  )
+                },
+                smallCatches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/smallCatches`
+                  )
+                },
+                submission: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity1Id}/submission`
+                  )
+                }
+              },
+              createdAt: expect.any(String),
+              daysFishedOther: 10,
+              daysFishedWithMandatoryRelease: 20,
+              id: createdActivity1Id,
+              updatedAt: expect.any(String),
+              version: expect.any(String)
+            },
+            {
+              _links: {
+                activity: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}`
+                  )
+                },
+                catches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/catches`
+                  )
+                },
+                river: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/river`
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}`
+                  )
+                },
+                smallCatches: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/smallCatches`
+                  )
+                },
+                submission: {
+                  href: expect.stringMatching(
+                    `api/activities/${createdActivity2Id}/submission`
+                  )
+                }
+              },
+              createdAt: expect.any(String),
+              daysFishedOther: 3,
+              daysFishedWithMandatoryRelease: 5,
+              id: createdActivity2Id,
+              updatedAt: expect.any(String),
+              version: expect.any(String)
+            }
+          ])
+        }
+      })
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/0/activities'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+
+    it('should return a 200 and with an empty activity array if the submission exists, but has not activities', async () => {
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        _embedded: {
+          activities: []
+        }
+      })
     })
   })
 })
