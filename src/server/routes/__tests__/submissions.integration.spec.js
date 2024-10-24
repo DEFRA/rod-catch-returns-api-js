@@ -384,7 +384,6 @@ describe('submissions.integration', () => {
   })
 
   describe('GET /api/submissions/{submissionId}/activites', () => {
-    // TODO add tests if submission does not exist and if submission exists, but activities are empty
     const CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION =
       'contact-identifier-get-activities-for-submission'
 
