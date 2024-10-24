@@ -117,22 +117,39 @@ export default [
         const submissionId = request.params.submissionId
 
         try {
-          const foundActivities = await Activity.findAll({
+          // Fetch the submission and associated activities in one call
+          const submissionWithActivities = await Submission.findOne({
             where: {
-              submission_id: submissionId
-            }
+              id: submissionId
+            },
+            include: [
+              {
+                model: Activity,
+                required: false // Allows for submissions with no activities
+              }
+            ]
           })
 
-          if (foundActivities) {
-            const response = foundActivities.map((activity) =>
-              mapActivityToResponse(request, activity.toJSON())
-            )
+          // If the submission does not exist, return 404
+          if (!submissionWithActivities) {
+            return h.response().code(StatusCodes.NOT_FOUND)
+          }
 
+          // If no activities, return 200 with an empty array
+          const foundActivities = submissionWithActivities.Activities
+          if (!foundActivities || foundActivities.length === 0) {
             return h
-              .response({ _embedded: { activities: response } })
+              .response({ _embedded: { activities: [] } })
               .code(StatusCodes.OK)
           }
-          return h.response().code(StatusCodes.NOT_FOUND)
+
+          const response = foundActivities.map((activity) =>
+            mapActivityToResponse(request, activity.toJSON())
+          )
+
+          return h
+            .response({ _embedded: { activities: response } })
+            .code(StatusCodes.OK)
         } catch (error) {
           logger.error('Error activities for submission:', error)
           return h

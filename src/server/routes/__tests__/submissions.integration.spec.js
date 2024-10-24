@@ -538,5 +538,41 @@ describe('submissions.integration', () => {
         }
       })
     })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/0/activities'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+
+    it('should return a 200 and with an empty activity array if the submission exists, but has not activities', async () => {
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        _embedded: {
+          activities: []
+        }
+      })
+    })
   })
 })
