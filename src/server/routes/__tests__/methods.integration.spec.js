@@ -1,6 +1,6 @@
 import initialiseServer from '../../server.js'
 
-describe.skip('methods.integration', () => {
+describe('methods.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
@@ -16,7 +16,7 @@ describe.skip('methods.integration', () => {
     internal,
     name,
     _links: {
-      activity: {
+      method: {
         href: expect.stringMatching(`api/methods/${id}`)
       },
       self: {
