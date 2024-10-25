@@ -1,4 +1,4 @@
-import { Activity, Submission } from '../../../entities/index.js'
+import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('activities.integration', () => {
@@ -12,24 +12,6 @@ describe('activities.integration', () => {
   afterAll(async () => {
     await server.stop()
   })
-
-  const deleteActivitiesAndSubmissions = async (contactId) => {
-    const submission = await Submission.findOne({
-      where: {
-        contactId
-      }
-    })
-    if (submission) {
-      await Activity.destroy({
-        where: { submission_id: submission.id }
-      })
-    }
-    await Submission.destroy({
-      where: {
-        contactId
-      }
-    })
-  }
 
   const createSubmission = async (contactId) => {
     const submission = await server.inject({

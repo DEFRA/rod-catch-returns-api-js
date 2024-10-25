@@ -1,7 +1,7 @@
 import {
   createSubmissionSchema,
-  getSubmissionByContactAndSeasonSchema,
-  getSubmissionBySubmissionIdSchema
+  getBySubmissionIdSchema,
+  getSubmissionByContactAndSeasonSchema
 } from '../submission.schema.js'
 
 describe('Validation Schemas', () => {
@@ -148,17 +148,17 @@ describe('Validation Schemas', () => {
     })
   })
 
-  describe('getSubmissionBySubmissionIdSchema', () => {
+  describe('getBySubmissionIdSchema', () => {
     it('should validate successfully when "submissionId" is provided and valid', () => {
       const params = { submissionId: 123 }
-      const { error } = getSubmissionBySubmissionIdSchema.validate(params)
+      const { error } = getBySubmissionIdSchema.validate(params)
 
       expect(error).toBeUndefined()
     })
 
     it('should return an error if "submissionId" is missing', () => {
       const params = { submissionId: undefined }
-      const { error } = getSubmissionBySubmissionIdSchema.validate(params)
+      const { error } = getBySubmissionIdSchema.validate(params)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"submissionId" is required')
@@ -166,7 +166,7 @@ describe('Validation Schemas', () => {
 
     it('should return an error if "submissionId" is not a number', () => {
       const params = { submissionId: 'abc' }
-      const { error } = getSubmissionBySubmissionIdSchema.validate(params)
+      const { error } = getBySubmissionIdSchema.validate(params)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain(

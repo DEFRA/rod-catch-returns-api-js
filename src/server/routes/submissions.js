@@ -1,11 +1,12 @@
+import { Activity, Submission } from '../../entities/index.js'
 import {
   createSubmissionSchema,
-  getSubmissionByContactAndSeasonSchema,
-  getSubmissionBySubmissionIdSchema
+  getBySubmissionIdSchema,
+  getSubmissionByContactAndSeasonSchema
 } from '../../schemas/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
-import { Submission } from '../../entities/index.js'
 import logger from '../../utils/logger-utils.js'
+import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 
 export default [
@@ -102,6 +103,70 @@ export default [
   },
   {
     method: 'GET',
+    path: '/submissions/{submissionId}/activities',
+    options: {
+      /**
+       * Get all activities associated with a submission by its submission id from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.param.submissionId - The submission id of the associated activities
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const submissionId = request.params.submissionId
+
+        try {
+          // Fetch the submission and associated activities in one call
+          const submissionWithActivities = await Submission.findOne({
+            where: {
+              id: submissionId
+            },
+            include: [
+              {
+                model: Activity,
+                required: false // Allows for submissions with no activities
+              }
+            ]
+          })
+
+          // If the submission does not exist, return 404
+          if (!submissionWithActivities) {
+            return h.response().code(StatusCodes.NOT_FOUND)
+          }
+
+          // If no activities, return 200 with an empty array
+          const foundActivities = submissionWithActivities.Activities
+          if (!foundActivities || foundActivities.length === 0) {
+            return h
+              .response({ _embedded: { activities: [] } })
+              .code(StatusCodes.OK)
+          }
+
+          const response = foundActivities.map((activity) =>
+            mapActivityToResponse(request, activity.toJSON())
+          )
+
+          return h
+            .response({ _embedded: { activities: response } })
+            .code(StatusCodes.OK)
+        } catch (error) {
+          logger.error('Error activities for submission:', error)
+          return h
+            .response({ error: 'Unable to find activities for submission' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+      },
+      validate: {
+        params: getBySubmissionIdSchema
+      },
+      description: 'Get all activities associated with a submission',
+      notes: 'Get all activities associated with a submission',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'GET',
     path: '/submissions/{submissionId}',
     options: {
       /**
@@ -138,7 +203,7 @@ export default [
         }
       },
       validate: {
-        params: getSubmissionBySubmissionIdSchema
+        params: getBySubmissionIdSchema
       },
       description: 'Get a submission by submissionId',
       notes: 'Get a submission by submissionId',

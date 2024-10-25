@@ -1,5 +1,40 @@
 import { Submission } from '../../../entities/index.js'
+import { createActivity } from '../../../test-utils/server-test-utils.js'
+import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
+
+const createExpectedActivity = (
+  id,
+  daysFishedWithMandatoryRelease,
+  daysFishedOther
+) => ({
+  id,
+  daysFishedWithMandatoryRelease,
+  daysFishedOther,
+  createdAt: expect.any(String),
+  updatedAt: expect.any(String),
+  version: expect.any(String),
+  _links: {
+    activity: {
+      href: expect.stringMatching(`api/activities/${id}`)
+    },
+    catches: {
+      href: expect.stringMatching(`api/activities/${id}/catches`)
+    },
+    river: {
+      href: expect.stringMatching(`api/activities/${id}/river`)
+    },
+    self: {
+      href: expect.stringMatching(`api/activities/${id}`)
+    },
+    smallCatches: {
+      href: expect.stringMatching(`api/activities/${id}/smallCatches`)
+    },
+    submission: {
+      href: expect.stringMatching(`api/activities/${id}/submission`)
+    }
+  }
+})
 
 describe('submissions.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
@@ -325,7 +360,7 @@ describe('submissions.integration', () => {
       })
     })
 
-    it('should successfully get as submission with a valid id', async () => {
+    it('should successfully get a submission with a valid id', async () => {
       const createdSubmission = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -379,6 +414,105 @@ describe('submissions.integration', () => {
 
       expect(result.statusCode).toBe(404)
       expect(result.payload).toBe('')
+    })
+  })
+
+  describe('GET /api/submissions/{submissionId}/activites', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION =
+      'contact-identifier-get-activities-for-submission'
+
+    beforeEach(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
+
+    afterAll(() =>
+      deleteActivitiesAndSubmissions(
+        CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
+      )
+    )
+    it('should successfully get all activivities for a submission with a valid submission id', async () => {
+      // create a submission
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      // add 2 activities with different rivers
+      const createdActivity1 = await createActivity(server, submissionId)
+      const createdActivity1Id = JSON.parse(createdActivity1.payload).id
+
+      const createdActivity2 = await createActivity(server, submissionId, {
+        river: 'rivers/5',
+        daysFishedWithMandatoryRelease: 5,
+        daysFishedOther: 3
+      })
+      const createdActivity2Id = JSON.parse(createdActivity2.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`,
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '5',
+          daysFishedOther: '3',
+          river: 'rivers/1'
+        }
+      })
+
+      expect(result.statusCode).toBe(200)
+      const activities = JSON.parse(result.payload)._embedded.activities
+      expect(activities).toEqual(
+        expect.arrayContaining([
+          createExpectedActivity(createdActivity1Id, 20, 10),
+          createExpectedActivity(createdActivity2Id, 5, 3)
+        ])
+      )
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/0/activities'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+
+    it('should return a 200 and with an empty activity array if the submission exists, but has not activities', async () => {
+      const createdSubmission = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}/activities`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        _embedded: {
+          activities: []
+        }
+      })
     })
   })
 })

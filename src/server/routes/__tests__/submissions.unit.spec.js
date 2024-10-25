@@ -1,9 +1,25 @@
 import { Submission } from '../../../entities/index.js'
+import { getServerDetails } from '../../../test-utils/server-test-utils.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+
+const [
+  {
+    options: { handler: postSubmissionHandler }
+  },
+  {
+    options: { handler: getSubmissionByContactIdAndSeasonHandler }
+  },
+  {
+    options: { handler: getActivitiesBySubmissionIdHandler }
+  },
+  {
+    options: { handler: getSubmissionByIdHandler }
+  }
+] = routes
 
 describe('submissions.unit', () => {
   const getResponseToolkit = () => ({
@@ -26,17 +42,8 @@ describe('submissions.unit', () => {
   })
 
   describe('POST /submissions', () => {
-    const postSubmissionHandler = routes[0].options.handler
-
     const getSubmissionRequest = () => ({
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
+      ...getServerDetails(),
       payload: {
         contactId: 'contact-identifier-111',
         season: '2024',
@@ -138,17 +145,8 @@ describe('submissions.unit', () => {
   })
 
   describe('GET /submissions/search/getByContactIdAndSeason', () => {
-    const getSubmissionHandler = routes[1].options.handler
-
     const getSubmissionRequest = () => ({
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
+      ...getServerDetails(),
       query: {
         contact_id: 'contact-identifier-111',
         season: '2024'
@@ -165,7 +163,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(200)
     })
@@ -176,7 +174,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(request, h)
 
       expect(h.response.mock.calls[0][0]).toMatchSnapshot()
     })
@@ -186,7 +184,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(null)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(404)
     })
@@ -197,7 +195,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(request, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error finding submission:',
@@ -211,7 +209,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(request, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -223,17 +221,8 @@ describe('submissions.unit', () => {
   })
 
   describe('GET /submissions/{submissionId}', () => {
-    const getSubmissionHandler = routes[2].options.handler
-
     const getSubmissionRequest = () => ({
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
+      ...getServerDetails(),
       params: {
         submissionId: '1'
       }
@@ -249,7 +238,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByIdHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(200)
     })
@@ -260,7 +249,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(foundSubmission)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByIdHandler(request, h)
 
       expect(h.response).toHaveBeenCalledWith({
         contactId: 'contact-identifier-111',
@@ -291,7 +280,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockResolvedValueOnce(null)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByIdHandler(request, h)
 
       expect(h.code).toHaveBeenCalledWith(404)
     })
@@ -302,7 +291,7 @@ describe('submissions.unit', () => {
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByIdHandler(request, h)
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error finding submission:',
@@ -316,11 +305,140 @@ describe('submissions.unit', () => {
       Submission.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
-      await getSubmissionHandler(request, h)
+      await getSubmissionByIdHandler(request, h)
 
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Unable find submission'
+        })
+      )
+      expect(h.code).toHaveBeenCalledWith(500)
+    })
+  })
+
+  describe('GET /submissions/{submissionId}/activities', () => {
+    const getFoundSubmissionWithActivities = (activities = []) => ({
+      id: '1',
+      contactId: 'contact-identifier-111',
+      season: '2024',
+      status: 'COMPLETE',
+      source: 'WEB',
+      version: '2024-10-10T13:13:11.000Z',
+      Activities: activities,
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z'
+    })
+
+    const getActivityMock = () => ({
+      toJSON: jest.fn().mockReturnValue({
+        id: '1',
+        daysFishedWithMandatoryRelease: 1,
+        daysFishedOther: 2,
+        createdAt: '2024-10-10T13:13:11.000Z',
+        updatedAt: '2024-10-10T13:13:11.000Z'
+      })
+    })
+
+    const getActivitiesRequest = () => ({
+      ...getServerDetails(),
+      params: {
+        submissionId: '1'
+      }
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return 200 with activities if they exist for the submission', async () => {
+      const activityMock = getActivityMock()
+      const foundSubmissionWithActivities = getFoundSubmissionWithActivities([
+        activityMock
+      ])
+      Submission.findOne.mockResolvedValueOnce(foundSubmissionWithActivities)
+      const h = getResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(h.code).toHaveBeenCalledWith(200)
+      expect(h.response).toHaveBeenCalledWith({
+        _embedded: {
+          activities: [
+            {
+              id: '1',
+              daysFishedWithMandatoryRelease: 1,
+              daysFishedOther: 2,
+              createdAt: '2024-10-10T13:13:11.000Z',
+              updatedAt: '2024-10-10T13:13:11.000Z',
+              _links: {
+                self: {
+                  href: 'http://localhost:3000/api/activities/1'
+                },
+                activity: {
+                  href: 'http://localhost:3000/api/activities/1'
+                },
+                submission: {
+                  href: 'http://localhost:3000/api/activities/1/submission'
+                },
+                catches: {
+                  href: 'http://localhost:3000/api/activities/1/catches'
+                },
+                river: {
+                  href: 'http://localhost:3000/api/activities/1/river'
+                },
+                smallCatches: {
+                  href: 'http://localhost:3000/api/activities/1/smallCatches'
+                }
+              }
+            }
+          ]
+        }
+      })
+    })
+
+    it('should return 200 with an empty activities array if the submission exists but no activities are found', async () => {
+      const foundSubmissionWithNoActivities = getFoundSubmissionWithActivities()
+      Submission.findOne.mockResolvedValueOnce(foundSubmissionWithNoActivities)
+      const h = getResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(h.response).toHaveBeenCalledWith({ _embedded: { activities: [] } })
+      expect(h.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should return 404 if the submission does not exist', async () => {
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(h.code).toHaveBeenCalledWith(404)
+    })
+
+    it('should log an error if fetching submission with activities fails', async () => {
+      const error = new Error('Database error')
+      Submission.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error activities for submission:',
+        error
+      )
+    })
+
+    it('should return 500 and an error if an error occurs while fetching submission with activities', async () => {
+      const error = new Error('Database error')
+      Submission.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(h.response).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Unable to find activities for submission'
         })
       )
       expect(h.code).toHaveBeenCalledWith(500)
