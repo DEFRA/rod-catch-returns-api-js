@@ -9,6 +9,11 @@ export const getServerDetails = () => ({
   }
 })
 
+export const getResponseToolkit = () => ({
+  response: jest.fn().mockReturnThis(),
+  code: jest.fn()
+})
+
 export const createActivity = (
   server,
   submissionId,

@@ -4,7 +4,7 @@ import { getBaseUrl } from '../utils/url-utils.js'
  * Maps a Activity entity to a response object.
  *
  * @param {import('@hapi/hapi').Request} request - The Hapi request object
- * @param {import('../../entities/index.js').Activity} activity - The Activity entity
+ * @param {import('../entities/index.js').Activity} activity - The Activity entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
 export function mapActivityToResponse(request, activity) {
