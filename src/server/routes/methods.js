@@ -9,7 +9,7 @@ export default [
     path: '/methods',
     options: {
       /**
-       * Retrieve all fishing methods in the database in the database
+       * Retrieve all fishing methods in the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit

@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`methods.unit should return all methods if the call to fetch all methods is successful 1`] = `
+{
+  "_embedded": {
+    "methods": [
+      {
+        "_links": {
+          "method": {
+            "href": "http://localhost:3000/api/methods/1",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/methods/1",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000+0000",
+        "id": "1",
+        "internal": false,
+        "name": "Fly",
+        "updatedAt": "2018-11-07T10:00:00.000+0000",
+      },
+      {
+        "_links": {
+          "method": {
+            "href": "http://localhost:3000/api/methods/2",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/methods/2",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000+0000",
+        "id": "2",
+        "internal": true,
+        "name": "Unknown",
+        "updatedAt": "2018-11-07T10:00:00.000+0000",
+      },
+    ],
+  },
+}
+`;
