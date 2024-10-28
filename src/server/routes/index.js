@@ -1,6 +1,7 @@
 import Activity from './activities.js'
 import Catchments from './catchments.js'
 import Licences from './licences.js'
+import Method from './methods.js'
 import Region from './regions.js'
 import Rivers from './rivers.js'
 import Species from './species.js'
@@ -11,6 +12,7 @@ export const apiPrefixRoutes = [].concat(
   Activity,
   Catchments,
   Licences,
+  Method,
   Region,
   Rivers,
   Species,
