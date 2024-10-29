@@ -53,7 +53,7 @@ describe('activities.integration', () => {
           river: 'rivers/3'
         }
       })
-      const activitiyId = JSON.parse(activity.payload).id
+      const activityId = JSON.parse(activity.payload).id
       expect(activity.statusCode).toBe(201)
       expect(JSON.parse(activity.payload)).toEqual({
         id: expect.any(String),
@@ -64,27 +64,25 @@ describe('activities.integration', () => {
         version: expect.any(String),
         _links: {
           self: {
-            href: expect.stringMatching(`/api/activities/${activitiyId}`)
+            href: expect.stringMatching(`/api/activities/${activityId}`)
           },
           activity: {
-            href: expect.stringMatching(`/api/activities/${activitiyId}`)
+            href: expect.stringMatching(`/api/activities/${activityId}`)
           },
           submission: {
             href: expect.stringMatching(
-              `/api/activities/${activitiyId}/submission`
+              `/api/activities/${activityId}/submission`
             )
           },
           catches: {
-            href: expect.stringMatching(
-              `/api/activities/${activitiyId}/catches`
-            )
+            href: expect.stringMatching(`/api/activities/${activityId}/catches`)
           },
           river: {
-            href: expect.stringMatching(`/api/activities/${activitiyId}/river`)
+            href: expect.stringMatching(`/api/activities/${activityId}/river`)
           },
           smallCatches: {
             href: expect.stringMatching(
-              `/api/activities/${activitiyId}/smallCatches`
+              `/api/activities/${activityId}/smallCatches`
             )
           }
         }
@@ -183,6 +181,71 @@ describe('activities.integration', () => {
           }
         ]
       })
+    })
+  })
+
+  describe('GET /api/activities/{activityId}/river', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER =
+      'contact-identifier-get-activity-river'
+    beforeEach(() =>
+      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
+    )
+
+    afterAll(() =>
+      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
+    )
+
+    it('should return the river associated with an activity', async () => {
+      const submissionId = await createSubmission(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER
+      )
+
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      const activityId = JSON.parse(activity.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}/river`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        createdAt: expect.any(String),
+        id: '3',
+        internal: false,
+        name: 'Aeron',
+        updatedAt: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching('/api/rivers/3')
+          },
+          river: {
+            href: expect.stringMatching('/api/rivers/3')
+          },
+          catchment: {
+            href: expect.stringMatching('/api/rivers/3/catchment')
+          }
+        }
+      })
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/activities/0/river'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
     })
   })
 })
