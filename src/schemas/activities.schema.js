@@ -1,3 +1,4 @@
+import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
 import {
   getSubmission,
   isSubmissionExists
@@ -24,7 +25,7 @@ const validateDaysFished = async (value, helper, submissionId) => {
 }
 
 const validateSubmission = async (value, helper) => {
-  const submissionId = value.replace('submissions/', '')
+  const submissionId = extractSubmissionId(value)
   const submissionExists = await isSubmissionExists(submissionId)
   return submissionExists
     ? value
@@ -49,9 +50,8 @@ export const createActivitySchema = Joi.object({
     .required()
     .min(1)
     .external((value, helper) => {
-      const submissionId = helper.state.ancestors[0].submission.replace(
-        'submissions/',
-        ''
+      const submissionId = extractSubmissionId(
+        helper.state.ancestors[0].submission
       )
       return validateDaysFished(value, helper, submissionId)
     })
@@ -72,8 +72,8 @@ export const createActivitySchema = Joi.object({
     .pattern(/^rivers\//)
     .description('The submission id prefixed with rivers/')
 }).external(async (value, helper) => {
-  const submissionId = value.submission.replace('submissions/', '')
-  const riverId = value.river.replace('rivers/', '')
+  const submissionId = extractSubmissionId(value.submission)
+  const riverId = extractRiverId(value.river)
 
   const activityExists = await isActivityExists(submissionId, riverId)
 
