@@ -33,7 +33,7 @@ const validateSubmission = async (value, helper) => {
 }
 
 const validateRiver = async (value, helper) => {
-  const riverId = value.replace('rivers/', '')
+  const riverId = extractRiverId(value)
   const riverInternal = await isRiverInternal(riverId)
   return riverInternal ? helper.message('This river is restricted') : value
 }
