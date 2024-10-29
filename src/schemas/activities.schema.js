@@ -1,11 +1,20 @@
+import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
+import {
+  getSubmission,
+  isSubmissionExists
+} from '../services/submissions.service.js'
 import Joi from 'joi'
 import { isActivityExists } from '../services/activities.service.js'
 import { isRiverInternal } from '../services/rivers.service.js'
-import { isSubmissionExists } from '../services/submissions.service.js'
 
-const validateDaysFished = (value, helper) => {
-  const currentYear = new Date().getFullYear()
-  const maxDaysFished = currentYear % 4 === 0 ? 168 : 167
+const validateDaysFished = async (value, helper, submissionId) => {
+  const submission = await getSubmission(submissionId)
+
+  if (!submission) {
+    return helper.message('The submission does not exist')
+  }
+
+  const maxDaysFished = submission.season % 4 === 0 ? 168 : 167
 
   if (value > maxDaysFished) {
     return helper.message(
@@ -16,7 +25,7 @@ const validateDaysFished = (value, helper) => {
 }
 
 const validateSubmission = async (value, helper) => {
-  const submissionId = value.replace('submissions/', '')
+  const submissionId = extractSubmissionId(value)
   const submissionExists = await isSubmissionExists(submissionId)
   return submissionExists
     ? value
@@ -24,7 +33,7 @@ const validateSubmission = async (value, helper) => {
 }
 
 const validateRiver = async (value, helper) => {
-  const riverId = value.replace('rivers/', '')
+  const riverId = extractRiverId(value)
   const riverInternal = await isRiverInternal(riverId)
   return riverInternal ? helper.message('This river is restricted') : value
 }
@@ -40,7 +49,12 @@ export const createActivitySchema = Joi.object({
     .integer()
     .required()
     .min(1)
-    .custom(validateDaysFished)
+    .external((value, helper) => {
+      const submissionId = extractSubmissionId(
+        helper.state.ancestors[0].submission
+      )
+      return validateDaysFished(value, helper, submissionId)
+    })
     .description(
       'The number of days fished during the mandatory release period'
     ),
@@ -58,8 +72,8 @@ export const createActivitySchema = Joi.object({
     .pattern(/^rivers\//)
     .description('The submission id prefixed with rivers/')
 }).external(async (value, helper) => {
-  const submissionId = value.submission.replace('submissions/', '')
-  const riverId = value.river.replace('rivers/', '')
+  const submissionId = extractSubmissionId(value.submission)
+  const riverId = extractRiverId(value.river)
 
   const activityExists = await isActivityExists(submissionId, riverId)
 

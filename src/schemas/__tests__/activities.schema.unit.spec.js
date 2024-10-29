@@ -1,7 +1,10 @@
+import {
+  getSubmission,
+  isSubmissionExists
+} from '../../services/submissions.service.js'
 import { createActivitySchema } from '../activities.schema.js'
 import { isActivityExists } from '../../services/activities.service.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
-import { isSubmissionExists } from '../../services/submissions.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/rivers.service.js')
@@ -9,13 +12,7 @@ jest.mock('../../services/submissions.service.js')
 
 describe('activities.schema.unit', () => {
   describe('createActivitySchema', () => {
-    const mockCurrentYear = (year) => {
-      jest.useFakeTimers('modern')
-      jest.useFakeTimers().setSystemTime(new Date(`${year}-01-01`))
-    }
-
     afterEach(() => {
-      jest.useRealTimers()
       jest.resetAllMocks()
     })
 
@@ -27,6 +24,7 @@ describe('activities.schema.unit', () => {
     })
 
     const getSuccessMocks = () => {
+      getSubmission.mockResolvedValue({ season: 2024 })
       isSubmissionExists.mockResolvedValue(true)
       isRiverInternal.mockResolvedValue(false)
       isActivityExists.mockResolvedValue(false)
@@ -47,6 +45,7 @@ describe('activities.schema.unit', () => {
     })
 
     it('should return an error if the activity already exists for the same submission and river', async () => {
+      getSubmission.mockResolvedValue({ season: 2024 })
       isSubmissionExists.mockResolvedValue(true)
       isRiverInternal.mockResolvedValue(false)
       isActivityExists.mockResolvedValue(true)
@@ -107,6 +106,7 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if river is restricted', async () => {
+        getSubmission.mockResolvedValue({ season: 2024 })
         isSubmissionExists.mockResolvedValue(true)
         isRiverInternal.mockResolvedValue(true)
         const payload = getValidPayload()
@@ -159,8 +159,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a non-leap year', async () => {
-        getSuccessMocks()
-        mockCurrentYear(2023) // 2023 is not a leap year
+        getSubmission.mockResolvedValue({ season: 2023 }) // 2023 is not a leap year
+        isSubmissionExists.mockResolvedValue(true)
+        isRiverInternal.mockResolvedValue(false)
+        isActivityExists.mockResolvedValue(false)
 
         const payload = {
           ...getValidPayload(),
@@ -178,8 +180,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if daysFishedWithMandatoryRelease exceeds 167 for a non-leap year', async () => {
-        getSuccessMocks()
-        mockCurrentYear(2023) // 2023 is not a leap year
+        getSubmission.mockResolvedValue({ season: 2023 }) // 2023 is not a leap year
+        isSubmissionExists.mockResolvedValue(true)
+        isRiverInternal.mockResolvedValue(false)
+        isActivityExists.mockResolvedValue(false)
 
         const payload = {
           ...getValidPayload(),
@@ -194,8 +198,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
-        getSuccessMocks()
-        mockCurrentYear(2024) // 2024 is a leap year
+        getSubmission.mockResolvedValue({ season: 2024 }) // 2024 is a leap year
+        isSubmissionExists.mockResolvedValue(true)
+        isRiverInternal.mockResolvedValue(false)
+        isActivityExists.mockResolvedValue(false)
         const payload = {
           ...getValidPayload(),
           daysFishedWithMandatoryRelease: 168
@@ -212,8 +218,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if daysFishedWithMandatoryRelease exceeds 168 for a leap year', async () => {
-        getSuccessMocks()
-        mockCurrentYear(2024) // 2024 is a leap year
+        getSubmission.mockResolvedValue({ season: 2024 }) // 2024 is a leap year
+        isSubmissionExists.mockResolvedValue(true)
+        isRiverInternal.mockResolvedValue(false)
+        isActivityExists.mockResolvedValue(false)
         const payload = {
           ...getValidPayload(),
           daysFishedWithMandatoryRelease: 169

@@ -1,4 +1,8 @@
 import { Activity, River } from '../../entities/index.js'
+import {
+  extractRiverId,
+  extractSubmissionId
+} from '../../utils/entity-utils.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivitySchema } from '../../schemas/activities.schema.js'
 import logger from '../../utils/logger-utils.js'
@@ -30,8 +34,8 @@ export default [
             river
           } = request.payload
 
-          const submissionId = submission.replace('submissions/', '')
-          const riverId = river.replace('rivers/', '')
+          const submissionId = extractSubmissionId(submission)
+          const riverId = extractRiverId(river)
 
           const createdActivity = await Activity.create({
             daysFishedOther,

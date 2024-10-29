@@ -108,6 +108,11 @@ describe('activities.integration', () => {
             message: 'The submission does not exist',
             property: 'submission',
             value: 'submissions/0'
+          },
+          {
+            message: 'The submission does not exist',
+            property: 'daysFishedWithMandatoryRelease',
+            value: 20
           }
         ]
       })
