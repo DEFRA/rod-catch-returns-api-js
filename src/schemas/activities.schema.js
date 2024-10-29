@@ -1,11 +1,19 @@
+import {
+  getSubmission,
+  isSubmissionExists
+} from '../services/submissions.service.js'
 import Joi from 'joi'
 import { isActivityExists } from '../services/activities.service.js'
 import { isRiverInternal } from '../services/rivers.service.js'
-import { isSubmissionExists } from '../services/submissions.service.js'
 
-const validateDaysFished = (value, helper) => {
-  const currentYear = new Date().getFullYear()
-  const maxDaysFished = currentYear % 4 === 0 ? 168 : 167
+const validateDaysFished = async (value, helper, submissionId) => {
+  const submission = await getSubmission(submissionId)
+
+  if (!submission) {
+    return helper.message('The submission does not exist')
+  }
+
+  const maxDaysFished = submission.season % 4 === 0 ? 168 : 167
 
   if (value > maxDaysFished) {
     return helper.message(
@@ -40,7 +48,13 @@ export const createActivitySchema = Joi.object({
     .integer()
     .required()
     .min(1)
-    .custom(validateDaysFished)
+    .external((value, helper) => {
+      const submissionId = helper.state.ancestors[0].submission.replace(
+        'submissions/',
+        ''
+      )
+      return validateDaysFished(value, helper, submissionId)
+    })
     .description(
       'The number of days fished during the mandatory release period'
     ),
