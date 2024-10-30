@@ -15,7 +15,7 @@ export default [
     path: '/activities',
     options: {
       /**
-       * Retrieve all the catchments in the database
+       * Create an activity for a submission in the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        *     @param {string} request.payload.submission - The submission id prefixed with submissions/
@@ -61,8 +61,8 @@ export default [
       validate: {
         payload: createActivitySchema
       },
-      description: 'Create an activity in the database',
-      notes: 'Create an activity in the database',
+      description: 'Create an activity for a submission in the database',
+      notes: 'Create an activity for a submission in the database',
       tags: ['api', 'activities']
     }
   },
