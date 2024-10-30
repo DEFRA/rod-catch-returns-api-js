@@ -1,6 +1,8 @@
+import { SmallCatch, SmallCatchCount } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { extractActivityId } from '../../utils/entity-utils.js'
 import logger from '../../utils/logger-utils.js'
+import { monthMapping } from '../../utils/date-utils.js'
 
 export default [
   {
@@ -32,11 +34,31 @@ export default [
           } = request.payload
 
           const activityId = extractActivityId(activity)
-          return h.response([]).code(StatusCodes.CREATED)
+          const monthInt = monthMapping[month.toUpperCase()]
+
+          // Prepare the SmallCatch data including nested counts
+          const smallCatchData = {
+            month: monthInt,
+            released: parseInt(released, 10),
+            activity_id: activityId,
+            noMonthRecorded,
+            reportingExclude,
+            counts: counts.map((count) => ({
+              count: parseInt(count.count, 10),
+              method_id: parseInt(count.method.split('/')[1], 10)
+            })),
+            version: new Date()
+          }
+
+          const smallCatch = await SmallCatch.create(smallCatchData, {
+            include: [{ association: SmallCatch.associations.counts }]
+          })
+
+          return h.response(smallCatch).code(StatusCodes.CREATED)
         } catch (error) {
           logger.error('Error create small catch:', error)
           return h
-            .response({ error: 'Unable to create small catche' })
+            .response({ error: 'Unable to create small catch' })
             .code(StatusCodes.INTERNAL_SERVER_ERROR)
         }
       },
