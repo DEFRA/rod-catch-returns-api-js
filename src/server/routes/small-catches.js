@@ -1,8 +1,8 @@
-import { SmallCatch, SmallCatchCount } from '../../entities/index.js'
+import { SmallCatch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { extractActivityId } from '../../utils/entity-utils.js'
+import { getMonthNumberFromName } from '../../utils/date-utils.js'
 import logger from '../../utils/logger-utils.js'
-import { monthMapping } from '../../utils/date-utils.js'
 
 export default [
   {
@@ -34,7 +34,7 @@ export default [
           } = request.payload
 
           const activityId = extractActivityId(activity)
-          const monthInt = monthMapping[month.toUpperCase()]
+          const monthInt = getMonthNumberFromName(month)
 
           // Prepare the SmallCatch data including nested counts
           const smallCatchData = {

@@ -1,14 +1,33 @@
-export const monthMapping = {
-  JANUARY: 1,
-  FEBRUARY: 2,
-  MARCH: 3,
-  APRIL: 4,
-  MAY: 5,
-  JUNE: 6,
-  JULY: 7,
-  AUGUST: 8,
-  SEPTEMBER: 9,
-  OCTOBER: 10,
-  NOVEMBER: 11,
-  DECEMBER: 12
-}
+const months = [
+  'JANUARY',
+  'FEBRUARY',
+  'MARCH',
+  'APRIL',
+  'MAY',
+  'JUNE',
+  'JULY',
+  'AUGUST',
+  'SEPTEMBER',
+  'OCTOBER',
+  'NOVEMBER',
+  'DECEMBER'
+]
+
+/**
+ * Converts a month name to its corresponding month number.
+ *
+ * @param {string} monthName - The name of the month (e.g., "JANUARY").
+ * @returns {number} - The month number (1 for January, 2 for February, etc.).
+ *                      Returns 0 if the month name is invalid.
+ */
+export const getMonthNumberFromName = (monthName) =>
+  months.indexOf(monthName.toUpperCase()) + 1
+
+/**
+ * Converts a month number to its corresponding month name.
+ *
+ * @param {number} monthNumber - The month number (1 for January, 2 for February, etc.).
+ * @returns {string} - The name of the month (e.g., "JANUARY").
+ *                     Returns undefined if the month number is out of range.
+ */
+export const getMonthNameFromNumber = (monthNumber) => months[monthNumber - 1]
