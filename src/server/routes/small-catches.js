@@ -18,7 +18,7 @@ export default [
        *     @param {string} request.payload.activity - The activity id prefixed with activities/
        *     @param {string} request.payload.month - The full month in capitals this record relates to
        *     @param {string} request.payload.released - The number released
-       *     @param {string[]} request.payload.counts - An array of small catches counts // TODO do this properly
+       *     @param {Array<{ method: string, count: string }>} request.payload.counts - An array of small catch counts, each with a fishing method and its count
        *     @param {string} request.payload.noMonthRecorded - To allow FMT users to report on the default date
        *     @param {string} request.payload.reportingExclude - Is this entry excluded from reporting
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
@@ -34,7 +34,7 @@ export default [
 
           const smallCatchResponse = mapSmallCatchToResponse(
             request,
-            smallCatch
+            smallCatch.toJSON()
           )
 
           return h.response(smallCatchResponse).code(StatusCodes.CREATED)
