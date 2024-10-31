@@ -5,7 +5,7 @@ import {
 import { deleteSmallCatchesActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
-describe.skip('small-catches.integration', () => {
+describe('small-catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
@@ -32,7 +32,7 @@ describe.skip('small-catches.integration', () => {
       )
     )
 
-    it('should successfully create a activity for a submission with a valid request', async () => {
+    it.skip('should successfully create a activity for a submission with a valid request', async () => {
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
@@ -68,7 +68,56 @@ describe.skip('small-catches.integration', () => {
       })
 
       expect(smallCatches.statusCode).toBe(201)
-      expect(JSON.parse(smallCatches.payload)).toEqual({})
+      const smallCatchesId = JSON.parse(smallCatches.payload).id
+      expect(JSON.parse(smallCatches.payload)).toEqual({
+        id: expect.any(String),
+        month: 'FEBRUARY',
+        count: [
+          {
+            count: 3,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/1`)
+              }
+            }
+          },
+          {
+            count: 2,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/2`)
+              }
+            }
+          },
+          {
+            count: 1,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/3`)
+              }
+            }
+          }
+        ],
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchesId}`)
+          },
+          smallCatch: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchesId}`)
+          },
+          activityEntity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(
+              `/api/smallCatches/${smallCatchesId}/activity`
+            )
+          }
+        }
+      })
     })
   })
 })

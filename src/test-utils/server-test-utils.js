@@ -42,7 +42,7 @@ export const createSubmission = (
 ) => {
   return server.inject({
     method: 'POST',
-    url: '/api/activities',
+    url: '/api/submissions',
     payload: {
       contactId,
       season,

@@ -39,13 +39,13 @@ export default [
           // Prepare the SmallCatch data including nested counts
           const smallCatchData = {
             month: monthInt,
-            released: parseInt(released, 10),
+            released,
             activity_id: activityId,
             noMonthRecorded,
             reportingExclude,
             counts: counts.map((count) => ({
-              count: parseInt(count.count, 10),
-              method_id: parseInt(count.method.split('/')[1], 10)
+              count: count.count,
+              method_id: count.method.split('/')[1] // todo use extract id
             })),
             version: new Date()
           }
