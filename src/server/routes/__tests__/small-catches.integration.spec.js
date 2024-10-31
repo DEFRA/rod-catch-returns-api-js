@@ -32,7 +32,7 @@ describe('small-catches.integration', () => {
       )
     )
 
-    it.skip('should successfully create a activity for a submission with a valid request', async () => {
+    it('should successfully create a activity for a submission with a valid request', async () => {
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
@@ -69,6 +69,7 @@ describe('small-catches.integration', () => {
 
       expect(smallCatches.statusCode).toBe(201)
       const smallCatchesId = JSON.parse(smallCatches.payload).id
+
       expect(JSON.parse(smallCatches.payload)).toEqual({
         id: expect.any(String),
         month: 'FEBRUARY',
@@ -101,6 +102,9 @@ describe('small-catches.integration', () => {
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         version: expect.any(String),
+        released: 3,
+        reportingExclude: false,
+        noMonthRecorded: false,
         _links: {
           self: {
             href: expect.stringMatching(`/api/smallCatches/${smallCatchesId}`)

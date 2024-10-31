@@ -1,7 +1,9 @@
+import {
+  mapRequestToSmallCatch,
+  mapSmallCatchToResponse
+} from '../../mappers/small-catches.mapper.js'
 import { SmallCatch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import { extractActivityId } from '../../utils/entity-utils.js'
-import { getMonthNumberFromName } from '../../utils/date-utils.js'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -24,37 +26,18 @@ export default [
        */
       handler: async (request, h) => {
         try {
-          const {
-            activity,
-            month,
-            released,
-            counts,
-            noMonthRecorded,
-            reportingExclude
-          } = request.payload
-
-          const activityId = extractActivityId(activity)
-          const monthInt = getMonthNumberFromName(month)
-
-          // Prepare the SmallCatch data including nested counts
-          const smallCatchData = {
-            month: monthInt,
-            released,
-            activity_id: activityId,
-            noMonthRecorded,
-            reportingExclude,
-            counts: counts.map((count) => ({
-              count: count.count,
-              method_id: count.method.split('/')[1] // todo use extract id
-            })),
-            version: new Date()
-          }
+          const smallCatchData = mapRequestToSmallCatch(request.payload)
 
           const smallCatch = await SmallCatch.create(smallCatchData, {
             include: [{ association: SmallCatch.associations.counts }]
           })
 
-          return h.response(smallCatch).code(StatusCodes.CREATED)
+          const smallCatchResponse = mapSmallCatchToResponse(
+            request,
+            smallCatch
+          )
+
+          return h.response(smallCatchResponse).code(StatusCodes.CREATED)
         } catch (error) {
           logger.error('Error create small catch:', error)
           return h
