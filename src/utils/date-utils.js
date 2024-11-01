@@ -21,7 +21,7 @@ const months = [
  *                      Returns 0 if the month name is invalid.
  */
 export const getMonthNumberFromName = (monthName) =>
-  months.indexOf(monthName.toUpperCase()) + 1
+  monthName ? months.indexOf(monthName.toUpperCase()) + 1 : 0
 
 /**
  * Converts a month number to its corresponding month name.
