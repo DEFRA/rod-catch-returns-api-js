@@ -1,6 +1,6 @@
 import { Submission } from '../../../entities/index.js'
 import { createActivity } from '../../../test-utils/server-test-utils.js'
-import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
+import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 const createExpectedActivity = (
@@ -422,13 +422,13 @@ describe('submissions.integration', () => {
       'contact-identifier-get-activities-for-submission'
 
     beforeEach(() =>
-      deleteActivitiesAndSubmissions(
+      deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
       )
     )
 
     afterAll(() =>
-      deleteActivitiesAndSubmissions(
+      deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
       )
     )

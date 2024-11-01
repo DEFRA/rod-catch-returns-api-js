@@ -1,4 +1,4 @@
-import { deleteActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
+import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('activities.integration', () => {
@@ -32,11 +32,11 @@ describe('activities.integration', () => {
     const CONTACT_IDENTIFIER_CREATE_ACTIVITY =
       'contact-identifier-create-activity'
     beforeEach(() =>
-      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
     )
 
     afterAll(() =>
-      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
     )
 
     it('should successfully create a activity for a submission with a valid request', async () => {
@@ -188,11 +188,11 @@ describe('activities.integration', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER =
       'contact-identifier-get-activity-river'
     beforeEach(() =>
-      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
     )
 
     afterAll(() =>
-      deleteActivitiesAndSubmissions(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER)
     )
 
     it('should return the river associated with an activity', async () => {
