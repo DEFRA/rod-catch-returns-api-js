@@ -34,3 +34,20 @@ export const createActivity = (
     }
   })
 }
+
+export const createSubmission = (
+  server,
+  contactId,
+  { season = '2023', status = 'INCOMPLETE', source = 'WEB' } = {}
+) => {
+  return server.inject({
+    method: 'POST',
+    url: '/api/submissions',
+    payload: {
+      contactId,
+      season,
+      status,
+      source
+    }
+  })
+}

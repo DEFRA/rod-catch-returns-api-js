@@ -1,4 +1,6 @@
 import {
+  extractActivityId,
+  extractMethodId,
   extractRiverId,
   extractSubmissionId,
   initialiseAssociations
@@ -91,6 +93,58 @@ describe('entity-utils.unit', () => {
     it('should handle an empty string input gracefully', () => {
       const river = ''
       const result = extractRiverId(river)
+      expect(result).toBe('')
+    })
+  })
+
+  describe('extractMethodId', () => {
+    it('should remove "methods/" prefix and return the ID', () => {
+      const method = 'methods/24680'
+      const result = extractMethodId(method)
+      expect(result).toBe('24680')
+    })
+
+    it('should return the original string if there is no "methods/" prefix', () => {
+      const method = '24680'
+      const result = extractMethodId(method)
+      expect(result).toBe('24680')
+    })
+
+    it('should return an empty string if the input is only "methods/"', () => {
+      const method = 'methods/'
+      const result = extractMethodId(method)
+      expect(result).toBe('')
+    })
+
+    it('should handle an empty string input gracefully', () => {
+      const method = ''
+      const result = extractMethodId(method)
+      expect(result).toBe('')
+    })
+  })
+
+  describe('extractActivityId', () => {
+    it('should remove "activities/" prefix and return the ID', () => {
+      const activity = 'activities/13579'
+      const result = extractActivityId(activity)
+      expect(result).toBe('13579')
+    })
+
+    it('should return the original string if there is no "activities/" prefix', () => {
+      const activity = '13579'
+      const result = extractActivityId(activity)
+      expect(result).toBe('13579')
+    })
+
+    it('should return an empty string if the input is only "activities/"', () => {
+      const activity = 'activities/'
+      const result = extractActivityId(activity)
+      expect(result).toBe('')
+    })
+
+    it('should handle an empty string input gracefully', () => {
+      const activity = ''
+      const result = extractActivityId(activity)
       expect(result).toBe('')
     })
   })

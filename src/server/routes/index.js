@@ -4,6 +4,7 @@ import Licences from './licences.js'
 import Method from './methods.js'
 import Region from './regions.js'
 import Rivers from './rivers.js'
+import SmallCatches from './small-catches.js'
 import Species from './species.js'
 import Static from './static.js'
 import Submissions from './submissions.js'
@@ -15,6 +16,7 @@ export const apiPrefixRoutes = [].concat(
   Method,
   Region,
   Rivers,
+  SmallCatches,
   Species,
   Submissions
 )

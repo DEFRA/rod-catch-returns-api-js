@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`small-catches.mapper.unit mapSmallCatchToResponse should map a SmallCatch to a response object with correct links 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/smallCatches/1/activity",
+    },
+    "activityEntity": {
+      "href": "http://localhost:3000/api/activities/3",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/smallCatches/1",
+    },
+    "smallCatch": {
+      "href": "http://localhost:3000/api/smallCatches/1",
+    },
+  },
+  "count": [
+    {
+      "_links": {
+        "method": {
+          "href": "http://localhost:3000/api/methods/1",
+        },
+      },
+      "count": 3,
+    },
+    {
+      "_links": {
+        "method": {
+          "href": "http://localhost:3000/api/methods/2",
+        },
+      },
+      "count": 2,
+    },
+    {
+      "_links": {
+        "method": {
+          "href": "http://localhost:3000/api/methods/3",
+        },
+      },
+      "count": 1,
+    },
+  ],
+  "createdAt": "2024-10-11T09:30:57.463+0000",
+  "id": "1",
+  "month": "FEBRUARY",
+  "noMonthRecorded": false,
+  "released": 3,
+  "reportingExclude": false,
+  "updatedAt": "2024-10-11T09:30:57.463+0000",
+  "version": "2024-10-11T09:30:57.463+0000",
+}
+`;
