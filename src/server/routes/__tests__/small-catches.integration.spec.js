@@ -2,7 +2,7 @@ import {
   createActivity,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
-import { deleteSmallCatchesActivitiesAndSubmissions } from '../../../test-utils/database-test-utils.js'
+import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('small-catches.integration', () => {
@@ -21,15 +21,11 @@ describe('small-catches.integration', () => {
     const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
       'contact-identifier-create-small-catch'
     beforeEach(() =>
-      deleteSmallCatchesActivitiesAndSubmissions(
-        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-      )
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_SMALL_CATCH)
     )
 
     afterAll(() =>
-      deleteSmallCatchesActivitiesAndSubmissions(
-        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-      )
+      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_SMALL_CATCH)
     )
 
     it('should successfully create a activity for a submission with a valid request', async () => {
