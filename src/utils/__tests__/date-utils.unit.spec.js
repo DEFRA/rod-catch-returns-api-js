@@ -81,6 +81,12 @@ describe('date-utils.unit', () => {
       )
     })
 
+    it('returns an error for 1.5', () => {
+      expect(() => getMonthNameFromNumber(1.5)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
+    })
+
     it('returns an error for -1', () => {
       expect(() => getMonthNameFromNumber(-1)).toThrow(
         'Invalid month number: monthNumber must be an integer between 1 and 12.'
