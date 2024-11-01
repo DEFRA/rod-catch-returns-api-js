@@ -29,19 +29,27 @@ describe('date-utils.unit', () => {
     })
 
     it('returns 0 for NotAMonth', () => {
-      expect(getMonthNumberFromName('NotAMonth')).toBe(0)
+      expect(() => getMonthNumberFromName('NotAMonth')).toThrow(
+        "Invalid month name: 'NotAMonth' is not a recognized month."
+      )
     })
 
     it('returns 0 for an empty string', () => {
-      expect(getMonthNumberFromName('')).toBe(0)
+      expect(() => getMonthNumberFromName('')).toThrow(
+        'Invalid month name: monthName must be a non-empty string.'
+      )
     })
 
     it('returns 0 for null', () => {
-      expect(getMonthNumberFromName(null)).toBe(0)
+      expect(() => getMonthNumberFromName(null)).toThrow(
+        'Invalid month name: monthName must be a non-empty string.'
+      )
     })
 
     it('returns 0 for undefined', () => {
-      expect(getMonthNumberFromName(undefined)).toBe(0)
+      expect(() => getMonthNumberFromName(undefined)).toThrow(
+        'Invalid month name: monthName must be a non-empty string.'
+      )
     })
   })
   describe('getMonthNameFromNumber', () => {
@@ -62,23 +70,33 @@ describe('date-utils.unit', () => {
     })
 
     it('returns undefined for 0', () => {
-      expect(getMonthNameFromNumber(0)).toBeUndefined()
+      expect(() => getMonthNameFromNumber(0)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
     })
 
     it('returns undefined for 13', () => {
-      expect(getMonthNameFromNumber(13)).toBeUndefined()
+      expect(() => getMonthNameFromNumber(13)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
     })
 
     it('returns undefined for -1', () => {
-      expect(getMonthNameFromNumber(-1)).toBeUndefined()
+      expect(() => getMonthNameFromNumber(-1)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
     })
 
     it('returns undefined for null', () => {
-      expect(getMonthNameFromNumber(null)).toBeUndefined()
+      expect(() => getMonthNameFromNumber(null)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
     })
 
     it('returns undefined for undefined', () => {
-      expect(getMonthNameFromNumber(undefined)).toBeUndefined()
+      expect(() => getMonthNameFromNumber(undefined)).toThrow(
+        'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
     })
   })
 })
