@@ -36,7 +36,7 @@ describe('smallCatches.unit', () => {
 
     const getCreatedSmallCatch = () => ({
       toJSON: jest.fn().mockReturnValue({
-        id: 1,
+        id: '1',
         month: 2,
         released: 3,
         counts: [
