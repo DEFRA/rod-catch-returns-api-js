@@ -43,7 +43,7 @@ export const getSubmissionByActivityId = async (activityId) => {
     return activity.Submission
   } catch (error) {
     throw new Error(
-      `Failed to fetch submission for activity ID ${activityId}: ${error.message}`
+      `Failed to fetch submission for activity ID ${activityId}: ${error}`
     )
   }
 }
