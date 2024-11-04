@@ -4,8 +4,27 @@ import { getMonthNumberFromName } from '../utils/date-utils'
 import { getSubmissionByActivityId } from '../services/activities.service'
 
 export const createSmallCatchSchema = Joi.object({
-  activity: Joi.string().required(),
-  month: Joi.string().required()
+  activity: Joi.string().required().messages({
+    'any.required': 'ACTIVITY_REQUIRED'
+  }),
+  month: Joi.string()
+    .required()
+    .when('noMonthRecorded', {
+      is: true,
+      then: Joi.required().messages({
+        'any.required': 'DEFAULT_MONTH_REQUIRED'
+      }),
+      otherwise: Joi.required().messages({
+        'any.required': 'MONTH_REQUIRED'
+      })
+    }),
+  counts: Joi.number().integer().min(0).required().messages({
+    'any.required': 'COUNTS_REQUIRED',
+    'number.base': 'COUNTS_NUMBER',
+    'number.integer': 'COUNTS_INTEGER',
+    'number.min': 'COUNTS_NEGATIVE'
+  }),
+  noMonthRecorded: Joi.boolean()
 }).external(async (value, helper) => {
   const activityId = extractActivityId(value.submission)
   const submission = await getSubmissionByActivityId(activityId)

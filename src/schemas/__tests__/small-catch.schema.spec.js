@@ -13,7 +13,9 @@ describe('smallCatch.schema.unit', () => {
 
     const getValidPayload = () => ({
       activity: 'activities/123',
-      month: 'JANUARY'
+      counts: 5,
+      month: 'JANUARY',
+      noMonthRecorded: false
     })
 
     const mockCurrentDate = new Date()
@@ -29,6 +31,17 @@ describe('smallCatch.schema.unit', () => {
       setupMocks({ season: currentYear })
 
       const payload = getValidPayload()
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).resolves.toStrictEqual(payload)
+    })
+
+    it('should validate successfully when noMonthRecorded is undefined', async () => {
+      // leaving month as JANUARY, it should always pass
+      setupMocks({ season: currentYear })
+
+      const payload = { ...getValidPayload(), noMonthRecorded: undefined }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
@@ -65,15 +78,82 @@ describe('smallCatch.schema.unit', () => {
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('"activity" is required')
+      ).rejects.toThrow('ACTIVITY_REQUIRED')
     })
 
-    it('should return an error if "month" is missing', async () => {
+    it('should return an MONTH_REQUIRED if "month" is missing and noMonthRecorded is false', async () => {
       const payload = { ...getValidPayload(), month: undefined }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('"month" is required')
+      ).rejects.toThrow('MONTH_REQUIRED')
+    })
+
+    it('should return a DEFAULT_MONTH_REQUIRED if "month" is missing and noMonthRecorded is true', async () => {
+      const payload = {
+        ...getValidPayload(),
+        month: undefined,
+        noMonthRecorded: true
+      }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('DEFAULT_MONTH_REQUIRED')
+    })
+
+    it('should return an error if "counts" is missing', async () => {
+      const payload = { ...getValidPayload(), counts: undefined }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('COUNTS_REQUIRED')
+    })
+
+    it('should return an error if "counts" is a decimal number', async () => {
+      const payload = { ...getValidPayload(), counts: 5.5 }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('COUNTS_INTEGER')
+    })
+
+    it('should return an error if "counts" is a string', async () => {
+      const payload = { ...getValidPayload(), counts: 'five' }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('COUNTS_NUMBER')
+    })
+
+    it('should return an error if "counts" is negative', async () => {
+      const payload = { ...getValidPayload(), counts: -5 }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('COUNTS_NEGATIVE')
+    })
+
+    it('should validate successfully if "counts" is 0', async () => {
+      setupMocks({ season: currentYear })
+      const payload = { ...getValidPayload(), counts: 0 }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).resolves.toStrictEqual(payload)
+    })
+
+    it('should validate successfully if "counts" is a number as a string', async () => {
+      setupMocks({ season: currentYear })
+      const payload = { ...getValidPayload(), counts: '3' }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).resolves.toStrictEqual({
+        activity: 'activities/123',
+        counts: 3,
+        month: 'JANUARY',
+        noMonthRecorded: false
+      })
     })
   })
 })
