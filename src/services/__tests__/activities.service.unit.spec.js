@@ -1,7 +1,7 @@
-import { Activity } from '../../entities/activity.entity.js'
+import { Activity } from '../../entities/index.js'
 import { isActivityExists } from '../activities.service.js'
 
-jest.mock('../../entities/activity.entity.js')
+jest.mock('../../entities/index.js')
 
 describe('activity.service.unit', () => {
   describe('isActivityExists', () => {

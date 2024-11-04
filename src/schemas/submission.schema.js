@@ -1,16 +1,20 @@
 import Joi from 'joi'
 
-const currentYear = new Date().getFullYear()
-
 export const createSubmissionSchema = Joi.object({
   contactId: Joi.string().required().description('The contact identifier'),
   season: Joi.number()
     .required()
-    .max(currentYear)
-    .description('The season (year) pertaining to the submission')
-    .messages({
-      'number.max': `Season must not be later than the current year (${currentYear}).`
-    }),
+    .custom((value, helper) => {
+      const currentYear = new Date().getFullYear()
+      if (value > currentYear) {
+        return helper.message(
+          `Season must not be later than the current year (${currentYear}).`
+        )
+      }
+
+      return value
+    })
+    .description('The season (year) pertaining to the submission'),
   status: Joi.string()
     .required()
     .valid('INCOMPLETE', 'SUBMITTED')
