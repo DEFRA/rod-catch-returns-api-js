@@ -1,9 +1,11 @@
 import { createSmallCatchSchema } from '../small-catch.schema.js'
 import { getMonthNameFromNumber } from '../../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
+import { isDuplicateSmallCatch } from '../../services/small-catch.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../utils/entity-utils.js')
+jest.mock('../../services/small-catch.service.js')
 
 describe('smallCatch.schema.unit', () => {
   describe('createSmallCatchSchema', () => {
@@ -154,6 +156,17 @@ describe('smallCatch.schema.unit', () => {
         month: 'JANUARY',
         noMonthRecorded: false
       })
+    })
+
+    it('should return DUPLICATE_FOUND error if a duplicate activity and month combination exists', async () => {
+      setupMocks({ season: currentYear })
+      isDuplicateSmallCatch.mockResolvedValue(true)
+
+      const payload = getValidPayload()
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).rejects.toThrow('DUPLICATE_FOUND')
     })
   })
 })
