@@ -5,6 +5,9 @@ import {
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
+// TODO add integration tests for SMALL_CATCH_DUPLICATE_FOUND, SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND, SMALL_CATCH_RELEASED_EXCEEDS_COUNTS
+// add one failure for SMALL_CATCH_MONTH_IN_FUTURE and one success
+
 describe('small-catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null

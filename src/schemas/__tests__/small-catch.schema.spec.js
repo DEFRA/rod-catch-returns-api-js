@@ -7,6 +7,8 @@ jest.mock('../../services/activities.service.js')
 jest.mock('../../utils/entity-utils.js')
 jest.mock('../../services/small-catch.service.js')
 
+// TODO group tests further like counts
+
 describe('smallCatch.schema.unit', () => {
   describe('createSmallCatchSchema', () => {
     afterEach(() => {
