@@ -29,11 +29,11 @@ export const createSmallCatchSchema = Joi.object({
 
       return value
     }),
-  counts: Joi.number().integer().min(0).required().messages({
-    'any.required': 'COUNTS_REQUIRED',
-    'number.base': 'COUNTS_NUMBER',
-    'number.integer': 'COUNTS_INTEGER',
-    'number.min': 'COUNTS_NEGATIVE'
+  released: Joi.number().integer().min(0).required().messages({
+    'any.required': 'RELEASED_REQUIRED',
+    'number.base': 'RELEASED_NUMBER',
+    'number.integer': 'RELEASED_INTEGER',
+    'number.min': 'RELEASED_NEGATIVE'
   }),
   noMonthRecorded: Joi.boolean()
 }).external(async (value, helper) => {

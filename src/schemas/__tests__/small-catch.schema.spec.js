@@ -15,7 +15,7 @@ describe('smallCatch.schema.unit', () => {
 
     const getValidPayload = () => ({
       activity: 'activities/123',
-      counts: 5,
+      released: 5,
       month: 'JANUARY',
       noMonthRecorded: false
     })
@@ -103,56 +103,56 @@ describe('smallCatch.schema.unit', () => {
       ).rejects.toThrow('DEFAULT_MONTH_REQUIRED')
     })
 
-    it('should return an error if "counts" is missing', async () => {
-      const payload = { ...getValidPayload(), counts: undefined }
+    it('should return an error if "released" is missing', async () => {
+      const payload = { ...getValidPayload(), released: undefined }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('COUNTS_REQUIRED')
+      ).rejects.toThrow('RELEASED_REQUIRED')
     })
 
-    it('should return an error if "counts" is a decimal number', async () => {
-      const payload = { ...getValidPayload(), counts: 5.5 }
+    it('should return an error if "released" is a decimal number', async () => {
+      const payload = { ...getValidPayload(), released: 5.5 }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('COUNTS_INTEGER')
+      ).rejects.toThrow('RELEASED_INTEGER')
     })
 
-    it('should return an error if "counts" is a string', async () => {
-      const payload = { ...getValidPayload(), counts: 'five' }
+    it('should return an error if "released" is a string', async () => {
+      const payload = { ...getValidPayload(), released: 'five' }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('COUNTS_NUMBER')
+      ).rejects.toThrow('RELEASED_NUMBER')
     })
 
-    it('should return an error if "counts" is negative', async () => {
-      const payload = { ...getValidPayload(), counts: -5 }
+    it('should return an error if "released" is negative', async () => {
+      const payload = { ...getValidPayload(), released: -5 }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('COUNTS_NEGATIVE')
+      ).rejects.toThrow('RELEASED_NEGATIVE')
     })
 
-    it('should validate successfully if "counts" is 0', async () => {
+    it('should validate successfully if "released" is 0', async () => {
       setupMocks({ season: currentYear })
-      const payload = { ...getValidPayload(), counts: 0 }
+      const payload = { ...getValidPayload(), released: 0 }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
       ).resolves.toStrictEqual(payload)
     })
 
-    it('should validate successfully if "counts" is a number as a string', async () => {
+    it('should validate successfully if "released" is a number as a string', async () => {
       setupMocks({ season: currentYear })
-      const payload = { ...getValidPayload(), counts: '3' }
+      const payload = { ...getValidPayload(), released: '3' }
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
       ).resolves.toStrictEqual({
         activity: 'activities/123',
-        counts: 3,
+        released: 3,
         month: 'JANUARY',
         noMonthRecorded: false
       })
