@@ -35,6 +35,33 @@ export const createSmallCatchSchema = Joi.object({
     'number.integer': 'RELEASED_INTEGER',
     'number.min': 'RELEASED_NEGATIVE'
   }),
+  counts: Joi.array()
+    .items(
+      Joi.object({
+        method: Joi.string().required().messages({
+          'any.required': 'METHOD_REQUIRED'
+        }),
+        count: Joi.number().integer().min(0).required().messages({
+          'any.required': 'COUNT_REQUIRED',
+          'number.base': 'COUNT_NUMBER',
+          'number.integer': 'COUNT_INTEGER',
+          'number.min': 'COUNT_NEGATIVE'
+        })
+      })
+    )
+    .required()
+    .messages({
+      'any.required': 'COUNTS_REQUIRED',
+      'array.base': 'COUNTS_ARRAY'
+    })
+    .custom((value, helper) => {
+      const methods = value.map((item) => item.method)
+      const hasDuplicates = new Set(methods).size !== methods.length
+      if (hasDuplicates) {
+        return helper.message('COUNTS_METHOD_DUPLICATE_FOUND')
+      }
+      return value
+    }),
   noMonthRecorded: Joi.boolean()
 }).external(async (value, helper) => {
   const activityId = extractActivityId(value.submission)

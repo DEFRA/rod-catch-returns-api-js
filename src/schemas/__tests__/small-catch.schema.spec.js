@@ -17,6 +17,10 @@ describe('smallCatch.schema.unit', () => {
       activity: 'activities/123',
       released: 5,
       month: 'JANUARY',
+      counts: [
+        { method: 'methods/1', count: 1 },
+        { method: 'methods/2', count: 2 }
+      ],
       noMonthRecorded: false
     })
 
@@ -153,6 +157,10 @@ describe('smallCatch.schema.unit', () => {
       ).resolves.toStrictEqual({
         activity: 'activities/123',
         released: 3,
+        counts: [
+          { method: 'methods/1', count: 1 },
+          { method: 'methods/2', count: 2 }
+        ],
         month: 'JANUARY',
         noMonthRecorded: false
       })
@@ -167,6 +175,82 @@ describe('smallCatch.schema.unit', () => {
       await expect(
         createSmallCatchSchema.validateAsync(payload)
       ).rejects.toThrow('DUPLICATE_FOUND')
+    })
+
+    describe('counts', () => {
+      it('should return an error if counts is missing', async () => {
+        const payload = { ...getValidPayload(), counts: undefined }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNTS_REQUIRED')
+      })
+
+      it('should return an error if counts is not an array', async () => {
+        const payload = { ...getValidPayload(), counts: 'not-an-array' }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNTS_ARRAY')
+      })
+
+      it('should return an error if method is missing in counts item', async () => {
+        const payload = { ...getValidPayload(), counts: [{ count: 1 }] }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('METHOD_REQUIRED')
+      })
+
+      it('should return an error if count is missing in counts item', async () => {
+        const payload = {
+          ...getValidPayload(),
+          counts: [{ method: 'methods/1' }]
+        }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNT_REQUIRED')
+      })
+
+      it('should return an error if count is not a number', async () => {
+        const payload = {
+          ...getValidPayload(),
+          counts: [{ method: 'methods/1', count: 'abc' }]
+        }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNT_NUMBER')
+      })
+
+      it('should return an error if count is a decimal', async () => {
+        const payload = {
+          ...getValidPayload(),
+          counts: [{ method: 'methods/1', count: 1.5 }]
+        }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNT_INTEGER')
+      })
+
+      it('should return an error if count is negative', async () => {
+        const payload = {
+          ...getValidPayload(),
+          counts: [{ method: 'methods/1', count: -1 }]
+        }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNT_NEGATIVE')
+      })
+
+      it('should return an error if duplicate methods are present in counts', async () => {
+        const payload = {
+          ...getValidPayload(),
+          counts: [
+            { method: 'methods/1', count: 1 },
+            { method: 'methods/1', count: 2 }
+          ]
+        }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('COUNTS_METHOD_DUPLICATE_FOUND')
+      })
     })
   })
 })
