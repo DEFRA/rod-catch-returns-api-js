@@ -137,7 +137,7 @@ describe('smallCatch.schema.unit', () => {
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('RELEASED_INTEGER')
+      ).rejects.toThrow('SMALL_CATCH_RELEASED_INTEGER')
     })
 
     it('should return an error if "released" is a string', async () => {
@@ -145,7 +145,7 @@ describe('smallCatch.schema.unit', () => {
 
       await expect(
         createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('RELEASED_NUMBER')
+      ).rejects.toThrow('SMALL_CATCH_RELEASED_NUMBER')
     })
 
     it('should return an error if "released" is negative', async () => {
@@ -233,7 +233,7 @@ describe('smallCatch.schema.unit', () => {
         }
         await expect(
           createSmallCatchSchema.validateAsync(payload)
-        ).rejects.toThrow('COUNT_NUMBER')
+        ).rejects.toThrow('SMALL_CATCH_COUNTS_COUNT_NUMBER')
       })
 
       it('should return an error if count is a decimal', async () => {
@@ -243,7 +243,7 @@ describe('smallCatch.schema.unit', () => {
         }
         await expect(
           createSmallCatchSchema.validateAsync(payload)
-        ).rejects.toThrow('COUNT_INTEGER')
+        ).rejects.toThrow('SMALL_CATCH_COUNTS_COUNT_INTEGER')
       })
 
       it('should return an error if count is negative', async () => {

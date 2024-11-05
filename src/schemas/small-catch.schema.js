@@ -38,8 +38,8 @@ export const createSmallCatchSchema = Joi.object({
         }),
         count: Joi.number().integer().min(0).required().messages({
           'any.required': 'SMALL_CATCH_COUNTS_COUNT_REQUIRED',
-          'number.base': 'COUNT_NUMBER',
-          'number.integer': 'COUNT_INTEGER',
+          'number.base': 'SMALL_CATCH_COUNTS_COUNT_NUMBER',
+          'number.integer': 'SMALL_CATCH_COUNTS_COUNT_INTEGER',
           'number.min': 'SMALL_CATCH_COUNTS_NOT_GREATER_THAN_ZERO'
         })
       })
@@ -63,8 +63,8 @@ export const createSmallCatchSchema = Joi.object({
     .required()
     .messages({
       'any.required': 'SMALL_CATCH_RELEASED_REQUIRED',
-      'number.base': 'RELEASED_NUMBER',
-      'number.integer': 'RELEASED_INTEGER',
+      'number.base': 'SMALL_CATCH_RELEASED_NUMBER',
+      'number.integer': 'SMALL_CATCH_RELEASED_INTEGER',
       'number.min': 'SMALL_CATCH_RELEASED_NEGATIVE'
     })
     .custom((value, helper) => {
