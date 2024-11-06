@@ -70,7 +70,7 @@ export const createSmallCatchSchema = Joi.object({
       'number.min': 'SMALL_CATCH_RELEASED_NEGATIVE'
     })
     .custom((value, helper) => {
-      const countsArray = helper.state.ancestors[0].counts || []
+      const countsArray = helper.state.ancestors[0].counts
       const totalCaught = countsArray.reduce((sum, item) => sum + item.count, 0)
 
       if (value > totalCaught) {

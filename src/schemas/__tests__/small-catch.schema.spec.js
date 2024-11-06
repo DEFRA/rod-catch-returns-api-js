@@ -7,8 +7,6 @@ jest.mock('../../services/activities.service.js')
 jest.mock('../../utils/entity-utils.js')
 jest.mock('../../services/small-catch.service.js')
 
-// TODO group tests further like counts
-
 describe('smallCatch.schema.unit', () => {
   describe('createSmallCatchSchema', () => {
     afterEach(() => {
@@ -63,7 +61,7 @@ describe('smallCatch.schema.unit', () => {
     })
 
     it('should validate successfully when noMonthRecorded is undefined', async () => {
-      // leaving month as JANUARY, it should always pass
+      // leaving month as JANUARY, it should always pass regardless of when it is run
       setupMocks({ season: currentYear })
 
       const payload = { ...getValidPayload(), noMonthRecorded: undefined }
@@ -73,127 +71,133 @@ describe('smallCatch.schema.unit', () => {
       ).resolves.toStrictEqual(payload)
     })
 
-    it('should return an error if the submission season is in the future', async () => {
-      const futureYear = currentYear + 1
-      setupMocks({ season: futureYear })
-      const payload = getValidPayload()
+    describe('activity', () => {
+      it('should return an error if "activity" is missing', async () => {
+        const payload = { ...getValidPayload(), activity: undefined }
 
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
-    })
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_ACTIVITY_REQUIRED')
+      })
 
-    it('should return an error if the submission season is current year and month is in the future', async () => {
-      const futureMonth = currentMonth === 12 ? 1 : currentMonth + 1
-      const futureSeason = currentMonth === 12 ? currentYear + 1 : currentYear
+      it('should return SMALL_CATCH_DUPLICATE_FOUND error if a duplicate activity and month combination exists', async () => {
+        setupMocks({ season: currentYear })
+        isDuplicateSmallCatch.mockResolvedValue(true)
 
-      setupMocks({ season: futureSeason })
-      const payload = {
-        ...getValidPayload(),
-        month: getMonthNameFromNumber(futureMonth)
-      }
+        const payload = getValidPayload()
 
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
-    })
-
-    it('should return an error if "activity" is missing', async () => {
-      const payload = { ...getValidPayload(), activity: undefined }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_ACTIVITY_REQUIRED')
-    })
-
-    it('should return SMALL_CATCH_MONTH_REQUIRED if "month" is missing and noMonthRecorded is false', async () => {
-      const payload = { ...getValidPayload(), month: undefined }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_MONTH_REQUIRED')
-    })
-
-    it('should return SMALL_CATCH_DEFAULT_MONTH_REQUIRED if "month" is missing and noMonthRecorded is true', async () => {
-      const payload = {
-        ...getValidPayload(),
-        month: undefined,
-        noMonthRecorded: true
-      }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_DEFAULT_MONTH_REQUIRED')
-    })
-
-    it('should return an error if "released" is missing', async () => {
-      const payload = { ...getValidPayload(), released: undefined }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_RELEASED_REQUIRED')
-    })
-
-    it('should return an error if "released" is a decimal number', async () => {
-      const payload = { ...getValidPayload(), released: 5.5 }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_RELEASED_INTEGER')
-    })
-
-    it('should return an error if "released" is a string', async () => {
-      const payload = { ...getValidPayload(), released: 'five' }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_RELEASED_NUMBER')
-    })
-
-    it('should return an error if "released" is negative', async () => {
-      const payload = { ...getValidPayload(), released: -5 }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_RELEASED_NEGATIVE')
-    })
-
-    it('should validate successfully if "released" is 0', async () => {
-      setupMocks({ season: currentYear })
-      const payload = { ...getValidPayload(), released: 0 }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).resolves.toStrictEqual(payload)
-    })
-
-    it('should validate successfully if "released" is a number as a string', async () => {
-      setupMocks({ season: currentYear })
-      const payload = { ...getValidPayload(), released: '3' }
-
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).resolves.toStrictEqual({
-        activity: 'activities/123',
-        released: 3,
-        counts: [
-          { method: 'methods/1', count: 1 },
-          { method: 'methods/2', count: 2 }
-        ],
-        month: 'JANUARY',
-        noMonthRecorded: false
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
       })
     })
 
-    it('should return SMALL_CATCH_DUPLICATE_FOUND error if a duplicate activity and month combination exists', async () => {
-      setupMocks({ season: currentYear })
-      isDuplicateSmallCatch.mockResolvedValue(true)
+    describe('month', () => {
+      it('should return an error if the submission season is in the future', async () => {
+        const futureYear = currentYear + 1
+        setupMocks({ season: futureYear })
+        const payload = getValidPayload()
 
-      const payload = getValidPayload()
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
+      })
 
-      await expect(
-        createSmallCatchSchema.validateAsync(payload)
-      ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
+      it('should return an error if the submission season is current year and month is in the future', async () => {
+        const futureMonth = currentMonth === 12 ? 1 : currentMonth + 1
+        const futureSeason = currentMonth === 12 ? currentYear + 1 : currentYear
+
+        setupMocks({ season: futureSeason })
+        const payload = {
+          ...getValidPayload(),
+          month: getMonthNameFromNumber(futureMonth)
+        }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
+      })
+
+      it('should return SMALL_CATCH_MONTH_REQUIRED if "month" is missing and noMonthRecorded is false', async () => {
+        const payload = { ...getValidPayload(), month: undefined }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_MONTH_REQUIRED')
+      })
+
+      it('should return SMALL_CATCH_DEFAULT_MONTH_REQUIRED if "month" is missing and noMonthRecorded is true', async () => {
+        const payload = {
+          ...getValidPayload(),
+          month: undefined,
+          noMonthRecorded: true
+        }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_DEFAULT_MONTH_REQUIRED')
+      })
+    })
+
+    describe('released', () => {
+      it('should return an error if "released" is missing', async () => {
+        const payload = { ...getValidPayload(), released: undefined }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_REQUIRED')
+      })
+
+      it('should return an error if "released" is a decimal number', async () => {
+        const payload = { ...getValidPayload(), released: 5.5 }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_INTEGER')
+      })
+
+      it('should return an error if "released" is a string', async () => {
+        const payload = { ...getValidPayload(), released: 'five' }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_NUMBER')
+      })
+
+      it('should return an error if "released" is negative', async () => {
+        const payload = { ...getValidPayload(), released: -5 }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_NEGATIVE')
+      })
+
+      it('should validate successfully if "released" is 0', async () => {
+        setupMocks({ season: currentYear })
+        const payload = { ...getValidPayload(), released: 0 }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should validate successfully if "released" is a number as a string', async () => {
+        setupMocks({ season: currentYear })
+        const payload = { ...getValidPayload(), released: '3' }
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual({
+          activity: 'activities/123',
+          released: 3,
+          counts: [
+            { method: 'methods/1', count: 1 },
+            { method: 'methods/2', count: 2 }
+          ],
+          month: 'JANUARY',
+          noMonthRecorded: false
+        })
+      })
     })
 
     describe('counts', () => {
