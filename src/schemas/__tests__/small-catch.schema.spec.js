@@ -32,7 +32,7 @@ describe('smallCatch.schema.unit', () => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
     }
 
-    it('should validate successfully when the submission season is current year and month is less than or equal to current month', async () => {
+    it('should validate successfully when the submission season is the current year and the month is less than or equal to the current month', async () => {
       // leaving month as JANUARY, it should always pass regardless of when it is run
       setupMocks({ season: currentYear })
 
