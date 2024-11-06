@@ -16,5 +16,3 @@ export const isDuplicateSmallCatch = async (activityId, month) => {
   })
   return count > 0
 }
-
-// TODO add unit test
