@@ -1,8 +1,8 @@
 import Joi from 'joi'
-import { extractActivityId } from '../utils/entity-utils'
-import { getMonthNumberFromName } from '../utils/date-utils'
-import { getSubmissionByActivityId } from '../services/activities.service'
-import { isDuplicateSmallCatch } from '../services/small-catch.service'
+import { extractActivityId } from '../utils/entity-utils.js'
+import { getMonthNumberFromName } from '../utils/date-utils.js'
+import { getSubmissionByActivityId } from '../services/activities.service.js'
+import { isDuplicateSmallCatch } from '../services/small-catch.service.js'
 
 export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
@@ -22,7 +22,9 @@ export const createSmallCatchSchema = Joi.object({
     .external(async (value, helper) => {
       const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
-      const duplicateExists = await isDuplicateSmallCatch(activityId, value)
+      const month = getMonthNumberFromName(value)
+
+      const duplicateExists = await isDuplicateSmallCatch(activityId, month)
       if (duplicateExists) {
         return helper.message('SMALL_CATCH_DUPLICATE_FOUND')
       }
@@ -79,7 +81,7 @@ export const createSmallCatchSchema = Joi.object({
     }),
   noMonthRecorded: Joi.boolean()
 }).external(async (value, helper) => {
-  const activityId = extractActivityId(value.submission)
+  const activityId = extractActivityId(value.activity)
   const submission = await getSubmissionByActivityId(activityId)
 
   const currentDate = new Date()
