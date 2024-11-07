@@ -1,3 +1,8 @@
+import {
+  createActivity,
+  createSmallCatch,
+  createSubmission
+} from '../../../test-utils/server-test-utils.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -13,21 +18,6 @@ describe('activities.integration', () => {
     await server.stop()
   })
 
-  const createSubmission = async (contactId) => {
-    const submission = await server.inject({
-      method: 'POST',
-      url: '/api/submissions',
-      payload: {
-        contactId,
-        season: '2023',
-        status: 'INCOMPLETE',
-        source: 'WEB'
-      }
-    })
-    const submissionId = JSON.parse(submission.payload).id
-    return submissionId
-  }
-
   describe('POST /api/activities ', () => {
     const CONTACT_IDENTIFIER_CREATE_ACTIVITY =
       'contact-identifier-create-activity'
@@ -40,9 +30,12 @@ describe('activities.integration', () => {
     )
 
     it('should successfully create a activity for a submission with a valid request', async () => {
-      const submissionId = await createSubmission(
+      const submission = await createSubmission(
+        server,
         CONTACT_IDENTIFIER_CREATE_ACTIVITY
       )
+      const submissionId = JSON.parse(submission.payload).id
+
       const activity = await server.inject({
         method: 'POST',
         url: '/api/activities',
@@ -54,7 +47,7 @@ describe('activities.integration', () => {
         }
       })
       const activityId = JSON.parse(activity.payload).id
-      expect(activity.statusCode).toBe(201)
+
       expect(JSON.parse(activity.payload)).toEqual({
         id: expect.any(String),
         daysFishedWithMandatoryRelease: 20,
@@ -87,6 +80,7 @@ describe('activities.integration', () => {
           }
         }
       })
+      expect(activity.statusCode).toBe(201)
     })
 
     it('should return a 400 status code and error if the submission does not exist', async () => {
@@ -119,9 +113,12 @@ describe('activities.integration', () => {
     })
 
     it('should return a 400 status code and error if the river is internal', async () => {
-      const submissionId = await createSubmission(
+      const submission = await createSubmission(
+        server,
         CONTACT_IDENTIFIER_CREATE_ACTIVITY
       )
+      const submissionId = JSON.parse(submission.payload).id
+
       const activity = await server.inject({
         method: 'POST',
         url: '/api/activities',
@@ -146,9 +143,12 @@ describe('activities.integration', () => {
     })
 
     it('should return a 400 status code and error if the river has already been added', async () => {
-      const submissionId = await createSubmission(
+      const submission = await createSubmission(
+        server,
         CONTACT_IDENTIFIER_CREATE_ACTIVITY
       )
+      const submissionId = JSON.parse(submission.payload).id
+
       const activityPass = await server.inject({
         method: 'POST',
         url: '/api/activities',
@@ -196,9 +196,11 @@ describe('activities.integration', () => {
     )
 
     it('should return the river associated with an activity', async () => {
-      const submissionId = await createSubmission(
+      const submission = await createSubmission(
+        server,
         CONTACT_IDENTIFIER_GET_ACTIVITY_RIVER
       )
+      const submissionId = JSON.parse(submission.payload).id
 
       const activity = await server.inject({
         method: 'POST',
@@ -242,6 +244,104 @@ describe('activities.integration', () => {
       const result = await server.inject({
         method: 'GET',
         url: '/api/activities/0/river'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
+
+  describe('GET /api/activities/{activityId}/smallCatches', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_SMALL_CATCHES =
+      'contact-identifier-get-activity-small-catches'
+    beforeEach(() =>
+      deleteSubmissionAndRelatedData(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_SMALL_CATCHES
+      )
+    )
+
+    afterAll(() =>
+      deleteSubmissionAndRelatedData(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_SMALL_CATCHES
+      )
+    )
+
+    it('should return the small catches associated with an activity', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_GET_ACTIVITY_SMALL_CATCHES
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+      const smallCatch = await createSmallCatch(server, activityId, {
+        counts: [
+          {
+            method: 'methods/1',
+            count: '3'
+          }
+        ]
+      })
+      const smallCatchId = JSON.parse(smallCatch.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}/smallCatches`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          smallCatches: [
+            {
+              month: 'FEBRUARY',
+              counts: [
+                {
+                  count: 3,
+                  _links: {
+                    method: {
+                      href: expect.stringMatching('/api/methods/1')
+                    }
+                  }
+                }
+              ],
+              released: 3,
+              reportingExclude: false,
+              noMonthRecorded: false,
+              id: smallCatchId,
+              createdAt: expect.any(String),
+              updatedAt: expect.any(String),
+              version: expect.any(String),
+              _links: {
+                self: {
+                  href: expect.stringMatching(
+                    `/api/smallCatches/${smallCatchId}`
+                  )
+                },
+                smallCatch: {
+                  href: expect.stringMatching(
+                    `/api/smallCatches/${smallCatchId}`
+                  )
+                },
+                activityEntity: {
+                  href: expect.stringMatching(`/api/activities/${activityId}`)
+                },
+                activity: {
+                  href: expect.stringMatching(
+                    `/api/smallCatches/${smallCatchId}/activity`
+                  )
+                }
+              }
+            }
+          ]
+        }
+      })
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/activities/0/smallCatches'
       })
 
       expect(result.statusCode).toBe(404)

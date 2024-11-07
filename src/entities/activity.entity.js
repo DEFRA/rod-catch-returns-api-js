@@ -43,4 +43,6 @@ Activity.associate = (models) => {
   Activity.belongsTo(models.River, {
     foreignKey: 'river_id'
   })
+
+  Activity.hasMany(models.SmallCatch, {})
 }
