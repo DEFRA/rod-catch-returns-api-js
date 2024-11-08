@@ -121,7 +121,7 @@ export default [
     path: '/activities/{activityId}/smallCatches',
     options: {
       /**
-       * Retrieve the smallCatches associated with an activity
+       * Retrieve the small catches associated with an activity
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        *     @param {string} request.params.activityId - The activity id
@@ -170,7 +170,7 @@ export default [
       },
       description:
         'Retrieve the small catches associated with an activity in the database',
-      notes: 'Retrieve small cactches with an activity in the database',
+      notes: 'Retrieve small catches with an activity in the database',
       tags: ['api', 'activities']
     }
   }

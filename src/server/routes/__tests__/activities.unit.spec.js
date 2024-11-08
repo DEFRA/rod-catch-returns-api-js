@@ -305,7 +305,23 @@ describe('activities.unit', () => {
       })
     })
 
-    it('should log an error if an error occurs while fetching the small cactches for the activity', async () => {
+    it('should return a 200 status code and an empty array if the activity exists, but small catches is undefined', async () => {
+      Activity.findOne.mockResolvedValueOnce({
+        SmallCatches: undefined
+      })
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(h.code).toHaveBeenCalledWith(200)
+      expect(h.response).toHaveBeenCalledWith({
+        _embedded: {
+          smallCatches: []
+        }
+      })
+    })
+
+    it('should log an error if an error occurs while fetching the small catches for the activity', async () => {
       const error = new Error('Database error')
       Activity.findOne.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
