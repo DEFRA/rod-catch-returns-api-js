@@ -13,11 +13,30 @@ describe('Validation Schemas', () => {
       source: 'WEB'
     })
 
+    beforeEach(() => {
+      jest.useRealTimers()
+    })
+
     it('should validate successfully when all fields are provided and valid', () => {
       const payload = getValidPayload()
       const { error } = createSubmissionSchema.validate(payload)
 
       expect(error).toBeUndefined()
+    })
+
+    it('should not cache the date when the file is loaded into memory', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-01-01'))
+      const payload = getValidPayload()
+      const { error } = createSubmissionSchema.validate(payload)
+      expect(error).toBeUndefined()
+
+      jest.useFakeTimers().setSystemTime(new Date('2025-01-01'))
+      const payload2 = {
+        ...getValidPayload(),
+        season: 2025
+      }
+      const { error2 } = createSubmissionSchema.validate(payload2)
+      expect(error2).toBeUndefined()
     })
 
     it('should return an error if "contactId" is not a string', () => {
