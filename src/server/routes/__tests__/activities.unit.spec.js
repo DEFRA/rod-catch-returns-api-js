@@ -15,6 +15,9 @@ const [
   },
   {
     options: { handler: getRiverForActivityHandler }
+  },
+  {
+    options: { handler: getSmallCatchesForActivityHandler }
   }
 ] = routes
 
@@ -177,6 +180,155 @@ describe('activities.unit', () => {
       expect(h.response).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Unable to fetch river for activity'
+        })
+      )
+    })
+  })
+
+  describe('GET /activities/{activityId}/smallCatches', () => {
+    const getActivityRequest = (activityId) => ({
+      ...getServerDetails(),
+      params: {
+        activityId
+      }
+    })
+
+    const getActivityWithSmallCatches = () => ({
+      SmallCatches: [
+        {
+          id: '53',
+          month: 4,
+          released: 3,
+          reportingExclude: false,
+          noMonthRecorded: false,
+          createdAt: '2024-10-11T09:30:57.463Z',
+          updatedAt: '2024-10-11T09:30:57.463Z',
+          version: '2024-10-11T09:30:57.463Z',
+          ActivityId: '3',
+          activity_id: '3',
+          counts: [
+            {
+              small_catch_id: '53',
+              method_id: '1',
+              count: 3,
+              SmallCatchId: '53'
+            },
+            {
+              small_catch_id: '53',
+              method_id: '2',
+              count: 2,
+              SmallCatchId: '53'
+            },
+            {
+              small_catch_id: '53',
+              method_id: '3',
+              count: 1,
+              SmallCatchId: '53'
+            }
+          ]
+        },
+        {
+          id: '700',
+          month: 6,
+          released: 3,
+          reportingExclude: false,
+          noMonthRecorded: false,
+          createdAt: '2024-10-30T14:14:16.698Z',
+          updatedAt: '2024-10-30T14:14:16.698Z',
+          version: '2024-10-30T14:14:16.697Z',
+          ActivityId: '3',
+          activity_id: '3',
+          counts: [
+            {
+              small_catch_id: '700',
+              method_id: '1',
+              count: 1,
+              SmallCatchId: '700'
+            },
+            {
+              small_catch_id: '700',
+              method_id: '2',
+              count: 2,
+              SmallCatchId: '700'
+            },
+            {
+              small_catch_id: '700',
+              method_id: '3',
+              count: 1,
+              SmallCatchId: '700'
+            }
+          ]
+        }
+      ]
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the small catches if the activity is found', async () => {
+      Activity.findOne.mockResolvedValueOnce(getActivityWithSmallCatches())
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(h.code).toHaveBeenCalledWith(200)
+      expect(h.response.mock.calls[0][0]).toMatchSnapshot()
+    })
+
+    it('should return 404 if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(
+        getActivityRequest('nonexistent-id'),
+        h
+      )
+
+      expect(h.code).toHaveBeenCalledWith(404)
+      expect(h.response).toHaveBeenCalledWith()
+    })
+
+    it('should return a 200 status code and an empty array if the activity exists, but no small catches have been added to it', async () => {
+      Activity.findOne.mockResolvedValueOnce({
+        SmallCatches: []
+      })
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(h.code).toHaveBeenCalledWith(200)
+      expect(h.response).toHaveBeenCalledWith({
+        _embedded: {
+          smallCatches: []
+        }
+      })
+    })
+
+    it('should log an error if an error occurs while fetching the small cactches for the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error fetching small catches:',
+        error
+      )
+    })
+
+    it('should return 500 and error message if an error occurs while fetching the small catches', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(h.code).toHaveBeenCalledWith(500)
+      expect(h.response).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Unable to fetch small catches for activity'
         })
       )
     })

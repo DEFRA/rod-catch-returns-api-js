@@ -21,12 +21,14 @@ describe('activities.integration', () => {
   describe('POST /api/activities ', () => {
     const CONTACT_IDENTIFIER_CREATE_ACTIVITY =
       'contact-identifier-create-activity'
-    beforeEach(() =>
-      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
     )
 
-    afterAll(() =>
-      deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
     )
 
     it('should successfully create a activity for a submission with a valid request', async () => {

@@ -150,9 +150,9 @@ export default [
             return h.response().code(StatusCodes.NOT_FOUND)
           }
 
-          const mappedSmallCatches = activityWithCatches.SmallCatches?.map(
-            (smallCatch) => mapSmallCatchToResponse(request, smallCatch)
-          )
+          const mappedSmallCatches = (
+            activityWithCatches.SmallCatches || []
+          ).map((smallCatch) => mapSmallCatchToResponse(request, smallCatch))
 
           return h
             .response({
