@@ -1,7 +1,10 @@
-import { Activity } from '../../entities/activity.entity.js'
-import { isActivityExists } from '../activities.service.js'
+import {
+  getSubmissionByActivityId,
+  isActivityExists
+} from '../activities.service.js'
+import { Activity } from '../../entities/index.js'
 
-jest.mock('../../entities/activity.entity.js')
+jest.mock('../../entities/index.js')
 
 describe('activity.service.unit', () => {
   describe('isActivityExists', () => {
@@ -34,6 +37,39 @@ describe('activity.service.unit', () => {
       await expect(
         isActivityExists(mockSubmissionId, mockRiverId)
       ).rejects.toThrow('Database error')
+    })
+  })
+
+  describe('getSubmissionByActivityId', () => {
+    const mockActivityId = 123
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return the submission if the activity with submission exists', async () => {
+      const mockSubmission = { id: 'submission-456' }
+      Activity.findOne.mockResolvedValue({ Submission: mockSubmission })
+
+      const result = await getSubmissionByActivityId(mockActivityId)
+
+      expect(result).toBe(mockSubmission)
+    })
+
+    it('should throw an error if no submission is found for the activity ID', async () => {
+      Activity.findOne.mockResolvedValue(null)
+
+      await expect(getSubmissionByActivityId(mockActivityId)).rejects.toThrow(
+        `No submission found for activity ID ${mockActivityId}`
+      )
+    })
+
+    it('should throw an error if Activity.findOne fails', async () => {
+      Activity.findOne.mockRejectedValue(new Error('Database error'))
+
+      await expect(getSubmissionByActivityId(mockActivityId)).rejects.toThrow(
+        `Failed to fetch submission for activity ID ${mockActivityId}: Error: Database error`
+      )
     })
   })
 })

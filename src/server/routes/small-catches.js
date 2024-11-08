@@ -4,6 +4,7 @@ import {
 } from '../../mappers/small-catches.mapper.js'
 import { SmallCatch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
+import { createSmallCatchSchema } from '../../schemas/small-catch.schema.js'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -44,6 +45,9 @@ export default [
             .response({ error: 'Unable to create small catch' })
             .code(StatusCodes.INTERNAL_SERVER_ERROR)
         }
+      },
+      validate: {
+        payload: createSmallCatchSchema
       },
       description: 'Create a small catch for an activity in the database',
       notes: 'Create a small catch for an activity in the database',

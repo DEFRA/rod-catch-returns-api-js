@@ -51,3 +51,39 @@ export const createSubmission = (
     }
   })
 }
+
+export const createSmallCatch = (
+  server,
+  activityId,
+  {
+    month = 'FEBRUARY',
+    released = '3',
+    counts = [
+      {
+        method: 'methods/1',
+        count: '3'
+      },
+      {
+        method: 'methods/2',
+        count: '2'
+      },
+      {
+        method: 'methods/3',
+        count: '1'
+      }
+    ],
+    noMonthRecorded = false
+  } = {}
+) => {
+  return server.inject({
+    method: 'POST',
+    url: '/api/smallCatches',
+    payload: {
+      activity: `activities/${activityId}`,
+      month,
+      released,
+      counts,
+      noMonthRecorded
+    }
+  })
+}
