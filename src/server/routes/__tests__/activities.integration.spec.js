@@ -54,7 +54,7 @@ describe('activities.integration', () => {
         }
       })
       const activityId = JSON.parse(activity.payload).id
-      expect(activity.statusCode).toBe(201)
+
       expect(JSON.parse(activity.payload)).toEqual({
         id: expect.any(String),
         daysFishedWithMandatoryRelease: 20,
@@ -87,6 +87,7 @@ describe('activities.integration', () => {
           }
         }
       })
+      expect(activity.statusCode).toBe(201)
     })
 
     it('should return a 400 status code and error if the submission does not exist', async () => {

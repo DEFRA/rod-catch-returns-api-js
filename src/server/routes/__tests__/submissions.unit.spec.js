@@ -1,4 +1,5 @@
 import { Submission } from '../../../entities/index.js'
+import { createActivity } from '@defra-fish/dynamics-lib'
 import { getServerDetails } from '../../../test-utils/server-test-utils.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
@@ -41,6 +42,17 @@ describe('submissions.unit', () => {
     })
   })
 
+  const getCreateActivityResponse = () => ({
+    '@odata.context':
+      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+    RCRActivityId: 'abc123',
+    ReturnStatus: 'success',
+    SuccessMessage: 'RCR Activity - created successfully',
+    ErrorMessage: null,
+    oDataContext:
+      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
+  })
+
   describe('POST /submissions', () => {
     const getSubmissionRequest = () => ({
       ...getServerDetails(),
@@ -74,6 +86,7 @@ describe('submissions.unit', () => {
       const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
+      createActivity.mockResolvedValueOnce(getCreateActivityResponse())
       const h = getResponseToolkit()
 
       await postSubmissionHandler(request, h)
@@ -84,6 +97,7 @@ describe('submissions.unit', () => {
     it('should return the created submission in the response body', async () => {
       const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
+      createActivity.mockResolvedValueOnce(getCreateActivityResponse())
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const h = getResponseToolkit()
 
@@ -131,6 +145,63 @@ describe('submissions.unit', () => {
       const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await postSubmissionHandler(request, h)
+
+      expect(h.response).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Unable create submission'
+        })
+      )
+      expect(h.code).toHaveBeenCalledWith(500)
+    })
+
+    it('should log an error but still return 201 when the call to create an activity in CRM returns an ErrorMessage', async () => {
+      const request = getSubmissionRequest()
+      const createdSubmission = getCreatedSubmission()
+      Submission.create.mockResolvedValueOnce(createdSubmission)
+      createActivity.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to create activity'
+      })
+      const h = getResponseToolkit()
+
+      await postSubmissionHandler(request, h)
+
+      expect(h.code).toHaveBeenCalledWith(201)
+      expect(logger.error).toHaveBeenCalledWith(
+        'failed to create activity in CRM for contact-identifier-111',
+        'Failed to create activity'
+      )
+    })
+
+    it('should log an error when the call to create an activity in CRM returns an error', async () => {
+      const request = getSubmissionRequest()
+      const createdSubmission = getCreatedSubmission()
+      Submission.create.mockResolvedValueOnce(createdSubmission)
+      const error = new Error('CRM')
+      createActivity.mockRejectedValueOnce(error)
+      const h = getResponseToolkit()
+
+      await postSubmissionHandler(request, h)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error creating submission:',
+        error
+      )
+    })
+
+    it('should return 500 and an error when the call to create an activity in CRM returns an error', async () => {
+      const request = getSubmissionRequest()
+      const createdSubmission = getCreatedSubmission()
+      Submission.create.mockResolvedValueOnce(createdSubmission)
+      const error = new Error('CRM')
+      createActivity.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
       await postSubmissionHandler(request, h)

@@ -5,6 +5,7 @@ import {
   getSubmissionByContactAndSeasonSchema
 } from '../../schemas/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
+import { createActivity } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
@@ -31,6 +32,15 @@ export default [
             source,
             version: Date.now()
           })
+
+          const resp = await createActivity(contactId, season)
+
+          if (resp.ErrorMessage) {
+            logger.error(
+              `failed to create activity in CRM for ${contactId}`,
+              resp.ErrorMessage
+            )
+          }
 
           const response = mapSubmissionToResponse(
             request,
