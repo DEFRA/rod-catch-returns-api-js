@@ -1,5 +1,6 @@
 import { Submission } from '../../../entities/index.js'
-import { createActivity } from '@defra-fish/dynamics-lib'
+import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
+import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import { getServerDetails } from '../../../test-utils/server-test-utils.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
@@ -42,17 +43,6 @@ describe('submissions.unit', () => {
     })
   })
 
-  const getCreateActivityResponse = () => ({
-    '@odata.context':
-      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-    RCRActivityId: 'abc123',
-    ReturnStatus: 'success',
-    SuccessMessage: 'RCR Activity - created successfully',
-    ErrorMessage: null,
-    oDataContext:
-      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
-  })
-
   describe('POST /submissions', () => {
     const getSubmissionRequest = () => ({
       ...getServerDetails(),
@@ -86,7 +76,7 @@ describe('submissions.unit', () => {
       const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
-      createActivity.mockResolvedValueOnce(getCreateActivityResponse())
+      createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
       const h = getResponseToolkit()
 
       await postSubmissionHandler(request, h)
@@ -97,7 +87,7 @@ describe('submissions.unit', () => {
     it('should return the created submission in the response body', async () => {
       const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
-      createActivity.mockResolvedValueOnce(getCreateActivityResponse())
+      createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const h = getResponseToolkit()
 
@@ -161,7 +151,7 @@ describe('submissions.unit', () => {
       const request = getSubmissionRequest()
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
-      createActivity.mockResolvedValue({
+      createActivityCRM.mockResolvedValue({
         '@odata.context':
           'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
         RCRActivityId: null,
@@ -185,7 +175,7 @@ describe('submissions.unit', () => {
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const error = new Error('CRM')
-      createActivity.mockRejectedValueOnce(error)
+      createActivityCRM.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
       await postSubmissionHandler(request, h)
@@ -201,7 +191,7 @@ describe('submissions.unit', () => {
       const createdSubmission = getCreatedSubmission()
       Submission.create.mockResolvedValueOnce(createdSubmission)
       const error = new Error('CRM')
-      createActivity.mockRejectedValueOnce(error)
+      createActivityCRM.mockRejectedValueOnce(error)
       const h = getResponseToolkit()
 
       await postSubmissionHandler(request, h)
