@@ -1,7 +1,10 @@
+import {
+  getMockResponseToolkit,
+  getServerDetails
+} from '../../../test-utils/server-test-utils.js'
 import { Submission } from '../../../entities/index.js'
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
-import { getServerDetails } from '../../../test-utils/server-test-utils.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 
@@ -24,11 +27,6 @@ const [
 ] = routes
 
 describe('submissions.unit', () => {
-  const getResponseToolkit = () => ({
-    response: jest.fn().mockReturnThis(),
-    code: jest.fn()
-  })
-
   const getFoundSubmission = () => ({
     toJSON: jest.fn().mockReturnValue({
       id: '1',
@@ -73,27 +71,27 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 201 status code if the submission is created successfully', async () => {
-      const request = getSubmissionRequest()
-      const createdSubmission = getCreatedSubmission()
-      Submission.create.mockResolvedValueOnce(createdSubmission)
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(201)
+      expect(result.statusCode).toBe(201)
     })
 
     it('should return the created submission in the response body', async () => {
-      const request = getSubmissionRequest()
-      const createdSubmission = getCreatedSubmission()
       createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
-      Submission.create.mockResolvedValueOnce(createdSubmission)
-      const h = getResponseToolkit()
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
 
-      await postSubmissionHandler(request, h)
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response).toHaveBeenCalledWith({
+      expect(result.payload).toStrictEqual({
         contactId: 'contact-identifier-111',
         createdAt: '2024-10-10T13:13:11.000Z',
         id: '1',
@@ -118,12 +116,13 @@ describe('submissions.unit', () => {
     })
 
     it('should log an error if submission creation fails', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
+      await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error creating submission:',
@@ -132,25 +131,22 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error if an error occurs while creating submission', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable create submission'
-        })
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result.payload).toStrictEqual({
+        error: 'Unable create submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
 
     it('should log an error but still return 201 when the call to create an activity in CRM returns an ErrorMessage', async () => {
-      const request = getSubmissionRequest()
-      const createdSubmission = getCreatedSubmission()
-      Submission.create.mockResolvedValueOnce(createdSubmission)
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       createActivityCRM.mockResolvedValue({
         '@odata.context':
           'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
@@ -159,11 +155,13 @@ describe('submissions.unit', () => {
         SuccessMessage: '',
         ErrorMessage: 'Failed to create activity'
       })
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(201)
+      expect(result.statusCode).toBe(201)
       expect(logger.error).toHaveBeenCalledWith(
         'failed to create activity in CRM for contact-identifier-111',
         'Failed to create activity'
@@ -171,14 +169,14 @@ describe('submissions.unit', () => {
     })
 
     it('should log an error when the call to create an activity in CRM returns an error', async () => {
-      const request = getSubmissionRequest()
-      const createdSubmission = getCreatedSubmission()
-      Submission.create.mockResolvedValueOnce(createdSubmission)
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
+      await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error creating submission:',
@@ -187,21 +185,19 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error when the call to create an activity in CRM returns an error', async () => {
-      const request = getSubmissionRequest()
-      const createdSubmission = getCreatedSubmission()
-      Submission.create.mockResolvedValueOnce(createdSubmission)
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await postSubmissionHandler(request, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable create submission'
-        })
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result.payload).toStrictEqual({
+        error: 'Unable create submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
   })
 
@@ -219,44 +215,46 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 200 status code if the submission is found', async () => {
-      const request = getSubmissionRequest()
-      const foundSubmission = getFoundSubmission()
-      Submission.findOne.mockResolvedValueOnce(foundSubmission)
-      const h = getResponseToolkit()
+      Submission.findOne.mockResolvedValueOnce(getFoundSubmission())
 
-      await getSubmissionByContactIdAndSeasonHandler(request, h)
+      const result = await getSubmissionByContactIdAndSeasonHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(200)
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return the found submission in the response body', async () => {
-      const request = getSubmissionRequest()
-      const foundSubmission = getFoundSubmission()
-      Submission.findOne.mockResolvedValueOnce(foundSubmission)
-      const h = getResponseToolkit()
+      Submission.findOne.mockResolvedValueOnce(getFoundSubmission())
 
-      await getSubmissionByContactIdAndSeasonHandler(request, h)
+      const result = await getSubmissionByContactIdAndSeasonHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response.mock.calls[0][0]).toMatchSnapshot()
+      expect(result.payload).toMatchSnapshot()
     })
 
     it('should return 404 if the submission is not found', async () => {
-      const request = getSubmissionRequest()
       Submission.findOne.mockResolvedValueOnce(null)
-      const h = getResponseToolkit()
 
-      await getSubmissionByContactIdAndSeasonHandler(request, h)
+      const result = await getSubmissionByContactIdAndSeasonHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(404)
+      expect(result.statusCode).toBe(404)
     })
 
     it('should log an error if fetching submission fails', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getSubmissionByContactIdAndSeasonHandler(request, h)
+      await getSubmissionByContactIdAndSeasonHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error finding submission:',
@@ -265,19 +263,18 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error if an error occurs while fetching submission', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getSubmissionByContactIdAndSeasonHandler(request, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable find submission'
-        })
+      const result = await getSubmissionByContactIdAndSeasonHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result.payload).toStrictEqual({
+        error: 'Unable find submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
   })
 
@@ -294,25 +291,25 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 200 status code if the submission is found', async () => {
-      const request = getSubmissionRequest()
-      const foundSubmission = getFoundSubmission()
-      Submission.findOne.mockResolvedValueOnce(foundSubmission)
-      const h = getResponseToolkit()
+      Submission.findOne.mockResolvedValueOnce(getFoundSubmission())
 
-      await getSubmissionByIdHandler(request, h)
+      const result = await getSubmissionByIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(200)
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return the found submission in the response body', async () => {
-      const request = getSubmissionRequest()
-      const foundSubmission = getFoundSubmission()
-      Submission.findOne.mockResolvedValueOnce(foundSubmission)
-      const h = getResponseToolkit()
+      Submission.findOne.mockResolvedValueOnce(getFoundSubmission())
 
-      await getSubmissionByIdHandler(request, h)
+      const result = await getSubmissionByIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response).toHaveBeenCalledWith({
+      expect(result.payload).toStrictEqual({
         contactId: 'contact-identifier-111',
         createdAt: '2024-10-10T13:13:11.000Z',
         id: '1',
@@ -337,22 +334,24 @@ describe('submissions.unit', () => {
     })
 
     it('should return 404 if the submission is not found', async () => {
-      const request = getSubmissionRequest()
       Submission.findOne.mockResolvedValueOnce(null)
-      const h = getResponseToolkit()
 
-      await getSubmissionByIdHandler(request, h)
+      const result = await getSubmissionByIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(404)
+      expect(result.statusCode).toBe(404)
     })
 
     it('should log an error if fetching submission fails', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getSubmissionByIdHandler(request, h)
+      await getSubmissionByIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error finding submission:',
@@ -361,19 +360,18 @@ describe('submissions.unit', () => {
     })
 
     it('should return 500 and an error if an error occurs while fetching submission', async () => {
-      const request = getSubmissionRequest()
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getSubmissionByIdHandler(request, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable find submission'
-        })
+      const result = await getSubmissionByIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result.payload).toStrictEqual({
+        error: 'Unable find submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
   })
 
@@ -396,7 +394,8 @@ describe('submissions.unit', () => {
         daysFishedWithMandatoryRelease: 1,
         daysFishedOther: 2,
         createdAt: '2024-10-10T13:13:11.000Z',
-        updatedAt: '2024-10-10T13:13:11.000Z'
+        updatedAt: '2024-10-10T13:13:11.000Z',
+        version: '2024-10-10T13:13:11.000Z'
       })
     })
 
@@ -412,17 +411,17 @@ describe('submissions.unit', () => {
     })
 
     it('should return 200 with activities if they exist for the submission', async () => {
-      const activityMock = getActivityMock()
       const foundSubmissionWithActivities = getFoundSubmissionWithActivities([
-        activityMock
+        getActivityMock()
       ])
       Submission.findOne.mockResolvedValueOnce(foundSubmissionWithActivities)
-      const h = getResponseToolkit()
 
-      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+      const result = await getActivitiesBySubmissionIdHandler(
+        getActivitiesRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(200)
-      expect(h.response).toHaveBeenCalledWith({
+      expect(result.payload).toStrictEqual({
         _embedded: {
           activities: [
             {
@@ -431,6 +430,7 @@ describe('submissions.unit', () => {
               daysFishedOther: 2,
               createdAt: '2024-10-10T13:13:11.000Z',
               updatedAt: '2024-10-10T13:13:11.000Z',
+              version: '2024-10-10T13:13:11.000Z',
               _links: {
                 self: {
                   href: 'http://localhost:3000/api/activities/1'
@@ -455,34 +455,42 @@ describe('submissions.unit', () => {
           ]
         }
       })
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return 200 with an empty activities array if the submission exists but no activities are found', async () => {
-      const foundSubmissionWithNoActivities = getFoundSubmissionWithActivities()
-      Submission.findOne.mockResolvedValueOnce(foundSubmissionWithNoActivities)
-      const h = getResponseToolkit()
+      Submission.findOne.mockResolvedValueOnce(
+        getFoundSubmissionWithActivities()
+      )
 
-      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+      const result = await getActivitiesBySubmissionIdHandler(
+        getActivitiesRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response).toHaveBeenCalledWith({ _embedded: { activities: [] } })
-      expect(h.code).toHaveBeenCalledWith(200)
+      expect(result.payload).toStrictEqual({ _embedded: { activities: [] } })
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return 404 if the submission does not exist', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
-      const h = getResponseToolkit()
 
-      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+      const result = await getActivitiesBySubmissionIdHandler(
+        getActivitiesRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(404)
+      expect(result.statusCode).toBe(404)
     })
 
     it('should log an error if fetching submission with activities fails', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+      await getActivitiesBySubmissionIdHandler(
+        getActivitiesRequest(),
+        getMockResponseToolkit()
+      )
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error activities for submission:',
@@ -493,16 +501,16 @@ describe('submissions.unit', () => {
     it('should return 500 and an error if an error occurs while fetching submission with activities', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable to find activities for submission'
-        })
+      const result = await getActivitiesBySubmissionIdHandler(
+        getActivitiesRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result.payload).toStrictEqual({
+        error: 'Unable to find activities for submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
   })
 })
