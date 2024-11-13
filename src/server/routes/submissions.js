@@ -33,12 +33,15 @@ export default [
             version: Date.now()
           })
 
-          const resp = await createActivity(contactId, season)
+          const createCrmActivityResponse = await createActivity(
+            contactId,
+            season
+          )
 
-          if (resp.ErrorMessage) {
+          if (createCrmActivityResponse.ErrorMessage) {
             logger.error(
               `failed to create activity in CRM for ${contactId}`,
-              resp.ErrorMessage
+              createCrmActivityResponse.ErrorMessage
             )
           }
 
