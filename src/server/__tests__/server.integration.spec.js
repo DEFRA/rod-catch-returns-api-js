@@ -1,18 +1,25 @@
 import initialiseServer from '../server.js'
 
-describe('server', () => {
+describe('server.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = {
+      ...originalEnv
+    }
+  })
 
   afterEach(async () => {
     await server.stop()
-    process.env.PORT = 5000
   })
 
   it('successfully starts the server', async () => {
     server = await initialiseServer()
     const result = await server.inject({ method: 'GET', url: '/' })
-    expect(result.statusCode).toBe(404)
+    expect(result.statusCode).toBe(200)
   })
 
   it('should start the server on the specified port', async () => {

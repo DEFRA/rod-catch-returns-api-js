@@ -1,20 +1,11 @@
 import 'dotenv/config'
 
-const ALLOWED_HOSTS = [
-  'localhost',
-  '127.0.0.1',
-  'postgres',
-  'host.docker.internal'
-]
-
 export default async () => {
-  const dbHost = process.env.DATABASE_HOST
+  // tests can only be run against a local database
+  process.env.DATABASE_HOST = 'localhost'
 
-  console.log(`\nChecking database host ${process.env.DATABASE_HOST}...`)
-  if (!ALLOWED_HOSTS.includes(dbHost)) {
-    console.log('You can only run the tests locally or in a CI environment!')
-    process.exit(1)
-  }
-
-  console.log('Database host valid')
+  // the tests run in parallel, which can cause conflicts when multiple instances of the server are started for integration tests
+  // setting the port to 0 tells your machine to choose the first randomly available port that it finds
+  process.env.PORT = 0
+  console.log('\nDatabase host set to localhost')
 }

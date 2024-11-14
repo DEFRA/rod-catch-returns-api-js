@@ -1,24 +1,30 @@
 {
   "name": "rod-catch-returns-api",
-  "version": "0.0.1",
+  "version": "0.1.0-rc.25",
   "description": "rod catch returns api js",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "test": "jest",
-    "lint": "eslint 'src/**/*.js'",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.js",
     "lint:fix": "npm run lint -- --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "format": "npm run prettier:fix && npm run lint:fix",
     "format:check": "npm run prettier && npm run lint",
     "prepare": "husky",
-    "docker:infrastructure": "docker-compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri",
-    "docker:build-dev": "TAG=dev PROJECT_DOCKERFILE=Dockerfile.dev docker-compose -f docker/services.build.yml build",
-    "docker:services-dev": "TAG=dev docker stack deploy -c docker/services.dev.yml rcrs",
-    "docker:test": "docker-compose -f docker/services.dev.yml run rcr_api npm run test",
-    "docker:test-clear": "docker-compose -f docker/services.dev.yml down"
+    "docker:infrastructure": "docker compose -f docker/infrastructure.yml build && docker stack deploy -c docker/infrastructure.yml rcri",
+    "docker:build-dev": "docker build -t rod_catch_returns/api_js_dev --target development .",
+    "docker:service-dev": "docker run -d --rm --env-file .env -p 5000:5000 -v ${PWD}/:/app --name rcr_api_js_dev rod_catch_returns/api_js_dev",
+    "docker:stop-dev": "docker container kill rcr_api_js_dev",
+    "docker:build": "docker build -t rod_catch_returns/api_js --target production .",
+    "docker:service": "docker run -d --rm --env-file .env -p 5000:5000 --name rcr_api_js rod_catch_returns/api_js",
+    "docker:stop": "docker container kill rcr_api_js",
+    "migrate:build": "docker build -f Dockerfile.migrate -t liquibase-migrator .",
+    "migrate:up": "docker run --network host -e ACTION=update --rm --env-file .env liquibase-migrator",
+    "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator"
   },
   "repository": {
     "type": "git",
@@ -37,8 +43,16 @@
   },
   "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme",
   "dependencies": {
+    "@defra-fish/dynamics-lib": "^1.50.0-rc.7",
     "@hapi/hapi": "^21.3.10",
+    "@hapi/inert": "^7.1.0",
+    "@hapi/vision": "^7.0.3",
+    "debug": "^4.3.7",
     "dotenv": "^16.4.5",
+    "hapi-and-healthy": "^7.1.0",
+    "hapi-swagger": "^17.3.0",
+    "http-status-codes": "^2.3.0",
+    "joi": "^17.13.3",
     "pg": "^8.12.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.3"
@@ -60,12 +74,21 @@
     "sourceType": "module"
   },
   "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "src/test-utils"
+    ],
     "globalSetup": "./src/test-utils/global-setup.js",
     "setupFilesAfterEnv": [
       "./src/test-utils/setup-files-after-env.js"
     ],
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "^@defra-fish/dynamics-lib$": "<rootDir>/src/__mocks__/dynamics-lib.js"
     }
   },
   "eslintConfig": {
