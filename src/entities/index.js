@@ -1,4 +1,5 @@
 import { Activity } from './activity.entity.js'
+import { Catch } from './catch.entity.js'
 import { Catchment } from './catchment.entity.js'
 import { Method } from './method.entity.js'
 import { Region } from './region.entity.js'
@@ -11,6 +12,7 @@ import { initialiseAssociations } from '../utils/entity-utils.js'
 
 const models = {
   Activity,
+  Catch,
   Catchment,
   Method,
   Region,
@@ -25,6 +27,7 @@ initialiseAssociations(models)
 
 export {
   Activity,
+  Catch,
   Catchment,
   Method,
   Region,

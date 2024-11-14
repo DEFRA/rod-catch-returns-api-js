@@ -39,8 +39,9 @@ Activity.associate = (models) => {
   Activity.belongsTo(models.Submission, {
     foreignKey: 'submission_id'
   })
-
   Activity.belongsTo(models.River, {
     foreignKey: 'river_id'
   })
+  Activity.hasMany(models.SmallCatch)
+  Activity.hasMany(models.Catch)
 }
