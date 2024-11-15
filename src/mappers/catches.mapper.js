@@ -10,9 +10,10 @@ import { getBaseUrl } from '../utils/url-utils.js'
  * Converts and calculates mass values between kilograms and ounces based on the provided mass type.
  *
  * @param {Object} mass - The mass object containing the values to calculate.
- * @param {number} mass.kg - The mass in kilograms.
- * @param {number} mass.oz - The mass in ounces.
+ * @param {number} [mass.kg=0] - The mass in kilograms. Defaults to 0 if not provided.
+ * @param {number} [mass.oz=0] - The mass in ounces. Defaults to 0 if not provided.
  * @param {string} mass.type - The mass type, either "IMPERIAL" or "METRIC".
+ * @throws {Error} If the mass type is not provided or is invalid.
  * @returns {Object} The calculated mass values.
  * @property {number} massKg - The mass in kilograms, converted if necessary.
  * @property {number} massOz - The mass in ounces, converted if necessary.
@@ -24,10 +25,12 @@ export const calculateMass = ({ kg = 0, oz = 0, type }) => {
   let massKg = parseFloat(kg) || 0
   let massOz = parseFloat(oz) || 0
 
-  if (type === 'IMPERIAL' && massOz > 0) {
+  if (type === 'IMPERIAL') {
     massKg = parseFloat((massOz * CONVERSION).toFixed(SCALE))
-  } else if (type === 'METRIC' && massKg > 0) {
+  } else if (type === 'METRIC') {
     massOz = parseFloat((massKg / CONVERSION).toFixed(SCALE))
+  } else {
+    throw new Error('Mass type must be either "IMPERIAL" or "METRIC".')
   }
 
   return { massKg, massOz }
