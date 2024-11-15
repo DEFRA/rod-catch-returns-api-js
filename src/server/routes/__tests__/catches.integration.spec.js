@@ -6,7 +6,7 @@ import {
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
-describe.skip('catches.integration', () => {
+describe('catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
@@ -51,36 +51,40 @@ describe.skip('catches.integration', () => {
       expect(createdCatch.statusCode).toBe(201)
       expect(JSON.parse(createdCatch.payload)).toEqual({
         id: expect.any(String),
-        daysFishedWithMandatoryRelease: 20,
-        daysFishedOther: 10,
+        dateCaught: '2024-06-24',
+        mass: {
+          type: 'IMPERIAL',
+          kg: '9.610488',
+          oz: '339.000000'
+        },
+        released: true,
+        reportingExclude: false,
+        noDateRecorded: false,
+        onlyMonthRecorded: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         version: expect.any(String),
         _links: {
           self: {
-            href: expect.stringMatching(`/api/activities/${createdCatchId}`)
+            href: expect.stringMatching(`/api/catches/${createdCatchId}`)
+          },
+          catch: {
+            href: expect.stringMatching(`/api/catches/${createdCatchId}`)
+          },
+          activityEntity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          species: {
+            href: expect.stringMatching(
+              `/api/catches/${createdCatchId}/species`
+            )
+          },
+          method: {
+            href: expect.stringMatching(`/api/catches/${createdCatchId}/method`)
           },
           activity: {
-            href: expect.stringMatching(`/api/activities/${createdCatchId}`)
-          },
-          submission: {
             href: expect.stringMatching(
-              `/api/activities/${createdCatchId}/submission`
-            )
-          },
-          catches: {
-            href: expect.stringMatching(
-              `/api/activities/${createdCatchId}/catches`
-            )
-          },
-          river: {
-            href: expect.stringMatching(
-              `/api/activities/${createdCatchId}/river`
-            )
-          },
-          smallCatches: {
-            href: expect.stringMatching(
-              `/api/activities/${createdCatchId}/smallCatches`
+              `/api/catches/${createdCatchId}/activity`
             )
           }
         }

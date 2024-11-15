@@ -1,9 +1,16 @@
 import {
   Activity,
+  Catch,
   SmallCatch,
   SmallCatchCount,
   Submission
 } from '../entities/index.js'
+
+export const deleteCatches = async (activityId) => {
+  await Catch.destroy({
+    where: { activity_id: activityId }
+  })
+}
 
 export const deleteSmallCatches = async (activityId) => {
   const smallCatch = await SmallCatch.findOne({
@@ -30,6 +37,7 @@ export const deleteActivitiesAndSmallCatches = async (submissionId) => {
 
   if (activity) {
     await deleteSmallCatches(activity.id)
+    await deleteCatches(activity.id)
   }
 
   await Activity.destroy({

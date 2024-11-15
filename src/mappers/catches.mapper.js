@@ -3,8 +3,35 @@ import {
   extractMethodId,
   extractSpeciesId
 } from '../utils/entity-utils.js'
+import { extractDateFromISO } from '../utils/date-utils.js'
 import { getBaseUrl } from '../utils/url-utils.js'
-import { toLocalDate } from '../utils/date-utils.js'
+
+/**
+ * Converts and calculates mass values between kilograms and ounces based on the provided mass type.
+ *
+ * @param {Object} mass - The mass object containing the values to calculate.
+ * @param {number} mass.kg - The mass in kilograms.
+ * @param {number} mass.oz - The mass in ounces.
+ * @param {string} mass.type - The mass type, either "IMPERIAL" or "METRIC".
+ * @returns {Object} The calculated mass values.
+ * @property {number} massKg - The mass in kilograms, converted if necessary.
+ * @property {number} massOz - The mass in ounces, converted if necessary.
+ */
+export const calculateMass = ({ kg = 0, oz = 0, type }) => {
+  const CONVERSION = 0.028349523125 // Conversion factor between kilograms and ounces
+  const SCALE = 6 // Number of decimal places for precision
+
+  let massKg = parseFloat(kg) || 0
+  let massOz = parseFloat(oz) || 0
+
+  if (type === 'IMPERIAL' && massOz > 0) {
+    massKg = parseFloat((massOz * CONVERSION).toFixed(SCALE))
+  } else if (type === 'METRIC' && massKg > 0) {
+    massOz = parseFloat((massKg / CONVERSION).toFixed(SCALE))
+  }
+
+  return { massKg, massOz }
+}
 
 /**
  * Maps a catch request object to a Catch entity.
@@ -52,17 +79,17 @@ export const mapRequestToCatch = ({
   // A date comes like this 2024-08-02T00:00:00+01:00. The +01:00 indicates the date-time is in a time zone that is 1 hour ahead of UTC
   // Without the code below, Sequelize converts this date-time to UTC internally. In UTC, 2024-08-02T00:00:00+01:00 becomes 2024-08-01T23:00:00 and is stored as 2024-08-01 in the database
   // The Java API treats the date literally. If you provide 2024-08-02T00:00:00+01:00, the local time zone is respected, and the date remains 2024-08-02.
-  const dateCaughtLocalDate = toLocalDate(dateCaught)
+  const extractedDateCaught = extractDateFromISO(dateCaught)
 
-  // TODO convert mass
+  const { massKg, massOz } = calculateMass(mass)
 
   return {
     activity_id: activityId,
-    dateCaught: dateCaughtLocalDate,
+    dateCaught: extractedDateCaught,
     species_id: speciesId,
     massType: mass.type,
-    massOz: mass.oz,
-    massKg: mass.kg,
+    massOz,
+    massKg,
     method_id: methodId,
     released,
     onlyMonthRecorded,
@@ -91,13 +118,15 @@ export function mapCatchToResponse(request, catchEntity) {
     noDateRecorded,
     onlyMonthRecorded,
     createdAt,
-    updatedAt
+    updatedAt,
+    version
   } = catchEntity
 
   const baseUrl = getBaseUrl(request)
   const catchUrl = `${baseUrl}/api/catches/${id}`
 
   return {
+    id,
     dateCaught,
     mass: {
       type: massType,
@@ -110,6 +139,7 @@ export function mapCatchToResponse(request, catchEntity) {
     onlyMonthRecorded,
     createdAt,
     updatedAt,
+    version,
     _links: {
       self: {
         href: catchUrl
