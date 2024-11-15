@@ -44,4 +44,12 @@ export const extractActivityId = (activity) =>
  * @param {string} method - The value containing the prefix and ID.
  * @returns {string} - The extracted ID.
  */
-export const extractMethodId = (activity) => activity.replace('methods/', '')
+export const extractMethodId = (method) => method.replace('methods/', '')
+
+/**
+ * Extracts the species ID from a given value by removing the species/ prefix.
+ *
+ * @param {string} method - The value containing the prefix and ID.
+ * @returns {string} - The extracted ID.
+ */
+export const extractSpeciesId = (species) => species.replace('species/', '')

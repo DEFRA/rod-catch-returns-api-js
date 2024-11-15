@@ -1,4 +1,5 @@
 import Activity from './activities.js'
+import Catches from './catches.js'
 import Catchments from './catchments.js'
 import Licences from './licences.js'
 import Method from './methods.js'
@@ -11,6 +12,7 @@ import Submissions from './submissions.js'
 
 export const apiPrefixRoutes = [].concat(
   Activity,
+  Catches,
   Catchments,
   Licences,
   Method,

@@ -57,3 +57,13 @@ export const getMonthNameFromNumber = (monthNumber) => {
 
   return months[parsedMonthNumber - 1]
 }
+
+/**
+ * Extracts the date portion (YYYY-MM-DD) from an ISO 8601 date-time string
+ *
+ * @param {string} isoDateTime - The ISO 8601 date-time string to extract the date from, e.g. 2024-08-02T00:00:00+01:00
+ * @returns {string} - The extracted date in YYYY-MM-DD format
+ */
+export const extractDateFromISO = (isoDateTime) => {
+  return isoDateTime.split('T')[0]
+}

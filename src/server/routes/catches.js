@@ -1,10 +1,15 @@
+import {
+  mapCatchToResponse,
+  mapRequestToCatch
+} from '../../mappers/catches.mapper.js'
+import { Catch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 
 export default [
   {
     method: 'POST',
-    path: '/catch',
+    path: '/catches',
     options: {
       /**
        * Create a catch (salmon and large sea trout) for an activity in the database
@@ -27,7 +32,16 @@ export default [
        */
       handler: async (request, h) => {
         try {
-          return h.response([]).code(StatusCodes.CREATED)
+          const catchData = mapRequestToCatch(request.payload)
+
+          const createdCatch = await Catch.create(catchData)
+
+          const catchResponse = mapCatchToResponse(
+            request,
+            createdCatch.toJSON()
+          )
+
+          return h.response(catchResponse).code(StatusCodes.CREATED)
         } catch (error) {
           logger.error('Error create catch:', error)
           return h
