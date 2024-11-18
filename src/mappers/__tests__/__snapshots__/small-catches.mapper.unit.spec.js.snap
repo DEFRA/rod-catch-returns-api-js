@@ -16,7 +16,7 @@ exports[`small-catches.mapper.unit mapSmallCatchToResponse should map a SmallCat
       "href": "http://localhost:3000/api/smallCatches/1",
     },
   },
-  "count": [
+  "counts": [
     {
       "_links": {
         "method": {
