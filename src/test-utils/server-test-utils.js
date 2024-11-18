@@ -14,6 +14,12 @@ export const getResponseToolkit = () => ({
   code: jest.fn()
 })
 
+export const getMockResponseToolkit = () => ({
+  response: jest.fn().mockImplementation((payload) => ({
+    code: (statusCode) => ({ payload, statusCode })
+  }))
+})
+
 export const createActivity = (
   server,
   submissionId,

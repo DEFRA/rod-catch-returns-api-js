@@ -60,7 +60,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatches.payload)).toEqual({
         id: expect.any(String),
         month: 'FEBRUARY',
-        count: [
+        counts: [
           {
             count: 3,
             _links: {

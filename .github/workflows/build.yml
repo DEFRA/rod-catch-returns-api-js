@@ -121,9 +121,14 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+      - name: Configure git version sorting
+        run: |
+          git config --global --unset-all versionsort.suffix || echo "No existing versionsort.suffix found in git configuration."
+          git config --global --add versionsort.suffix -beta.
+          git config --global --add versionsort.suffix -rc.
       - name: Generate raw tag
         id: raw-tag
-        run: echo "raw_tag=$(git describe --always --tags --abbrev=0)" >> $GITHUB_OUTPUT
+        run: echo "raw_tag=$(git tag --list --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-rc\.[0-9]*)?$' | tail -1)" >> $GITHUB_OUTPUT
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
