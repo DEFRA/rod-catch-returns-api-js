@@ -2,6 +2,7 @@ import {
   extractActivityId,
   extractMethodId,
   extractRiverId,
+  extractSpeciesId,
   extractSubmissionId,
   initialiseAssociations
 } from '../entity-utils.js'
@@ -145,6 +146,32 @@ describe('entity-utils.unit', () => {
     it('should handle an empty string input gracefully', () => {
       const activity = ''
       const result = extractActivityId(activity)
+      expect(result).toBe('')
+    })
+  })
+
+  describe('extractSpeciesId', () => {
+    it('should remove "species/" prefix and return the ID', () => {
+      const species = 'species/1'
+      const result = extractSpeciesId(species)
+      expect(result).toBe('1')
+    })
+
+    it('should return the original string if there is no "species/" prefix', () => {
+      const species = '13579'
+      const result = extractSpeciesId(species)
+      expect(result).toBe('13579')
+    })
+
+    it('should return an empty string if the input is only "species/"', () => {
+      const species = 'species/'
+      const result = extractSpeciesId(species)
+      expect(result).toBe('')
+    })
+
+    it('should handle an empty string input gracefully', () => {
+      const species = ''
+      const result = extractSpeciesId(species)
       expect(result).toBe('')
     })
   })

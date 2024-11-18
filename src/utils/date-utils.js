@@ -63,7 +63,15 @@ export const getMonthNameFromNumber = (monthNumber) => {
  *
  * @param {string} isoDateTime - The ISO 8601 date-time string to extract the date from, e.g. 2024-08-02T00:00:00+01:00
  * @returns {string} - The extracted date in YYYY-MM-DD format
+ * @throws {Error} - If the input is not a valid ISO 8601 date-time string
  */
 export const extractDateFromISO = (isoDateTime) => {
+  if (
+    !isoDateTime ||
+    typeof isoDateTime !== 'string' ||
+    !isoDateTime.includes('T')
+  ) {
+    throw new Error('Invalid ISO 8601 date-time string')
+  }
   return isoDateTime.split('T')[0]
 }
