@@ -79,7 +79,9 @@ export function mapSmallCatchToResponse(request, smallCatch) {
     released,
     reportingExclude,
     noMonthRecorded,
-    count: counts.map((count) => mapSmallCatchCountToResponse(request, count)),
+    counts: counts?.map((count) =>
+      mapSmallCatchCountToResponse(request, count)
+    ),
     version,
     updatedAt,
     createdAt,
