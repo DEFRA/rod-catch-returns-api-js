@@ -1,4 +1,7 @@
 import { createCatchSchema } from '../catch.schema.js'
+import { getSubmissionByActivityId } from '../../services/activities.service.js'
+
+jest.mock('../../services/activities.service.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -16,6 +19,10 @@ describe('catch.schema.unit', () => {
       onlyMonthRecorded: false,
       noDateRecorded: false
     })
+
+    const setupMocks = ({ season }) => {
+      getSubmissionByActivityId.mockResolvedValueOnce({ season })
+    }
 
     describe('activity', () => {
       it('should return an error if "activity" is missing', async () => {
@@ -64,6 +71,44 @@ describe('catch.schema.unit', () => {
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_DATE_REQUIRED'
+        )
+      })
+
+      it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
+        setupMocks({ season: 2022 })
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: '2023-08-01T00:00:00+01:00'
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_YEAR_MISMATCH'
+        )
+      })
+
+      it('should validate successfully if "dateCaught" matches the year in the submission', async () => {
+        setupMocks({ season: 2023 })
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: '2023-08-01T00:00:00+01:00'
+        }
+
+        await expect(
+          createCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should return CATCH_DATE_IN_FUTURE if dateCaught is in the future', async () => {
+        const futureDate = new Date()
+        futureDate.setFullYear(futureDate.getFullYear() + 1)
+
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: futureDate.toISOString()
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_IN_FUTURE'
         )
       })
     })
