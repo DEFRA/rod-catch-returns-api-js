@@ -3,7 +3,9 @@ import {
   createCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
+import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
+import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import initialiseServer from '../../server.js'
 
 describe('catches.integration', () => {
@@ -11,6 +13,7 @@ describe('catches.integration', () => {
   let server = null
 
   beforeAll(async () => {
+    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
   })
 
@@ -48,7 +51,6 @@ describe('catches.integration', () => {
 
       const createdCatchId = JSON.parse(createdCatch.payload).id
 
-      expect(createdCatch.statusCode).toBe(201)
       expect(JSON.parse(createdCatch.payload)).toEqual({
         id: expect.any(String),
         dateCaught: '2024-06-24',
@@ -89,6 +91,7 @@ describe('catches.integration', () => {
           }
         }
       })
+      expect(createdCatch.statusCode).toBe(201)
     })
   })
 })
