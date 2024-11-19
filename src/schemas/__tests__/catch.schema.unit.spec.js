@@ -26,5 +26,46 @@ describe('catch.schema.unit', () => {
         )
       })
     })
+
+    describe('dateCaught', () => {
+      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is true and onlyMonthRecorded is false', async () => {
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: undefined,
+          noDateRecorded: true,
+          onlyMonthRecorded: false
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DEFAULT_DATE_REQUIRED'
+        )
+      })
+
+      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is true', async () => {
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: undefined,
+          noDateRecorded: false,
+          onlyMonthRecorded: true
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DEFAULT_DATE_REQUIRED'
+        )
+      })
+
+      it('should return a CATCH_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is false', async () => {
+        const payload = {
+          ...getValidPayload(),
+          dateCaught: undefined,
+          noDateRecorded: false,
+          onlyMonthRecorded: false
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
+      })
+    })
   })
 })
