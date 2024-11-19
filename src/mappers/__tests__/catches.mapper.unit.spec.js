@@ -41,7 +41,7 @@ describe('activity.mapper.unit', () => {
       })
     })
 
-    it('should map the mass correctly is mass type is METRIC', () => {
+    it('should map the mass correctly if mass type is METRIC', () => {
       const result = mapRequestToCatch(getMockCatchRequest())
 
       expect(result.massType).toBe('METRIC')
@@ -49,7 +49,7 @@ describe('activity.mapper.unit', () => {
       expect(result.massOz).toBe(811.301125)
     })
 
-    it('should map the mass correctly is mass type is IMPERIAL', () => {
+    it('should map the mass correctly if mass type is IMPERIAL', () => {
       const result = mapRequestToCatch({
         ...getMockCatchRequest(),
         mass: {
