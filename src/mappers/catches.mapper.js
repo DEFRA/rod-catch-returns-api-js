@@ -3,6 +3,7 @@ import {
   extractMethodId,
   extractSpeciesId
 } from '../utils/entity-utils.js'
+import { Measures } from '../utils/constants.js'
 import { extractDateFromISO } from '../utils/date-utils.js'
 import { getBaseUrl } from '../utils/url-utils.js'
 
@@ -25,12 +26,14 @@ export const calculateMass = ({ kg = 0, oz = 0, type }) => {
   let massKg = parseFloat(kg) || 0
   let massOz = parseFloat(oz) || 0
 
-  if (type === 'IMPERIAL') {
+  if (type === Measures.IMPERIAL) {
     massKg = parseFloat((massOz * CONVERSION).toFixed(SCALE))
-  } else if (type === 'METRIC') {
+  } else if (type === Measures.METRIC) {
     massOz = parseFloat((massKg / CONVERSION).toFixed(SCALE))
   } else {
-    throw new Error('Mass type must be either "IMPERIAL" or "METRIC".')
+    throw new Error(
+      `Mass type must be either ${Object.values(Measures).join(' or ')}`
+    )
   }
 
   return { massKg, massOz }
