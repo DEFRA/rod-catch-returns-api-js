@@ -1,5 +1,6 @@
 import { Submission } from '../../../entities/index.js'
 import { createActivity } from '../../../test-utils/server-test-utils.js'
+import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -48,6 +49,17 @@ describe('submissions.integration', () => {
     await server.stop()
   })
 
+  const getCreateActivityResponse = () => ({
+    '@odata.context':
+      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+    RCRActivityId: 'abc123',
+    ReturnStatus: 'success',
+    SuccessMessage: 'RCR Activity - created successfully',
+    ErrorMessage: null,
+    oDataContext:
+      'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
+  })
+
   describe('POST /api/submissions ', () => {
     const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
       'contact-identifier-create-submission'
@@ -68,6 +80,7 @@ describe('submissions.integration', () => {
     })
 
     it('should successfully create a submission with a valid request', async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
       const result = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -243,6 +256,45 @@ describe('submissions.integration', () => {
           }
         ]
       })
+    })
+
+    it('should successfully create a Submission when the call to create an activity in CRM returns an ErrorMessage', async () => {
+      createActivityCRM.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to create activity'
+      })
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      expect(result.statusCode).toBe(201)
+    })
+
+    it('should return a 500 when the call to create an activity in CRM throws an error', async () => {
+      createActivityCRM.mockRejectedValueOnce(new Error('CRM error'))
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      expect(result.statusCode).toBe(500)
     })
   })
 
