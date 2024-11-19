@@ -73,5 +73,5 @@ export const extractDateFromISO = (isoDateTime) => {
   ) {
     throw new Error('Invalid ISO 8601 date-time string')
   }
-  return isoDateTime.split('T')[0]
+  return isoDateTime.match(/20[0-9]{2}-[0-9]{2}-[0-9]{2}/)[0]
 }
