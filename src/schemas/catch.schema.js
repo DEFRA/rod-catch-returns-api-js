@@ -45,6 +45,8 @@ export const createCatchSchema = Joi.object({
       if (submission.season !== yearCaught) {
         return helper.message('CATCH_YEAR_MISMATCH')
       }
+
+      return value
     }),
   onlyMonthRecorded: Joi.boolean()
     .required()
