@@ -3,6 +3,7 @@ import {
   extractMethodId,
   extractSpeciesId
 } from '../utils/entity-utils.js'
+import { Measures } from '../utils/constants.js'
 import { extractDateFromISO } from '../utils/date-utils.js'
 import { getBaseUrl } from '../utils/url-utils.js'
 
@@ -22,18 +23,23 @@ export const calculateMass = ({ kg = 0, oz = 0, type }) => {
   const CONVERSION = 0.028349523125 // Conversion factor between kilograms and ounces
   const SCALE = 6 // Number of decimal places for precision
 
-  let massKg = parseFloat(kg) || 0
-  let massOz = parseFloat(oz) || 0
-
-  if (type === 'IMPERIAL') {
-    massKg = parseFloat((massOz * CONVERSION).toFixed(SCALE))
-  } else if (type === 'METRIC') {
-    massOz = parseFloat((massKg / CONVERSION).toFixed(SCALE))
-  } else {
-    throw new Error('Mass type must be either "IMPERIAL" or "METRIC".')
+  if (type === Measures.IMPERIAL) {
+    const massOz = parseFloat(oz) || 0
+    return {
+      massKg: parseFloat((massOz * CONVERSION).toFixed(SCALE)),
+      massOz
+    }
+  } else if (type === Measures.METRIC) {
+    const massKg = parseFloat(kg) || 0
+    return {
+      massKg,
+      massOz: parseFloat((massKg / CONVERSION).toFixed(SCALE))
+    }
   }
 
-  return { massKg, massOz }
+  throw new Error(
+    `Mass type must be either ${Object.values(Measures).join(' or ')}`
+  )
 }
 
 /**

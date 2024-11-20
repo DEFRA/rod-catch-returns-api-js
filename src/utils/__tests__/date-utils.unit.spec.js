@@ -108,10 +108,16 @@ describe('date-utils.unit', () => {
   })
 
   describe('extractDateFromISO', () => {
-    it('should extract the correct date from a valid ISO 8601 string with UTC offset', () => {
-      const isoDateTime = '2024-08-02T00:00:00+01:00'
+    it('should extract the correct date from a valid ISO 8601 string with UTC offset in summer', () => {
+      const isoDateTime = '2024-06-02T00:00:00+01:00'
       const result = extractDateFromISO(isoDateTime)
-      expect(result).toBe('2024-08-02')
+      expect(result).toBe('2024-06-02')
+    })
+
+    it('should extract the correct date from a valid ISO 8601 string with UTC offset in winter', () => {
+      const isoDateTime = '2024-02-21T00:00:00+01:00'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-02-21')
     })
 
     it('should extract the correct date from a valid ISO 8601 string in UTC', () => {

@@ -42,26 +42,38 @@ describe('activity.mapper.unit', () => {
     })
 
     it('should map the mass correctly if mass type is METRIC', () => {
-      const result = mapRequestToCatch(getMockCatchRequest())
+      const mockCatchRequest = getMockCatchRequest()
 
-      expect(result.massType).toBe('METRIC')
-      expect(result.massKg).toBe(23)
-      expect(result.massOz).toBe(811.301125)
+      const result = mapRequestToCatch(mockCatchRequest)
+
+      expect(result).toStrictEqual(
+        expect.objectContaining({
+          massType: mockCatchRequest.mass.type,
+          massKg: mockCatchRequest.mass.kg,
+          massOz: 811.301125
+        })
+      )
     })
 
     it('should map the mass correctly if mass type is IMPERIAL', () => {
-      const result = mapRequestToCatch({
+      const mockCatchRequest = {
         ...getMockCatchRequest(),
         mass: {
-          kg: 23,
-          oz: 811,
+          kg: 9,
+          oz: 333,
           type: 'IMPERIAL'
         }
-      })
+      }
 
-      expect(result.massType).toBe('IMPERIAL')
-      expect(result.massKg).toBe(22.991463)
-      expect(result.massOz).toBe(811)
+      const result = mapRequestToCatch(mockCatchRequest)
+
+      expect(result).toStrictEqual(
+        expect.objectContaining({
+          massType: mockCatchRequest.mass.type,
+          massKg: 9.440391,
+          massOz: mockCatchRequest.mass.oz
+        })
+      )
     })
 
     it('should map the date caught correctly if it is provided in UTC format', () => {
@@ -183,13 +195,13 @@ describe('activity.mapper.unit', () => {
 
     it('should throw an error if mass type is not provided', () => {
       expect(() => calculateMass({ kg: 10 })).toThrowError(
-        'Mass type must be either "IMPERIAL" or "METRIC".'
+        'Mass type must be either IMPERIAL or METRIC'
       )
     })
 
     it('should throw an error if mass type is invalid', () => {
       expect(() => calculateMass({ kg: 10, type: 'INVALID' })).toThrowError(
-        'Mass type must be either "IMPERIAL" or "METRIC".'
+        'Mass type must be either IMPERIAL or METRIC'
       )
     })
 
@@ -213,8 +225,17 @@ describe('activity.mapper.unit', () => {
       })
     })
 
-    it('should default kg and oz to 0 if not provided', () => {
+    it('should default kg and oz to 0 if not provided and type is METRIC', () => {
       const result = calculateMass({ type: 'METRIC' })
+
+      expect(result).toStrictEqual({
+        massKg: 0,
+        massOz: 0
+      })
+    })
+
+    it('should default kg and oz to 0 if not provided and type is IMPERIAL', () => {
+      const result = calculateMass({ type: 'IMPERIAL' })
 
       expect(result).toStrictEqual({
         massKg: 0,
