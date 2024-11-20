@@ -114,7 +114,7 @@ describe('catch.schema.unit', () => {
     })
 
     describe('onlyMonthRecorded', () => {
-      it('should return a NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED if "onlyMonthRecorded" is true and "noDateRecorded" is true', async () => {
+      it('should return CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED if "onlyMonthRecorded" is true and "noDateRecorded" is true', async () => {
         const payload = {
           ...getValidPayload(),
           noDateRecorded: true,
@@ -123,6 +123,107 @@ describe('catch.schema.unit', () => {
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
+        )
+      })
+    })
+
+    describe('species', () => {
+      it('should return CATCH_SPECIES_REQUIRED if "species" is undefined', async () => {
+        const payload = {
+          ...getValidPayload(),
+          species: undefined
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_SPECIES_REQUIRED'
+        )
+      })
+    })
+
+    describe('mass', () => {
+      it('should return a CATCH_MASS_REQUIRED if "mass" is undefined', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: undefined
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_REQUIRED'
+        )
+      })
+
+      it('should return a CATCH_MASS_TYPE_INVALID if "mass.type" is invalid', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: 2,
+            oz: 1,
+            type: 'invalid'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_TYPE_INVALID'
+        )
+      })
+
+      it('should return a CATCH_MASS_KG_POSITIVE if "mass.kg" is invalid', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: -2,
+            oz: 1,
+            type: 'METRIC'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_KG_POSITIVE'
+        )
+      })
+
+      it('should return a CATCH_MASS_OZ_POSITIVE if "mass.oz" is invalid', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: 2,
+            oz: -1,
+            type: 'IMPERIAL'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_OZ_POSITIVE'
+        )
+      })
+
+      it('should return a CATCH_MASS_KG_REQUIRED if "mass.kg" is undefined and "mass.type" is METRIC', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: undefined,
+            oz: 5,
+            type: 'METRIC'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_KG_REQUIRED'
+        )
+      })
+
+      it('should return a CATCH_MASS_OZ_REQUIRED if "mass.oz" is undefined and "mass.type" is IMPERIAL', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: 3,
+            oz: undefined,
+            type: 'IMPERIAL'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_OZ_REQUIRED'
         )
       })
     })

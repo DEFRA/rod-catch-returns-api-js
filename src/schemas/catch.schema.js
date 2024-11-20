@@ -1,4 +1,5 @@
 import Joi from 'joi'
+import { Measures } from '../utils/constants.js'
 import { extractActivityId } from '../utils/entity-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 
@@ -49,5 +50,43 @@ export const createCatchSchema = Joi.object({
         'any.only': 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
       })
     }),
-  noDateRecorded: Joi.boolean().required()
+  noDateRecorded: Joi.boolean().required(),
+  species: Joi.string().required().messages({
+    'any.required': 'CATCH_SPECIES_REQUIRED'
+  }),
+  mass: Joi.object({
+    kg: Joi.number()
+      .positive()
+      .when('type', {
+        is: Measures.METRIC,
+        then: Joi.required().messages({
+          'any.required': 'CATCH_MASS_KG_REQUIRED'
+        })
+      })
+      .messages({
+        'number.positive': 'CATCH_MASS_KG_POSITIVE'
+      }),
+    oz: Joi.number()
+      .positive()
+      .when('type', {
+        is: Measures.IMPERIAL,
+        then: Joi.required().messages({
+          'any.required': 'CATCH_MASS_OZ_REQUIRED'
+        })
+      })
+      .messages({
+        'number.positive': 'CATCH_MASS_OZ_POSITIVE'
+      }),
+    type: Joi.string()
+      .valid(...Object.values(Measures))
+      .required()
+      .messages({
+        'any.required': 'CATCH_MASS_TYPE_REQUIRED',
+        'any.only': 'CATCH_MASS_TYPE_INVALID'
+      })
+  })
+    .required()
+    .messages({
+      'any.required': 'CATCH_MASS_REQUIRED'
+    })
 }).unknown()
