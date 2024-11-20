@@ -54,7 +54,7 @@ describe('small-catches.integration', () => {
         )
     )
 
-    it('should successfully create a activity for a submission with a valid request', async () => {
+    it('should successfully create a small catch for a submission with a valid request', async () => {
       const activityId = await setupSubmissionAndActivity()
 
       const smallCatches = await createSmallCatch(server, activityId)

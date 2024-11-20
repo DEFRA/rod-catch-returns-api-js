@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`catches.unit POST /catches should return the created catch if the call to create it is successful 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/catches/1600/activity",
+    },
+    "activityEntity": {
+      "href": "http://localhost:3000/api/activities/404",
+    },
+    "catch": {
+      "href": "http://localhost:3000/api/catches/1600",
+    },
+    "method": {
+      "href": "http://localhost:3000/api/catches/1600/method",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/catches/1600",
+    },
+    "species": {
+      "href": "http://localhost:3000/api/catches/1600/species",
+    },
+  },
+  "createdAt": "2024-11-18T11:22:36.438Z",
+  "dateCaught": "2024-06-24",
+  "id": "1600",
+  "mass": {
+    "kg": "9.610488",
+    "oz": "339.000000",
+    "type": "IMPERIAL",
+  },
+  "noDateRecorded": false,
+  "onlyMonthRecorded": false,
+  "released": true,
+  "reportingExclude": false,
+  "updatedAt": "2024-11-18T11:22:36.438Z",
+  "version": "2024-11-18T11:22:36.437Z",
+}
+`;
