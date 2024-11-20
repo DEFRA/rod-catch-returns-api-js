@@ -1,9 +1,10 @@
+import { convertKgtoOz, convertOztoKg } from '../utils/mass-utils.js'
 import {
   extractActivityId,
   extractMethodId,
   extractSpeciesId
 } from '../utils/entity-utils.js'
-import { Measures } from '../utils/constants.js'
+import { MEASURES } from '../utils/constants.js'
 import { extractDateFromISO } from '../utils/date-utils.js'
 import { getBaseUrl } from '../utils/url-utils.js'
 
@@ -20,25 +21,22 @@ import { getBaseUrl } from '../utils/url-utils.js'
  * @property {number} massOz - The mass in ounces, converted if necessary.
  */
 export const calculateMass = ({ kg = 0, oz = 0, type }) => {
-  const CONVERSION = 0.028349523125 // Conversion factor between kilograms and ounces
-  const SCALE = 6 // Number of decimal places for precision
-
-  if (type === Measures.IMPERIAL) {
+  if (type === MEASURES.IMPERIAL) {
     const massOz = parseFloat(oz) || 0
     return {
-      massKg: parseFloat((massOz * CONVERSION).toFixed(SCALE)),
+      massKg: convertOztoKg(massOz),
       massOz
     }
-  } else if (type === Measures.METRIC) {
+  } else if (type === MEASURES.METRIC) {
     const massKg = parseFloat(kg) || 0
     return {
       massKg,
-      massOz: parseFloat((massKg / CONVERSION).toFixed(SCALE))
+      massOz: convertKgtoOz(massKg)
     }
   }
 
   throw new Error(
-    `Mass type must be either ${Object.values(Measures).join(' or ')}`
+    `Mass type must be either ${Object.values(MEASURES).join(' or ')}`
   )
 }
 

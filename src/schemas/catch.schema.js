@@ -1,7 +1,12 @@
 import Joi from 'joi'
-import { Measures } from '../utils/constants.js'
+import { MEASURES } from '../utils/constants.js'
+import { convertKgtoOz } from '../utils/mass-utils.js'
 import { extractActivityId } from '../utils/entity-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+
+const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
+const MAX_FISH_MASS_OZ = convertKgtoOz(50) // 1763.698097oz
+const MIN_FISH_MASS = 0
 
 export const createCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
@@ -56,29 +61,35 @@ export const createCatchSchema = Joi.object({
   }),
   mass: Joi.object({
     kg: Joi.number()
-      .positive()
+      .min(MIN_FISH_MASS)
+      .max(MAX_FISH_MASS_KG)
       .when('type', {
-        is: Measures.METRIC,
+        is: MEASURES.METRIC,
         then: Joi.required().messages({
           'any.required': 'CATCH_MASS_KG_REQUIRED'
         })
       })
       .messages({
-        'number.positive': 'CATCH_MASS_KG_POSITIVE'
+        'number.positive': 'CATCH_MASS_KG_POSITIVE',
+        'number.min': 'CATCH_MASS_BELOW_MINIMUM',
+        'number.max': 'CATCH_MASS_MAX_EXCEEDED'
       }),
     oz: Joi.number()
-      .positive()
+      .min(MIN_FISH_MASS)
+      .max(MAX_FISH_MASS_OZ)
       .when('type', {
-        is: Measures.IMPERIAL,
+        is: MEASURES.IMPERIAL,
         then: Joi.required().messages({
           'any.required': 'CATCH_MASS_OZ_REQUIRED'
         })
       })
       .messages({
-        'number.positive': 'CATCH_MASS_OZ_POSITIVE'
+        'number.positive': 'CATCH_MASS_OZ_POSITIVE',
+        'number.min': 'CATCH_MASS_BELOW_MINIMUM',
+        'number.max': 'CATCH_MASS_MAX_EXCEEDED'
       }),
     type: Joi.string()
-      .valid(...Object.values(Measures))
+      .valid(...Object.values(MEASURES))
       .required()
       .messages({
         'any.required': 'CATCH_MASS_TYPE_REQUIRED',

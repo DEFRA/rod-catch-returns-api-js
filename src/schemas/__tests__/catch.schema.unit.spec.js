@@ -167,7 +167,7 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return a CATCH_MASS_KG_POSITIVE if "mass.kg" is invalid', async () => {
+      it('should return a CATCH_MASS_BELOW_MINIMUM if "mass.kg" is negative', async () => {
         const payload = {
           ...getValidPayload(),
           mass: {
@@ -178,22 +178,52 @@ describe('catch.schema.unit', () => {
         }
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
-          'CATCH_MASS_KG_POSITIVE'
+          'CATCH_MASS_BELOW_MINIMUM'
         )
       })
 
-      it('should return a CATCH_MASS_OZ_POSITIVE if "mass.oz" is invalid', async () => {
+      it('should return a CATCH_MASS_MAX_EXCEEDED if "mass.kg" is over 50kg', async () => {
         const payload = {
           ...getValidPayload(),
           mass: {
-            kg: 2,
-            oz: -1,
+            kg: 51,
+            oz: 1,
+            type: 'METRIC'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_MAX_EXCEEDED'
+        )
+      })
+
+      it('should return a CATCH_MASS_BELOW_MINIMUM if "mass.oz" is negative', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: 5,
+            oz: -2,
             type: 'IMPERIAL'
           }
         }
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
-          'CATCH_MASS_OZ_POSITIVE'
+          'CATCH_MASS_BELOW_MINIMUM'
+        )
+      })
+
+      it('should return a CATCH_MASS_MAX_EXCEEDED if "mass.oz" is over 1763.698097oz', async () => {
+        const payload = {
+          ...getValidPayload(),
+          mass: {
+            kg: 5,
+            oz: 1764,
+            type: 'IMPERIAL'
+          }
+        }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_MAX_EXCEEDED'
         )
       })
 
