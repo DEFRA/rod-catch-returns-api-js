@@ -225,8 +225,17 @@ describe('activity.mapper.unit', () => {
       })
     })
 
-    it('should default kg and oz to 0 if not provided', () => {
+    it('should default kg and oz to 0 if not provided and type is METRIC', () => {
       const result = calculateMass({ type: 'METRIC' })
+
+      expect(result).toStrictEqual({
+        massKg: 0,
+        massOz: 0
+      })
+    })
+
+    it('should default kg and oz to 0 if not provided and type is IMPERIAL', () => {
+      const result = calculateMass({ type: 'IMPERIAL' })
 
       expect(result).toStrictEqual({
         massKg: 0,
