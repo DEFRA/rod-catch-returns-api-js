@@ -1,7 +1,9 @@
 import { createCatchSchema } from '../catch.schema.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
+import { isMethodInternal } from '../../services/methods.service.js'
 
 jest.mock('../../services/activities.service.js')
+jest.mock('../../services/methods.service.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -20,8 +22,9 @@ describe('catch.schema.unit', () => {
       noDateRecorded: false
     })
 
-    const setupMocks = ({ season }) => {
+    const setupMocks = ({ season = 2024, methodInternal = false } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
+      isMethodInternal.mockResolvedValue(methodInternal)
     }
 
     describe('activity', () => {
@@ -30,6 +33,14 @@ describe('catch.schema.unit', () => {
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_ACTIVITY_REQUIRED'
+        )
+      })
+
+      it('should return an error if "activity" does not start with "activities/"', async () => {
+        const payload = { ...getValidPayload(), activity: 'invalid/123' }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_ACTIVITY_INVALID'
         )
       })
     })
@@ -125,6 +136,32 @@ describe('catch.schema.unit', () => {
           'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
         )
       })
+
+      it.each([undefined, true, false])(
+        'should successfully validate if "onlyMonthRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = { ...getValidPayload(), onlyMonthRecorded: value }
+
+          await expect(
+            createCatchSchema.validateAsync(payload)
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+    })
+
+    describe('noDateRecorded', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "noDateRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = { ...getValidPayload(), noDateRecorded: value }
+
+          await expect(
+            createCatchSchema.validateAsync(payload)
+          ).resolves.toStrictEqual(payload)
+        }
+      )
     })
 
     describe('species', () => {
@@ -256,6 +293,69 @@ describe('catch.schema.unit', () => {
           'CATCH_MASS_OZ_REQUIRED'
         )
       })
+    })
+
+    describe('method', () => {
+      it('should return an error if "method" is missing', async () => {
+        const payload = { ...getValidPayload(), method: undefined }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_METHOD_REQUIRED'
+        )
+      })
+
+      it('should return an error if "method" does not start with "methods/"', async () => {
+        const payload = { ...getValidPayload(), method: 'invalid/123' }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_METHOD_INVALID'
+        )
+      })
+
+      it('should return an error if "method" is restricted', async () => {
+        setupMocks({ methodInternal: true })
+        const payload = { ...getValidPayload(), method: 'methods/4' }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_METHOD_FORBIDDEN'
+        )
+      })
+    })
+
+    describe('released', () => {
+      it('should return an error if "released" is missing', async () => {
+        const payload = { ...getValidPayload(), released: undefined }
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_RELEASED_REQUIRED'
+        )
+      })
+
+      it.each([true, false])(
+        'should successfully validate if "released" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = { ...getValidPayload(), released: value }
+
+          await expect(
+            createCatchSchema.validateAsync(payload)
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+    })
+
+    describe('reportingExclude', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "reportingExclude" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = { ...getValidPayload(), reportingExclude: value }
+
+          await expect(
+            createCatchSchema.validateAsync(payload)
+          ).resolves.toStrictEqual(payload)
+        }
+      )
     })
   })
 })
