@@ -53,7 +53,7 @@ describe('catches.integration', () => {
 
       expect(JSON.parse(createdCatch.payload)).toEqual({
         id: expect.any(String),
-        dateCaught: '2024-06-24',
+        dateCaught: '2023-06-24',
         mass: {
           type: 'IMPERIAL',
           kg: '9.610488',
@@ -92,6 +92,44 @@ describe('catches.integration', () => {
         }
       })
       expect(createdCatch.statusCode).toBe(201)
+    })
+
+    it('should throw an error if the "dateCaught" year does not match the "season" in the submission', async () => {
+      const activityId = await setupSubmissionAndActivity()
+
+      const createdCatch = await createCatch(server, activityId, {
+        dateCaught: '2022-06-24T00:00:00+01:00'
+      })
+
+      expect(JSON.parse(createdCatch.payload)).toEqual({
+        errors: [
+          {
+            message: 'CATCH_YEAR_MISMATCH',
+            property: 'dateCaught',
+            value: '2022-06-24T00:00:00+01:00'
+          }
+        ]
+      })
+      expect(createdCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if the "method" is internal', async () => {
+      const activityId = await setupSubmissionAndActivity()
+
+      const createdCatch = await createCatch(server, activityId, {
+        method: 'methods/4' // this method name is Unknown and is internal
+      })
+
+      expect(JSON.parse(createdCatch.payload)).toEqual({
+        errors: [
+          {
+            message: 'CATCH_METHOD_FORBIDDEN',
+            property: 'method',
+            value: 'methods/4'
+          }
+        ]
+      })
+      expect(createdCatch.statusCode).toBe(400)
     })
   })
 })
