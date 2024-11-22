@@ -138,8 +138,8 @@ describe('activity.mapper.unit', () => {
         dateCaught: '2024-06-24',
         id: '1600',
         mass: {
-          kg: '9.610488',
-          oz: '339.000000',
+          kg: 9.610488,
+          oz: 339,
           type: 'IMPERIAL'
         },
         noDateRecorded: false,

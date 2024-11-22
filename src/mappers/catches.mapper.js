@@ -137,8 +137,8 @@ export function mapCatchToResponse(request, catchEntity) {
     dateCaught,
     mass: {
       type: massType,
-      kg: massKg,
-      oz: massOz
+      kg: parseFloat(massKg),
+      oz: parseFloat(massOz)
     },
     released,
     reportingExclude,

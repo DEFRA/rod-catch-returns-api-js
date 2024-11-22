@@ -56,8 +56,8 @@ describe('catches.integration', () => {
         dateCaught: '2023-06-24',
         mass: {
           type: 'IMPERIAL',
-          kg: '9.610488',
-          oz: '339.000000'
+          kg: 9.610488,
+          oz: 339
         },
         released: true,
         reportingExclude: false,
