@@ -1,4 +1,4 @@
-import { Activity, River, SmallCatch } from '../../entities/index.js'
+import { Activity, Catch, River, SmallCatch } from '../../entities/index.js'
 import {
   extractRiverId,
   extractSubmissionId
@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { createActivitySchema } from '../../schemas/activities.schema.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'
 
@@ -171,6 +172,60 @@ export default [
       description:
         'Retrieve the small catches associated with an activity in the database',
       notes: 'Retrieve small catches with an activity in the database',
+      tags: ['api', 'activities']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/activities/{activityId}/catches',
+    options: {
+      /**
+       * Retrieve the catches (salmon and large sea trout) associated with an activity
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.activityId - The activity id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        try {
+          const activityId = request.params.activityId
+          const activityWithCatches = await Activity.findOne({
+            where: { id: activityId },
+            include: [
+              {
+                model: Catch
+              }
+            ]
+          })
+
+          if (!activityWithCatches) {
+            logger.error(`Catches not found for ${activityId}`)
+            return h.response().code(StatusCodes.NOT_FOUND)
+          }
+
+          const mappedCatches = (activityWithCatches.Catches || []).map(
+            (smallCatch) => mapCatchToResponse(request, smallCatch)
+          )
+
+          return h
+            .response({
+              _embedded: {
+                catches: mappedCatches
+              }
+            })
+            .code(StatusCodes.OK)
+        } catch (error) {
+          logger.error('Error fetching catches:', error)
+          return h
+            .response({ error: 'Unable to fetch catches for activity' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+      },
+      description:
+        'Retrieve the catches (salmon and large sea trout) associated with an activity in the database',
+      notes:
+        'Retrieve catches (salmon and large sea trout) with an activity in the database',
       tags: ['api', 'activities']
     }
   }
