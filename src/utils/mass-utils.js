@@ -1,4 +1,4 @@
-import { MASS_CONVERSION, MASS_SCALE } from './constants'
+import { MASS_CONVERSION, MASS_SCALE } from './constants.js'
 
 /**
  * Converts a mass value from ounces to kilograms.
