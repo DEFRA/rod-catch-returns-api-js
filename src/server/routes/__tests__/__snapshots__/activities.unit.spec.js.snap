@@ -1,5 +1,86 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`activities.unit GET /activities/{activityId}/catches should return a 200 status code and the catches if the activity is found 1`] = `
+{
+  "_embedded": {
+    "catches": [
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/catches/550/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/1",
+          },
+          "catch": {
+            "href": "http://localhost:3000/api/catches/550",
+          },
+          "method": {
+            "href": "http://localhost:3000/api/catches/550/method",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/catches/550",
+          },
+          "species": {
+            "href": "http://localhost:3000/api/catches/550/species",
+          },
+        },
+        "createdAt": "2024-11-15T10:32:02.650Z",
+        "dateCaught": "2024-06-23",
+        "id": "550",
+        "mass": {
+          "kg": 9.610488,
+          "oz": 339,
+          "type": "IMPERIAL",
+        },
+        "noDateRecorded": false,
+        "onlyMonthRecorded": false,
+        "released": true,
+        "reportingExclude": true,
+        "updatedAt": "2024-11-15T10:32:02.650Z",
+        "version": "2024-11-15T10:32:02.647Z",
+      },
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/catches/1600/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/1",
+          },
+          "catch": {
+            "href": "http://localhost:3000/api/catches/1600",
+          },
+          "method": {
+            "href": "http://localhost:3000/api/catches/1600/method",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/catches/1600",
+          },
+          "species": {
+            "href": "http://localhost:3000/api/catches/1600/species",
+          },
+        },
+        "createdAt": "2024-11-18T11:22:36.438Z",
+        "dateCaught": "2024-06-24",
+        "id": "1600",
+        "mass": {
+          "kg": 9.610488,
+          "oz": 339,
+          "type": "IMPERIAL",
+        },
+        "noDateRecorded": false,
+        "onlyMonthRecorded": false,
+        "released": true,
+        "reportingExclude": false,
+        "updatedAt": "2024-11-18T11:22:36.438Z",
+        "version": "2024-11-18T11:22:36.437Z",
+      },
+    ],
+  },
+}
+`;
+
 exports[`activities.unit GET /activities/{activityId}/smallCatches should return a 200 status code and the small catches if the activity is found 1`] = `
 {
   "_embedded": {
