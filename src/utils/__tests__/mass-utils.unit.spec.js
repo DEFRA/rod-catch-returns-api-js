@@ -58,7 +58,7 @@ describe('mass-utils.unit', () => {
       expect(convertKgtoOz(0.4536)).toBe(16.000269)
     })
 
-    it('converts 2.5 kilograms to 88.184905ounces', () => {
+    it('converts 2.5 kilograms to 88.184905 ounces', () => {
       expect(convertKgtoOz(2.5)).toBe(88.184905)
     })
 
