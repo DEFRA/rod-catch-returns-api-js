@@ -81,7 +81,10 @@ describe('activities.unit', () => {
 
       await postActivityHandler(getActivityRequest(), getMockResponseToolkit())
 
-      expect(logger.error).toHaveBeenCalledWith('Error create activity:', error)
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error creating activity',
+        error
+      )
     })
 
     it('should return 500 and error message if an error occurs while creating the activity', async () => {
@@ -94,7 +97,7 @@ describe('activities.unit', () => {
       )
 
       expect(result.payload).toStrictEqual({
-        error: 'Unable to create activity'
+        error: 'Error creating activity'
       })
       expect(result.statusCode).toBe(500)
     })
@@ -177,7 +180,7 @@ describe('activities.unit', () => {
       )
 
       expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching river for activity:',
+        'Error fetching river for activity',
         error
       )
     })
@@ -192,7 +195,7 @@ describe('activities.unit', () => {
       )
 
       expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch river for activity'
+        error: 'Error fetching river for activity'
       })
       expect(result.statusCode).toBe(500)
     })
@@ -349,7 +352,7 @@ describe('activities.unit', () => {
       )
 
       expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching small catches:',
+        'Error fetching small catches',
         error
       )
     })
@@ -364,7 +367,7 @@ describe('activities.unit', () => {
       )
 
       expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch small catches for activity'
+        error: 'Error fetching small catches'
       })
       expect(result.statusCode).toBe(500)
     })
@@ -492,10 +495,7 @@ describe('activities.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching catches:',
-        error
-      )
+      expect(logger.error).toHaveBeenCalledWith('Error fetching catches', error)
     })
 
     it('should return 500 and error message if an error occurs while fetching the catches', async () => {
@@ -508,7 +508,7 @@ describe('activities.unit', () => {
       )
 
       expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch catches for activity'
+        error: 'Error fetching catches'
       })
       expect(result.statusCode).toBe(500)
     })

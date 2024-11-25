@@ -3,9 +3,9 @@ import {
   extractRiverId,
   extractSubmissionId
 } from '../../utils/entity-utils.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivitySchema } from '../../schemas/activities.schema.js'
-import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
@@ -54,10 +54,7 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
-          logger.error('Error create activity:', error)
-          return h
-            .response({ error: 'Unable to create activity' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error creating activity', error, h)
         }
       },
       validate: {
@@ -93,10 +90,11 @@ export default [
             ]
           })
 
-          if (!activity) {
-            logger.error('Activity not found or has no associated river')
-            return h.response().code(StatusCodes.NOT_FOUND)
-          }
+          if (!activity)
+            return handleNotFound(
+              'Activity not found or has no associated river',
+              h
+            )
 
           const mappedRiver = mapRiverToResponse(
             request,
@@ -105,10 +103,11 @@ export default [
 
           return h.response(mappedRiver).code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching river for activity:', error)
-          return h
-            .response({ error: 'Unable to fetch river for activity' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError(
+            'Error fetching river for activity',
+            error,
+            h
+          )
         }
       },
       description:
@@ -146,10 +145,11 @@ export default [
             ]
           })
 
-          if (!activityWithCatches) {
-            logger.error(`Small catches not found for ${activityId}`)
-            return h.response().code(StatusCodes.NOT_FOUND)
-          }
+          if (!activityWithCatches)
+            return handleNotFound(
+              `Small catches not found for ${activityId}`,
+              h
+            )
 
           const mappedSmallCatches = (
             activityWithCatches.SmallCatches || []
@@ -163,10 +163,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching small catches:', error)
-          return h
-            .response({ error: 'Unable to fetch small catches for activity' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching small catches', error, h)
         }
       },
       description:
@@ -199,10 +196,8 @@ export default [
             ]
           })
 
-          if (!activityWithCatches) {
-            logger.error(`Catches not found for ${activityId}`)
-            return h.response().code(StatusCodes.NOT_FOUND)
-          }
+          if (!activityWithCatches)
+            return handleNotFound(`Catches not found for ${activityId}`, h)
 
           const mappedCatches = (activityWithCatches.Catches || []).map(
             (catchEntity) => mapCatchToResponse(request, catchEntity)
@@ -216,10 +211,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching catches:', error)
-          return h
-            .response({ error: 'Unable to fetch catches for activity' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching catches', error, h)
         }
       },
       description:
