@@ -4,6 +4,7 @@ import {
 } from '../../mappers/catches.mapper.js'
 import { Catch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
+import { createCatchSchema } from '../../schemas/catch.schema.js'
 import logger from '../../utils/logger-utils.js'
 
 export default [
@@ -48,6 +49,9 @@ export default [
             .response({ error: 'Unable to create catch' })
             .code(StatusCodes.INTERNAL_SERVER_ERROR)
         }
+      },
+      validate: {
+        payload: createCatchSchema
       },
       description:
         'Create a catch (salmon and large sea trout) for an activity in the database',

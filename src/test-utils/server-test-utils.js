@@ -98,7 +98,7 @@ export const createCatch = (
   server,
   activityId,
   {
-    dateCaught = '2024-06-24T00:00:00+01:00',
+    dateCaught = '2023-06-24T00:00:00+01:00',
     species = 'species/1',
     mass = {
       kg: 9.61,
