@@ -90,11 +90,12 @@ export default [
             ]
           })
 
-          if (!activity)
+          if (!activity) {
             return handleNotFound(
               'Activity not found or has no associated river',
               h
             )
+          }
 
           const mappedRiver = mapRiverToResponse(
             request,
@@ -145,11 +146,12 @@ export default [
             ]
           })
 
-          if (!activityWithCatches)
+          if (!activityWithCatches) {
             return handleNotFound(
               `Small catches not found for ${activityId}`,
               h
             )
+          }
 
           const mappedSmallCatches = (
             activityWithCatches.SmallCatches || []
@@ -196,8 +198,9 @@ export default [
             ]
           })
 
-          if (!activityWithCatches)
+          if (!activityWithCatches) {
             return handleNotFound(`Catches not found for ${activityId}`, h)
+          }
 
           const mappedCatches = (activityWithCatches.Catches || []).map(
             (catchEntity) => mapCatchToResponse(request, catchEntity)
