@@ -186,7 +186,7 @@ export default [
        * Get a submission by its submissionId from the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
-       *     @param {string} request.params.submissionId - The ID of the submission to be retrieved.
+       *     @param {string} request.params.submissionId - The ID of the submission to be retrieved
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
        */
@@ -220,6 +220,53 @@ export default [
       },
       description: 'Get a submission by submissionId',
       notes: 'Get a submission by submissionId',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: '/submissions/{submissionId}',
+    options: {
+      /**
+       * Update a submission in the database using the submission ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.submissionId - The ID of the submission to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const { submissionId } = request.params
+        const { status, reportingExclude } = request.payload
+
+        try {
+          const submission = await Submission.findByPk(submissionId)
+
+          if (!submission) {
+            return h.response().code(StatusCodes.NOT_FOUND)
+          }
+
+          const updatedSubmission = await submission.update({
+            status,
+            reportingExclude,
+            version: new Date()
+          })
+
+          const mappedSubmission = mapSubmissionToResponse(
+            request,
+            updatedSubmission.toJSON()
+          )
+
+          return h.response(mappedSubmission).code(StatusCodes.OK)
+        } catch (error) {
+          logger.error('Error creating submission:', error)
+          return h
+            .response({ error: 'Unable update submission' })
+            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+      },
+      description: 'Update a submission',
+      notes: 'Update a submission',
       tags: ['api', 'submissions']
     }
   }

@@ -571,10 +571,11 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe.skip('PATCH /api/submissions/{submissionId}', () => {
+  describe('PATCH /api/submissions/{submissionId}', () => {
     const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
       'contact-identifier-update-submission'
     beforeEach(async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
       await Submission.destroy({
         where: {
           contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
@@ -591,41 +592,78 @@ describe('submissions.integration', () => {
     })
 
     it('should successfully update a submission with a valid status', async () => {
-      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
-      const createdSubmission = createSubmission(server)
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
       const submissionId = JSON.parse(createdSubmission.payload).id
       expect(JSON.parse(createdSubmission.payload).status).toBe('INCOMPLETE')
 
       const updatedSubmission = await server.inject({
-        method: 'POST',
+        method: 'PATCH',
         url: `/api/submissions/${submissionId}`,
         payload: {
-          status: 'COMPLETE'
+          status: 'SUBMITTED'
         }
       })
 
+      expect(JSON.parse(updatedSubmission.payload).status).toBe('SUBMITTED')
       expect(updatedSubmission.statusCode).toBe(200)
-      expect(JSON.parse(updatedSubmission.payload).status).toBe('COMPLETE')
     })
 
     it('should successfully update a submission when reportingExclude is true', async () => {
-      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
-      const createdSubmission = createSubmission(server)
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
       const submissionId = JSON.parse(createdSubmission.payload).id
       expect(JSON.parse(createdSubmission.payload).reportingExclude).toBeFalsy()
 
       const updatedSubmission = await server.inject({
-        method: 'POST',
+        method: 'PATCH',
         url: `/api/submissions/${submissionId}`,
         payload: {
           reportingExclude: true
         }
       })
 
-      expect(updatedSubmission.statusCode).toBe(200)
       expect(
         JSON.parse(updatedSubmission.payload).reportingExclude
       ).toBeTruthy()
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should not update a field that is not updateable, but still return a 200 and the original submission', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          season: 2024
+        }
+      })
+
+      expect(JSON.parse(updatedSubmission.payload).season).toBe(2023)
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: '/api/submissions/0',
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(updatedSubmission.payload).toBe('')
+      expect(updatedSubmission.statusCode).toBe(404)
     })
   })
 })
