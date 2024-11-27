@@ -2,7 +2,8 @@ import { Activity, Submission } from '../../entities/index.js'
 import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
-  getSubmissionByContactAndSeasonSchema
+  getSubmissionByContactAndSeasonSchema,
+  updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivity } from '@defra-fish/dynamics-lib'
@@ -23,13 +24,15 @@ export default [
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
        */
       handler: async (request, h) => {
-        const { contactId, season, status, source } = request.payload
+        const { contactId, season, status, source, reportingExclude } =
+          request.payload
         try {
           const createdSubmission = await Submission.create({
             contactId,
             season,
             status,
             source,
+            reportingExclude,
             version: Date.now()
           })
 
@@ -264,6 +267,9 @@ export default [
             .response({ error: 'Unable update submission' })
             .code(StatusCodes.INTERNAL_SERVER_ERROR)
         }
+      },
+      validate: {
+        payload: updateSubmissionSchema
       },
       description: 'Update a submission',
       notes: 'Update a submission',

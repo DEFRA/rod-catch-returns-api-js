@@ -1,3 +1,4 @@
+import { SOURCES, STATUSES } from '../utils/constants.js'
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../services/database.service.js'
 
@@ -16,10 +17,10 @@ export const Submission = sequelize.define(
       type: DataTypes.INTEGER
     },
     status: {
-      type: DataTypes.ENUM('INCOMPLETE', 'SUBMITTED')
+      type: DataTypes.ENUM(Object.values(STATUSES))
     },
     source: {
-      type: DataTypes.ENUM('WEB', 'PAPER')
+      type: DataTypes.ENUM(Object.values(SOURCES))
     },
     reportingExclude: {
       type: DataTypes.BOOLEAN,
