@@ -1,5 +1,8 @@
+import {
+  createActivity,
+  createSubmission
+} from '../../../test-utils/server-test-utils.js'
 import { Submission } from '../../../entities/index.js'
-import { createActivity } from '../../../test-utils/server-test-utils.js'
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
@@ -60,7 +63,7 @@ describe('submissions.integration', () => {
       'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
   })
 
-  describe('POST /api/submissions ', () => {
+  describe('POST /api/submissions', () => {
     const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
       'contact-identifier-create-submission'
     beforeEach(async () => {
@@ -565,6 +568,64 @@ describe('submissions.integration', () => {
           activities: []
         }
       })
+    })
+  })
+
+  describe.skip('PATCH /api/submissions/{submissionId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
+      'contact-identifier-update-submission'
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    it('should successfully update a submission with a valid status', async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+      const createdSubmission = createSubmission(server)
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).status).toBe('INCOMPLETE')
+
+      const updatedSubmission = await server.inject({
+        method: 'POST',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'COMPLETE'
+        }
+      })
+
+      expect(updatedSubmission.statusCode).toBe(200)
+      expect(JSON.parse(updatedSubmission.payload).status).toBe('COMPLETE')
+    })
+
+    it('should successfully update a submission when reportingExclude is true', async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+      const createdSubmission = createSubmission(server)
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).reportingExclude).toBeFalsy()
+
+      const updatedSubmission = await server.inject({
+        method: 'POST',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          reportingExclude: true
+        }
+      })
+
+      expect(updatedSubmission.statusCode).toBe(200)
+      expect(
+        JSON.parse(updatedSubmission.payload).reportingExclude
+      ).toBeTruthy()
     })
   })
 })
