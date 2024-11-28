@@ -2,12 +2,16 @@ import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import {
+  handleNotFound,
+  handleServerError
+} from '../../../utils/server-utils.js'
 import { Activity } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
 import routes from '../activities.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
 
 const [
   {
@@ -18,6 +22,9 @@ const [
   },
   {
     options: { handler: getSmallCatchesForActivityHandler }
+  },
+  {
+    options: { handler: getCatchesForActivityHandler }
   }
 ] = routes
 
@@ -72,28 +79,18 @@ describe('activities.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should log an error if an error occurs while creating the activity', async () => {
+    it('should call handleServerError if an error occurs while creating the activity', async () => {
       const error = new Error('Database error')
       Activity.create.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await postActivityHandler(getActivityRequest(), getMockResponseToolkit())
+      await postActivityHandler(getActivityRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith('Error create activity:', error)
-    })
-
-    it('should return 500 and error message if an error occurs while creating the activity', async () => {
-      const error = new Error('Database error')
-      Activity.create.mockRejectedValueOnce(error)
-
-      const result = await postActivityHandler(
-        getActivityRequest(),
-        getMockResponseToolkit()
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating activity',
+        error,
+        h
       )
-
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to create activity'
-      })
-      expect(result.statusCode).toBe(500)
     })
   })
 
@@ -152,46 +149,30 @@ describe('activities.unit', () => {
       expect(result.statusCode).toBe(200)
     })
 
-    it('should return 404 if the activity is not found', async () => {
+    it('should call handleNotFound if the activity is not found', async () => {
       Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
 
-      const result = await getRiverForActivityHandler(
-        getActivityRequest('nonexistent-id'),
-        getMockResponseToolkit()
-      )
+      await getRiverForActivityHandler(getActivityRequest('nonexistent-id'), h)
 
-      expect(result.payload).toBeUndefined()
-      expect(result.statusCode).toBe(404)
-    })
-
-    it('should log an error if an error occurs while fetching the river for the activity', async () => {
-      const error = new Error('Database error')
-      Activity.findOne.mockRejectedValueOnce(error)
-
-      await getRiverForActivityHandler(
-        getActivityRequest('1'),
-        getMockResponseToolkit()
-      )
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching river for activity:',
-        error
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Activity not found or has no associated river',
+        h
       )
     })
 
-    it('should return 500 and error message if an error occurs while fetching the river', async () => {
+    it('should call handleServerError if an error occurs while fetching the river for the activity', async () => {
       const error = new Error('Database error')
       Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      const result = await getRiverForActivityHandler(
-        getActivityRequest('1'),
-        getMockResponseToolkit()
+      await getRiverForActivityHandler(getActivityRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching river for activity',
+        error,
+        h
       )
-
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch river for activity'
-      })
-      expect(result.statusCode).toBe(500)
     })
   })
 
@@ -288,16 +269,19 @@ describe('activities.unit', () => {
       expect(result.statusCode).toBe(200)
     })
 
-    it('should return 404 if the activity is not found', async () => {
+    it('should call handleNotFound if the activity is not found', async () => {
       Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
 
-      const result = await getSmallCatchesForActivityHandler(
+      await getSmallCatchesForActivityHandler(
         getActivityRequest('nonexistent-id'),
-        getMockResponseToolkit()
+        h
       )
 
-      expect(result.payload).toBeUndefined()
-      expect(result.statusCode).toBe(404)
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Small catches not found for nonexistent-id',
+        h
+      )
     })
 
     it('should return a 200 status code and an empty array if the activity exists, but no small catches have been added to it', async () => {
@@ -336,34 +320,149 @@ describe('activities.unit', () => {
       expect(result.statusCode).toBe(200)
     })
 
-    it('should log an error if an error occurs while fetching the small catches for the activity', async () => {
+    it('should call handleServerError if an error occurs while fetching the small catches for the activity', async () => {
       const error = new Error('Database error')
       Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await getSmallCatchesForActivityHandler(
+      await getSmallCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching small catches',
+        error,
+        h
+      )
+    })
+  })
+
+  describe('GET /activities/{activityId}/catches', () => {
+    const getActivityRequest = (activityId) => ({
+      ...getServerDetails(),
+      params: {
+        activityId
+      }
+    })
+
+    const getActivityWithCatches = () => ({
+      Catches: [
+        {
+          id: '550',
+          dateCaught: '2024-06-23',
+          massKg: '9.610488',
+          massOz: '339.000000',
+          massType: 'IMPERIAL',
+          released: true,
+          onlyMonthRecorded: false,
+          noDateRecorded: false,
+          reportingExclude: true,
+          createdAt: '2024-11-15T10:32:02.650Z',
+          updatedAt: '2024-11-15T10:32:02.650Z',
+          version: '2024-11-15T10:32:02.647Z',
+          ActivityId: '1',
+          activity_id: '1',
+          method_id: '1',
+          species_id: '1'
+        },
+        {
+          id: '1600',
+          dateCaught: '2024-06-24',
+          massKg: '9.610488',
+          massOz: '339.000000',
+          massType: 'IMPERIAL',
+          released: true,
+          onlyMonthRecorded: false,
+          noDateRecorded: false,
+          reportingExclude: false,
+          createdAt: '2024-11-18T11:22:36.438Z',
+          updatedAt: '2024-11-18T11:22:36.438Z',
+          version: '2024-11-18T11:22:36.437Z',
+          ActivityId: '1',
+          activity_id: '1',
+          method_id: '1',
+          species_id: '1'
+        }
+      ]
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the catches if the activity is found', async () => {
+      Activity.findOne.mockResolvedValueOnce(getActivityWithCatches())
+
+      const result = await getCatchesForActivityHandler(
         getActivityRequest('1'),
         getMockResponseToolkit()
       )
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching small catches:',
-        error
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getCatchesForActivityHandler(
+        getActivityRequest('nonexistent-id'),
+        h
+      )
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Catches not found for nonexistent-id',
+        h
       )
     })
 
-    it('should return 500 and error message if an error occurs while fetching the small catches', async () => {
-      const error = new Error('Database error')
-      Activity.findOne.mockRejectedValueOnce(error)
+    it('should return a 200 status code and an empty array if the activity exists, but no catches have been added to it', async () => {
+      Activity.findOne.mockResolvedValueOnce({
+        Catches: []
+      })
 
-      const result = await getSmallCatchesForActivityHandler(
+      const result = await getCatchesForActivityHandler(
         getActivityRequest('1'),
         getMockResponseToolkit()
       )
 
       expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch small catches for activity'
+        _embedded: {
+          catches: []
+        }
       })
-      expect(result.statusCode).toBe(500)
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return a 200 status code and an empty array if the activity exists, but catches is undefined', async () => {
+      Activity.findOne.mockResolvedValueOnce({
+        Catches: undefined
+      })
+
+      const result = await getCatchesForActivityHandler(
+        getActivityRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toStrictEqual({
+        _embedded: {
+          catches: []
+        }
+      })
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the catches for the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getCatchesForActivityHandler(getActivityRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching catches',
+        error,
+        h
+      )
     })
   })
 })
