@@ -22,6 +22,12 @@ const [
   }
 ] = routes
 
+const NOT_FOUND_SYMBOL = Symbol('NOT_FOUND')
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
+
 describe('methods.unit', () => {
   describe('GET /methods', () => {
     const getFoundMethods = () => [
@@ -80,6 +86,18 @@ describe('methods.unit', () => {
         error,
         h
       )
+    })
+
+    it('should return an if an error occurs while fetching methods', async () => {
+      const error = new Error('Database error')
+      Method.findAll.mockRejectedValueOnce(error)
+
+      const result = await getMethodsHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 
@@ -149,6 +167,17 @@ describe('methods.unit', () => {
       )
     })
 
+    it('should return a not found reqponse if the requested method does not exist', async () => {
+      Method.findOne.mockResolvedValueOnce(undefined)
+
+      const result = await getMethodByIdHandler(
+        getMethodRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
     it('should call handleServerError if an error occurs while fetching the method', async () => {
       const error = new Error('Database error')
       Method.findOne.mockRejectedValueOnce(error)
@@ -161,6 +190,18 @@ describe('methods.unit', () => {
         error,
         h
       )
+    })
+
+    it('should return an error response if an error occurs while fetching the method', async () => {
+      const error = new Error('Database error')
+      Method.findOne.mockRejectedValueOnce(error)
+
+      const result = await getMethodByIdHandler(
+        getMethodRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })
