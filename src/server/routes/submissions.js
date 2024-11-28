@@ -5,6 +5,7 @@ import {
   getSubmissionByContactAndSeasonSchema,
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivity } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
@@ -55,10 +56,7 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
-          logger.error('Error creating submission:', error)
-          return h
-            .response({ error: 'Unable create submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error creating submission', error, h)
         }
       },
       validate: {
@@ -101,12 +99,12 @@ export default [
             )
             return h.response(response).code(StatusCodes.OK)
           }
-          return h.response().code(StatusCodes.NOT_FOUND)
+          return handleNotFound(
+            `Submission not found for ${contactId} and ${season}`,
+            h
+          )
         } catch (error) {
-          logger.error('Error finding submission:', error)
-          return h
-            .response({ error: 'Unable find submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error finding submission', error, h)
         }
       },
       validate: {
@@ -148,7 +146,10 @@ export default [
 
           // If the submission does not exist, return 404
           if (!submissionWithActivities) {
-            return h.response().code(StatusCodes.NOT_FOUND)
+            return handleNotFound(
+              `Activities not found for submission with id ${submissionId}`,
+              h
+            )
           }
 
           // If no activities, return 200 with an empty array
@@ -167,10 +168,7 @@ export default [
             .response({ _embedded: { activities: response } })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error activities for submission:', error)
-          return h
-            .response({ error: 'Unable to find activities for submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          handleServerError('Error finding activities for submission', error, h)
         }
       },
       validate: {
@@ -210,12 +208,9 @@ export default [
             )
             return h.response(response).code(StatusCodes.OK)
           }
-          return h.response().code(StatusCodes.NOT_FOUND)
+          return handleNotFound(`Submission not found ${submissionId}`, h)
         } catch (error) {
-          logger.error('Error finding submission:', error)
-          return h
-            .response({ error: 'Unable find submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error finding submission', error, h)
         }
       },
       validate: {
@@ -246,7 +241,7 @@ export default [
           const submission = await Submission.findByPk(submissionId)
 
           if (!submission) {
-            return h.response().code(StatusCodes.NOT_FOUND)
+            return handleNotFound(`Submission not found for ${submissionId}`, h)
           }
 
           const updatedSubmission = await submission.update({
@@ -262,10 +257,7 @@ export default [
 
           return h.response(mappedSubmission).code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error creating submission:', error)
-          return h
-            .response({ error: 'Unable update submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error updating submission', error, h)
         }
       },
       validate: {
