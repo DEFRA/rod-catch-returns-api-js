@@ -168,7 +168,11 @@ export default [
             .response({ _embedded: { activities: response } })
             .code(StatusCodes.OK)
         } catch (error) {
-          handleServerError('Error finding activities for submission', error, h)
+          return handleServerError(
+            'Error finding activities for submission',
+            error,
+            h
+          )
         }
       },
       validate: {
