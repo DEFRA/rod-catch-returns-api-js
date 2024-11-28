@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`methods.unit should return all methods if the call to fetch all methods is successful 1`] = `
+exports[`methods.unit GET /methods should return all methods if the call to fetch all methods is successful 1`] = `
 {
   "_embedded": {
     "methods": [

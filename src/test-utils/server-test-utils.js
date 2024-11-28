@@ -1,4 +1,4 @@
-export const getServerDetails = () => ({
+export const getServerDetails = (overrides = {}) => ({
   info: {
     host: 'localhost:3000'
   },
@@ -6,7 +6,8 @@ export const getServerDetails = () => ({
     info: {
       protocol: 'http'
     }
-  }
+  },
+  ...overrides
 })
 
 export const getResponseToolkit = () => ({
