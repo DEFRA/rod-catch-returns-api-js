@@ -1,6 +1,6 @@
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { Method } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 
 export default [
@@ -31,10 +31,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching methods:', error)
-          return h
-            .response({ error: 'Unable to fetch methods' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching methods', error, h)
         }
       },
       description: 'Retrieve all the fishing methods in the database',
@@ -59,18 +56,14 @@ export default [
           const method = await Method.findOne({ where: { id: methodId } })
 
           if (!method) {
-            logger.error(`method not found for id ${methodId}`)
-            return h.response().code(StatusCodes.NOT_FOUND)
+            return handleNotFound(`Method not found for id ${methodId}`, h)
           }
 
           const mappedMethod = mapMethodToResponse(request, method.toJSON())
 
           return h.response(mappedMethod).code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching method:', error)
-          return h
-            .response({ error: 'Unable to fetch method' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching method', error, h)
         }
       },
       description: 'Retreive a fishing method by ID from the database',

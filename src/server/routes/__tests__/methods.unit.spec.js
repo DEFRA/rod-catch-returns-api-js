@@ -2,12 +2,16 @@ import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import {
+  handleNotFound,
+  handleServerError
+} from '../../../utils/server-utils.js'
 import { Method } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
 import routes from '../methods.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
 
 const [
   {
@@ -63,40 +67,19 @@ describe('methods.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should log an error if an error occurs while fetching methods', async () => {
+    it('should call handleServerError if an error occurs while fetching methods', async () => {
       const error = new Error('Database error')
       Method.findAll.mockRejectedValueOnce(error)
 
-      await getMethodsHandler(getServerDetails(), getMockResponseToolkit())
+      const h = getMockResponseToolkit()
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching methods:',
-        error
+      await getMethodsHandler(getServerDetails(), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching methods',
+        error,
+        h
       )
-    })
-
-    it('should return 500 if an error occurs while fetching methods', async () => {
-      Method.findAll.mockRejectedValueOnce(new Error('Database error'))
-
-      const result = await getMethodsHandler(
-        getServerDetails(),
-        getMockResponseToolkit()
-      )
-
-      expect(result.statusCode).toBe(500)
-    })
-
-    it('should return the error response in the body if an error occurs while fetching methods', async () => {
-      Method.findAll.mockRejectedValueOnce(new Error('Database error'))
-
-      const result = await getMethodsHandler(
-        getServerDetails(),
-        getMockResponseToolkit()
-      )
-
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch methods'
-      })
     })
   })
 
@@ -154,49 +137,30 @@ describe('methods.unit', () => {
       })
     })
 
-    it('should return a 404 and an empty body if the requested method does not exists', async () => {
+    it('should call handleNotFound if the requested method does not exist', async () => {
       Method.findOne.mockResolvedValueOnce(undefined)
+      const h = getMockResponseToolkit()
 
-      const result = await getMethodByIdHandler(
-        getMethodRequest(),
-        getMockResponseToolkit()
+      await getMethodByIdHandler(getMethodRequest(), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Method not found for id 1',
+        h
       )
-
-      expect(result.payload).toBeUndefined()
-      expect(result.statusCode).toBe(404)
     })
 
-    it('should log an error if an error occurs while fetching the method', async () => {
+    it('should call handleServerError if an error occurs while fetching the method', async () => {
       const error = new Error('Database error')
       Method.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await getMethodByIdHandler(getMethodRequest(), getMockResponseToolkit())
+      await getMethodByIdHandler(getMethodRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith('Error fetching method:', error)
-    })
-
-    it('should return 500 if an error occurs while fetching the method', async () => {
-      Method.findOne.mockRejectedValueOnce(new Error('Database error'))
-
-      const result = await getMethodByIdHandler(
-        getMethodRequest(),
-        getMockResponseToolkit()
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching method',
+        error,
+        h
       )
-
-      expect(result.statusCode).toBe(500)
-    })
-
-    it('should return the error response in the body if an error occurs while fetching methods', async () => {
-      Method.findOne.mockRejectedValueOnce(new Error('Database error'))
-
-      const result = await getMethodByIdHandler(
-        getMethodRequest(),
-        getMockResponseToolkit()
-      )
-
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to fetch method'
-      })
     })
   })
 })
