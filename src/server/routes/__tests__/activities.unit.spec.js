@@ -203,7 +203,7 @@ describe('activities.unit', () => {
       )
     })
 
-    it('should return an an error response if an error occurs while fetching the river for the activity', async () => {
+    it('should return an error response if an error occurs while fetching the river for the activity', async () => {
       const error = new Error('Database error')
       Activity.findOne.mockRejectedValueOnce(error)
       const h = getMockResponseToolkit()
