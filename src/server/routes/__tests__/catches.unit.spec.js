@@ -2,12 +2,16 @@ import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import {
+  handleNotFound,
+  handleServerError
+} from '../../../utils/server-utils.js'
 import { Catch } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
 import routes from '../catches.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
 
 const [
   {
@@ -15,26 +19,32 @@ const [
   }
 ] = routes
 
+const NOT_FOUND_SYMBOL = Symbol('NOT_FOUND')
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
+
 describe('catches.unit', () => {
   describe('POST /catches', () => {
-    const getCatchRequest = () => ({
-      ...getServerDetails(),
-      payload: {
-        activity: 'activities/404',
-        dateCaught: '2024-06-24T00:00:00+01:00',
-        species: 'species/1',
-        mass: {
-          kg: 9.61,
-          oz: 339,
-          type: 'IMPERIAL'
-        },
-        method: 'methods/1',
-        released: true,
-        onlyMonthRecorded: false,
-        noDateRecorded: false,
-        reportingExclude: false
-      }
-    })
+    const getCatchRequest = () =>
+      getServerDetails({
+        payload: {
+          activity: 'activities/404',
+          dateCaught: '2024-06-24T00:00:00+01:00',
+          species: 'species/1',
+          mass: {
+            kg: 9.61,
+            oz: 339,
+            type: 'IMPERIAL'
+          },
+          method: 'methods/1',
+          released: true,
+          onlyMonthRecorded: false,
+          noDateRecorded: false,
+          reportingExclude: false
+        }
+      })
 
     const getCreatedCatch = () => ({
       toJSON: jest.fn().mockReturnValue({
@@ -83,16 +93,21 @@ describe('catches.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should log an error if an error occurs while creating the catch', async () => {
+    it('should call handleServerError if an error occurs while creating the catch', async () => {
       const error = new Error('Database error')
       Catch.create.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await postCatchHandler(getCatchRequest(), getMockResponseToolkit())
+      await postCatchHandler(getCatchRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith('Error create catch:', error)
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating catch',
+        error,
+        h
+      )
     })
 
-    it('should return 500 and error message if an error occurs while creating the catch', async () => {
+    it('should return an error response if an error occurs while creating the catch', async () => {
       const error = new Error('Database error')
       Catch.create.mockRejectedValueOnce(error)
 
@@ -101,10 +116,7 @@ describe('catches.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to create catch'
-      })
-      expect(result.statusCode).toBe(500)
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })

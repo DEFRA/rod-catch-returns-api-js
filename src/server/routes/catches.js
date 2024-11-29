@@ -6,7 +6,6 @@ import {
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 
 export default [
@@ -46,10 +45,7 @@ export default [
 
           return h.response(catchResponse).code(StatusCodes.CREATED)
         } catch (error) {
-          logger.error('Error create catch:', error)
-          return h
-            .response({ error: 'Unable to create catch' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error creating catch', error, h)
         }
       },
       validate: {
