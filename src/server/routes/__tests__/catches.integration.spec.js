@@ -21,7 +21,7 @@ describe('catches.integration', () => {
     await server.stop()
   })
 
-  describe('POST /api/catches ', () => {
+  describe('POST /api/catches', () => {
     const CONTACT_IDENTIFIER_CREATE_CATCH = 'contact-identifier-create-catch'
 
     beforeEach(
@@ -130,6 +130,92 @@ describe('catches.integration', () => {
         ]
       })
       expect(createdCatch.statusCode).toBe(400)
+    })
+  })
+
+  describe.skip('GET /api/catches/{catchId}/activity', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH =
+      'contact-identifier-get-activity-for-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH
+        )
+    )
+
+    const setupSubmissionAndActivity = async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      return JSON.parse(activity.payload).id
+    }
+
+    it('should successfully get the activity associated with a catch', async () => {
+      const activityId = await setupSubmissionAndActivity()
+
+      const createdCatch = await createCatch(server, activityId)
+
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      const activity = server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/activity`
+      })
+
+      expect(JSON.parse(activity.payload)).toEqual({
+        id: expect.any(String),
+        daysFishedWithMandatoryRelease: 20,
+        daysFishedOther: 10,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          submission: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/submission`
+            )
+          },
+          catches: {
+            href: expect.stringMatching(`/api/activities/${activityId}/catches`)
+          },
+          river: {
+            href: expect.stringMatching(`/api/activities/${activityId}/river`)
+          },
+          smallCatches: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/smallCatches`
+            )
+          }
+        }
+      })
+      expect(activity.statusCode).toBe(201)
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/catches/0/activity'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
     })
   })
 })
