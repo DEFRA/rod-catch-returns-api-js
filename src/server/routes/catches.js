@@ -1,11 +1,11 @@
 import { Activity, Catch } from '../../entities/index.js'
+import { catchIdSchema, createCatchSchema } from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
   mapCatchToResponse,
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import { createCatchSchema } from '../../schemas/catch.schema.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 
@@ -112,10 +112,9 @@ export default [
           )
         }
       },
-      // TODO add validator
-      // validate: {
-      //   params: getBySubmissionIdSchema
-      // },
+      validate: {
+        params: catchIdSchema
+      },
       description: 'Retrieve the activity associated with a catch',
       notes:
         'Retrieve the activity associated with a catch using the catch ID from the database',

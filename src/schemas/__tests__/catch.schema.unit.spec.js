@@ -1,4 +1,4 @@
-import { createCatchSchema } from '../catch.schema.js'
+import { catchIdSchema, createCatchSchema } from '../catch.schema.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 
@@ -337,6 +337,31 @@ describe('catch.schema.unit', () => {
           ).resolves.toStrictEqual(payload)
         }
       )
+    })
+  })
+
+  describe('catchIdSchema', () => {
+    it('should validate successfully when "catchId" is provided and valid', () => {
+      const params = { catchId: 123 }
+      const { error } = catchIdSchema.validate(params)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "catchId" is missing', () => {
+      const params = { catchId: undefined }
+      const { error } = catchIdSchema.validate(params)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"catchId" is required')
+    })
+
+    it('should return an error if "catchId" is not a number', () => {
+      const params = { catchId: 'abc' }
+      const { error } = catchIdSchema.validate(params)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"catchId" must be a number')
     })
   })
 })
