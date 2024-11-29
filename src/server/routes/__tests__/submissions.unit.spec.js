@@ -74,7 +74,7 @@ describe('submissions.unit', () => {
         status: 'INCOMPLETE',
         source: 'WEB',
         version: '2024-10-10T13:13:11.000Z',
-        reportingExclude: false,
+        reportingExclude: true,
         createdAt: '2024-10-10T13:13:11.000Z',
         updatedAt: '2024-10-10T13:13:11.000Z'
       })
@@ -109,7 +109,7 @@ describe('submissions.unit', () => {
         contactId: 'contact-identifier-111',
         createdAt: '2024-10-10T13:13:11.000Z',
         id: '1',
-        reportingExclude: false,
+        reportingExclude: true,
         season: '2024',
         source: 'WEB',
         status: 'INCOMPLETE',
