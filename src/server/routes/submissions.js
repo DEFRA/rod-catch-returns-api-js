@@ -248,6 +248,7 @@ export default [
             return handleNotFound(`Submission not found for ${submissionId}`, h)
           }
 
+          // if a value is undefined, it is not updated by Sequelize
           const updatedSubmission = await submission.update({
             status,
             reportingExclude,

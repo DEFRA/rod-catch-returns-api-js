@@ -28,6 +28,9 @@ const [
   },
   {
     options: { handler: getSubmissionByIdHandler }
+  },
+  {
+    options: { handler: patchSubmissionByIdHandler }
   }
 ] = routes
 
@@ -532,6 +535,145 @@ describe('submissions.unit', () => {
 
       const result = await getActivitiesBySubmissionIdHandler(
         getActivitiesRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('PATCH /submissions/{submissionId}', () => {
+    const getSubmissionRequest = (payload) =>
+      getServerDetails({
+        params: {
+          submissionId: '1'
+        },
+        payload
+      })
+
+    const getFoundSubmission = () => ({
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: '1',
+          contactId: 'contact-identifier-111',
+          season: '2024',
+          status: 'COMPLETE',
+          source: 'WEB',
+          version: '2024-10-10T13:13:11.000Z',
+          reportingExclude: false,
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z'
+        })
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the submission is updated successfully', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call update with the "status"', async () => {
+      const foundSubmission = getFoundSubmission()
+      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundSubmission.update).toHaveBeenCalledWith({
+        status: 'COMPLETE',
+        reportingExclude: undefined,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should call update with "reportingExclude"', async () => {
+      const foundSubmission = getFoundSubmission()
+      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ reportingExclude: true }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundSubmission.update).toHaveBeenCalledWith({
+        status: undefined,
+        reportingExclude: true,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should return the updated submission in the response body', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call handleNotFound if the submission is not found', async () => {
+      Submission.findByPk.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        h
+      )
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Submission not found for 1',
+        h
+      )
+    })
+
+    it('should return a not found response if the submission is not found', async () => {
+      Submission.findByPk.mockResolvedValueOnce(null)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if updating the submission fails', async () => {
+      const error = new Error('Database error')
+      Submission.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating submission',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while updating the submission', async () => {
+      const error = new Error('Database error')
+      Submission.findByPk.mockRejectedValueOnce(error)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
         getMockResponseToolkit()
       )
 
