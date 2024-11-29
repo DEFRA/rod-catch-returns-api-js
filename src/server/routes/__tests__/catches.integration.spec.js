@@ -21,6 +21,13 @@ describe('catches.integration', () => {
     await server.stop()
   })
 
+  const setupSubmissionAndActivity = async (contactId) => {
+    const submission = await createSubmission(server, contactId)
+    const submissionId = JSON.parse(submission.payload).id
+    const activity = await createActivity(server, submissionId)
+    return JSON.parse(activity.payload).id
+  }
+
   describe('POST /api/catches', () => {
     const CONTACT_IDENTIFIER_CREATE_CATCH = 'contact-identifier-create-catch'
 
@@ -34,18 +41,10 @@ describe('catches.integration', () => {
         await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_CATCH)
     )
 
-    const setupSubmissionAndActivity = async () => {
-      const submission = await createSubmission(
-        server,
+    it('should successfully create a catch for a submission with a valid request', async () => {
+      const activityId = await setupSubmissionAndActivity(
         CONTACT_IDENTIFIER_CREATE_CATCH
       )
-      const submissionId = JSON.parse(submission.payload).id
-      const activity = await createActivity(server, submissionId)
-      return JSON.parse(activity.payload).id
-    }
-
-    it('should successfully create a catch for a submission with a valid request', async () => {
-      const activityId = await setupSubmissionAndActivity()
 
       const createdCatch = await createCatch(server, activityId)
 
@@ -95,7 +94,9 @@ describe('catches.integration', () => {
     })
 
     it('should throw an error if the "dateCaught" year does not match the "season" in the submission', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_CATCH
+      )
 
       const createdCatch = await createCatch(server, activityId, {
         dateCaught: '2022-06-24T00:00:00+01:00'
@@ -114,7 +115,9 @@ describe('catches.integration', () => {
     })
 
     it('should throw an error if the "method" is internal', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_CATCH
+      )
 
       const createdCatch = await createCatch(server, activityId, {
         method: 'methods/4' // this method name is Unknown and is internal
@@ -133,7 +136,7 @@ describe('catches.integration', () => {
     })
   })
 
-  describe.skip('GET /api/catches/{catchId}/activity', () => {
+  describe('GET /api/catches/{catchId}/activity', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH =
       'contact-identifier-get-activity-for-catch'
 
@@ -151,24 +154,16 @@ describe('catches.integration', () => {
         )
     )
 
-    const setupSubmissionAndActivity = async () => {
-      const submission = await createSubmission(
-        server,
+    it('should successfully get the activity associated with a catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
         CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_CATCH
       )
-      const submissionId = JSON.parse(submission.payload).id
-      const activity = await createActivity(server, submissionId)
-      return JSON.parse(activity.payload).id
-    }
-
-    it('should successfully get the activity associated with a catch', async () => {
-      const activityId = await setupSubmissionAndActivity()
 
       const createdCatch = await createCatch(server, activityId)
 
       const catchId = JSON.parse(createdCatch.payload).id
 
-      const activity = server.inject({
+      const activity = await server.inject({
         method: 'GET',
         url: `/api/catches/${catchId}/activity`
       })
@@ -205,7 +200,7 @@ describe('catches.integration', () => {
           }
         }
       })
-      expect(activity.statusCode).toBe(201)
+      expect(activity.statusCode).toBe(200)
     })
 
     it('should return a 404 and empty body if the activity could not be found', async () => {
