@@ -16,10 +16,6 @@ describe('small-catches.integration', () => {
   const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
     'contact-identifier-create-small-catch'
 
-  const mockCurrentDate = new Date()
-  const currentYear = mockCurrentDate.getFullYear()
-  const currentMonth = mockCurrentDate.getMonth() + 1
-
   beforeAll(async () => {
     createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
@@ -40,12 +36,11 @@ describe('small-catches.integration', () => {
   }
 
   describe('POST /api/smallCatches ', () => {
-    beforeEach(
-      async () =>
-        await deleteSubmissionAndRelatedData(
-          CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-        )
-    )
+    beforeEach(async () => {
+      await deleteSubmissionAndRelatedData(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
+    })
 
     afterAll(
       async () =>
@@ -210,14 +205,15 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if small catch month is in the future', async () => {
-      const futureMonth = currentMonth === 12 ? 1 : currentMonth + 1
-      const futureSeason = currentMonth === 12 ? currentYear + 1 : currentYear
+      jest
+        .useFakeTimers({ advanceTimers: true })
+        .setSystemTime(new Date('2024-04-21')) // set month to April
 
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH,
         {
-          season: futureSeason
+          season: 2024
         }
       )
       const submissionId = JSON.parse(submission.payload).id
@@ -226,7 +222,7 @@ describe('small-catches.integration', () => {
       const activityId = JSON.parse(activity.payload).id
 
       const smallCatch = await createSmallCatch(server, activityId, {
-        month: getMonthNameFromNumber(futureMonth)
+        month: getMonthNameFromNumber(5) // set month to May
       })
 
       expect(JSON.parse(smallCatch.payload)).toEqual({
@@ -257,6 +253,7 @@ describe('small-catches.integration', () => {
         ]
       })
       expect(smallCatch.statusCode).toBe(400)
+      jest.useRealTimers()
     })
   })
 })
