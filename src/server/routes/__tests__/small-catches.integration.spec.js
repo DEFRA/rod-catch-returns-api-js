@@ -37,7 +37,6 @@ describe('small-catches.integration', () => {
 
   describe('POST /api/smallCatches ', () => {
     beforeEach(async () => {
-      jest.useRealTimers()
       await deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
       )
@@ -254,6 +253,7 @@ describe('small-catches.integration', () => {
         ]
       })
       expect(smallCatch.statusCode).toBe(400)
+      jest.useRealTimers()
     })
   })
 })
