@@ -73,6 +73,8 @@ export default [
       handler: async (request, h) => {
         const catchId = request.params.catchId
 
+        console.log(catchId)
+
         try {
           const catchWithActivity = await Catch.findOne({
             where: {
@@ -93,14 +95,12 @@ export default [
             )
           }
 
-          const foundActivity = catchWithActivity.Activity
-          const response = mapActivityToResponse(
-            request,
-            foundActivity.toJSON()
-          )
+          const foundActivity = catchWithActivity.toJSON().Activity
+          const response = mapActivityToResponse(request, foundActivity)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
+          console.log(error)
           return handleServerError(
             'Error fetching activity for catch',
             error,
