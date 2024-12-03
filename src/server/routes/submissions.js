@@ -2,8 +2,10 @@ import { Activity, Submission } from '../../entities/index.js'
 import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
-  getSubmissionByContactAndSeasonSchema
+  getSubmissionByContactAndSeasonSchema,
+  updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
 import { createActivity } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
@@ -23,13 +25,15 @@ export default [
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
        */
       handler: async (request, h) => {
-        const { contactId, season, status, source } = request.payload
+        const { contactId, season, status, source, reportingExclude } =
+          request.payload
         try {
           const createdSubmission = await Submission.create({
             contactId,
             season,
             status,
             source,
+            reportingExclude,
             version: Date.now()
           })
 
@@ -52,10 +56,7 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
-          logger.error('Error creating submission:', error)
-          return h
-            .response({ error: 'Unable create submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error creating submission', error, h)
         }
       },
       validate: {
@@ -98,12 +99,12 @@ export default [
             )
             return h.response(response).code(StatusCodes.OK)
           }
-          return h.response().code(StatusCodes.NOT_FOUND)
+          return handleNotFound(
+            `Submission not found for ${contactId} and ${season}`,
+            h
+          )
         } catch (error) {
-          logger.error('Error finding submission:', error)
-          return h
-            .response({ error: 'Unable find submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error finding submission', error, h)
         }
       },
       validate: {
@@ -145,7 +146,10 @@ export default [
 
           // If the submission does not exist, return 404
           if (!submissionWithActivities) {
-            return h.response().code(StatusCodes.NOT_FOUND)
+            return handleNotFound(
+              `Activities not found for submission with id ${submissionId}`,
+              h
+            )
           }
 
           // If no activities, return 200 with an empty array
@@ -164,10 +168,11 @@ export default [
             .response({ _embedded: { activities: response } })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error activities for submission:', error)
-          return h
-            .response({ error: 'Unable to find activities for submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError(
+            'Error finding activities for submission',
+            error,
+            h
+          )
         }
       },
       validate: {
@@ -186,7 +191,7 @@ export default [
        * Get a submission by its submissionId from the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
-       *     @param {string} request.params.submissionId - The ID of the submission to be retrieved.
+       *     @param {string} request.params.submissionId - The ID of the submission to be retrieved
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
        */
@@ -207,12 +212,9 @@ export default [
             )
             return h.response(response).code(StatusCodes.OK)
           }
-          return h.response().code(StatusCodes.NOT_FOUND)
+          return handleNotFound(`Submission not found ${submissionId}`, h)
         } catch (error) {
-          logger.error('Error finding submission:', error)
-          return h
-            .response({ error: 'Unable find submission' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error finding submission', error, h)
         }
       },
       validate: {
@@ -220,6 +222,54 @@ export default [
       },
       description: 'Get a submission by submissionId',
       notes: 'Get a submission by submissionId',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: '/submissions/{submissionId}',
+    options: {
+      /**
+       * Update a submission in the database using the submission ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.submissionId - The ID of the submission to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const { submissionId } = request.params
+        const { status, reportingExclude } = request.payload
+
+        try {
+          const submission = await Submission.findByPk(submissionId)
+
+          if (!submission) {
+            return handleNotFound(`Submission not found for ${submissionId}`, h)
+          }
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedSubmission = await submission.update({
+            status,
+            reportingExclude,
+            version: new Date()
+          })
+
+          const mappedSubmission = mapSubmissionToResponse(
+            request,
+            updatedSubmission.toJSON()
+          )
+
+          return h.response(mappedSubmission).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error updating submission', error, h)
+        }
+      },
+      validate: {
+        payload: updateSubmissionSchema
+      },
+      description: 'Update a submission',
+      notes: 'Update a submission',
       tags: ['api', 'submissions']
     }
   }

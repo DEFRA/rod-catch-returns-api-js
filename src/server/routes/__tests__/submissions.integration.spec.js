@@ -1,5 +1,8 @@
+import {
+  createActivity,
+  createSubmission
+} from '../../../test-utils/server-test-utils.js'
 import { Submission } from '../../../entities/index.js'
-import { createActivity } from '../../../test-utils/server-test-utils.js'
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
@@ -60,7 +63,7 @@ describe('submissions.integration', () => {
       'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
   })
 
-  describe('POST /api/submissions ', () => {
+  describe('POST /api/submissions', () => {
     const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
       'contact-identifier-create-submission'
     beforeEach(async () => {
@@ -565,6 +568,102 @@ describe('submissions.integration', () => {
           activities: []
         }
       })
+    })
+  })
+
+  describe('PATCH /api/submissions/{submissionId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
+      'contact-identifier-update-submission'
+    beforeEach(async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    it('should successfully update a submission with a valid status', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).status).toBe('INCOMPLETE')
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(JSON.parse(updatedSubmission.payload).status).toBe('SUBMITTED')
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should successfully update a submission when reportingExclude is true', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).reportingExclude).toBeFalsy()
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          reportingExclude: true
+        }
+      })
+
+      expect(
+        JSON.parse(updatedSubmission.payload).reportingExclude
+      ).toBeTruthy()
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should not update a field that is not updateable, but still return a 200 and the original submission', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          season: 2024
+        }
+      })
+
+      expect(JSON.parse(updatedSubmission.payload).season).toBe(2023)
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: '/api/submissions/0',
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(updatedSubmission.payload).toBe('')
+      expect(updatedSubmission.statusCode).toBe(404)
     })
   })
 })

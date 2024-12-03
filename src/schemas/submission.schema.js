@@ -1,3 +1,4 @@
+import { SOURCES, STATUSES } from '../utils/constants.js'
 import Joi from 'joi'
 
 export const createSubmissionSchema = Joi.object({
@@ -17,13 +18,23 @@ export const createSubmissionSchema = Joi.object({
     .description('The season (year) pertaining to the submission'),
   status: Joi.string()
     .required()
-    .valid('INCOMPLETE', 'SUBMITTED')
+    .valid(...Object.values(STATUSES))
     .description('The submission status'),
   source: Joi.string()
     .required()
-    .valid('WEB', 'PAPER')
-    .description('The submission source')
+    .valid(...Object.values(SOURCES))
+    .description('The submission source'),
+  reportingExclude: Joi.boolean()
+    .optional()
+    .description(
+      'Indicates if the submission should be excluded from reporting'
+    )
 })
+
+export const updateSubmissionSchema = Joi.object({
+  status: createSubmissionSchema.extract('status').optional(),
+  reportingExclude: createSubmissionSchema.extract('reportingExclude')
+}).unknown()
 
 export const getSubmissionByContactAndSeasonSchema = Joi.object({
   contact_id: Joi.string().required().description('The contact identifier'),

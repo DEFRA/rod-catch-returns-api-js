@@ -1,7 +1,8 @@
 import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
-  getSubmissionByContactAndSeasonSchema
+  getSubmissionByContactAndSeasonSchema,
+  updateSubmissionSchema
 } from '../submission.schema.js'
 
 describe('Validation Schemas', () => {
@@ -109,6 +110,72 @@ describe('Validation Schemas', () => {
       expect(error.details[0].message).toContain(
         '"source" must be one of [WEB, PAPER]'
       )
+    })
+  })
+
+  describe('updateSubmissionSchema', () => {
+    const getValidPayload = () => ({
+      status: 'SUBMITTED',
+      reportingExclude: true
+    })
+
+    it('should validate successfully when all fields are provided and valid', () => {
+      const payload = getValidPayload()
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should validate successfully when "status" is provided and valid', () => {
+      const payload = { status: 'INCOMPLETE' }
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should validate successfully when "reportingExclude" is provided and valid', () => {
+      const payload = { reportingExclude: true }
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should validate successfully when no fields are provided (partial update)', () => {
+      const payload = {}
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "status" is not one of the allowed values', () => {
+      const payload = { status: 'PENDING' }
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain(
+        '"status" must be one of [INCOMPLETE, SUBMITTED]'
+      )
+    })
+
+    it('should return an error if "reportingExclude" is not a boolean', () => {
+      const payload = { reportingExclude: 'yes' }
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain(
+        '"reportingExclude" must be a boolean'
+      )
+    })
+
+    it('should validate successfully when unknown fields are included (due to `.unknown()`)', () => {
+      const payload = {
+        status: 'SUBMITTED',
+        reportingExclude: true,
+        extraField: 'allowed'
+      }
+      const { error } = updateSubmissionSchema.validate(payload)
+
+      expect(error).toBeUndefined()
     })
   })
 
