@@ -143,3 +143,7 @@ export const createCatchSchema = Joi.object({
     'Is this entry excluded from reporting'
   )
 }).unknown()
+
+export const catchIdSchema = Joi.object({
+  catchId: Joi.number().required().description('The id of the catch')
+})

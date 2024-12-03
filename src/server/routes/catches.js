@@ -1,11 +1,12 @@
+import { Activity, Catch } from '../../entities/index.js'
+import { catchIdSchema, createCatchSchema } from '../../schemas/catch.schema.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
   mapCatchToResponse,
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
-import { Catch } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import { createCatchSchema } from '../../schemas/catch.schema.js'
-import logger from '../../utils/logger-utils.js'
+import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 
 export default [
   {
@@ -29,7 +30,7 @@ export default [
        *     @param {boolean} request.payload.noDateRecorded - Indicates if no specific date was recorded, to allow FMT users to report on the default month
        *     @param {string} request.payload.reportingExclude - Is this entry excluded from reporting
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
-       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Activity}
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
        */
       handler: async (request, h) => {
         try {
@@ -44,10 +45,7 @@ export default [
 
           return h.response(catchResponse).code(StatusCodes.CREATED)
         } catch (error) {
-          logger.error('Error create catch:', error)
-          return h
-            .response({ error: 'Unable to create catch' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error creating catch', error, h)
         }
       },
       validate: {
@@ -57,6 +55,62 @@ export default [
         'Create a catch (salmon and large sea trout) for an activity in the database',
       notes:
         'Create a catch (salmon and large sea trout) for an activity in the database',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/catches/{catchId}/activity',
+    options: {
+      /**
+       * Retrieve the activity associated with a catch using the catch ID from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch.
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Activity}
+       */
+      handler: async (request, h) => {
+        const catchId = request.params.catchId
+
+        try {
+          const catchWithActivity = await Catch.findOne({
+            where: {
+              id: catchId
+            },
+            include: [
+              {
+                model: Activity,
+                required: true // Ensures the join will only return results if an associated Activity exists
+              }
+            ]
+          })
+
+          if (!catchWithActivity) {
+            return handleNotFound(
+              `Activity not found for catch with ID ${catchId}`,
+              h
+            )
+          }
+
+          const foundActivity = catchWithActivity.toJSON().Activity
+          const response = mapActivityToResponse(request, foundActivity)
+
+          return h.response(response).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error fetching activity for catch',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: catchIdSchema
+      },
+      description: 'Retrieve the activity associated with a catch',
+      notes:
+        'Retrieve the activity associated with a catch using the catch ID from the database',
       tags: ['api', 'catches']
     }
   }
