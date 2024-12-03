@@ -257,7 +257,7 @@ describe('small-catches.integration', () => {
     })
   })
 
-  describe.skip('GET /api/smallCatches/{smallCatchId}/activity', () => {
+  describe('GET /api/smallCatches/{smallCatchId}/activity', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH =
       'contact-identifier-get-activity-for-small-catch'
 
