@@ -256,4 +256,82 @@ describe('small-catches.integration', () => {
       jest.useRealTimers()
     })
   })
+
+  describe.skip('GET /api/smallCatches/{smallCatchId}/activity', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH =
+      'contact-identifier-get-activity-for-small-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+        )
+    )
+
+    it('should successfully get the activity associated with a small catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+      )
+
+      const smallCatch = await createSmallCatch(server, activityId)
+
+      const smallCatchId = JSON.parse(smallCatch.payload).id
+
+      const activity = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}/activity`
+      })
+
+      expect(JSON.parse(activity.payload)).toEqual({
+        id: expect.any(String),
+        daysFishedWithMandatoryRelease: 20,
+        daysFishedOther: 10,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          submission: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/submission`
+            )
+          },
+          catches: {
+            href: expect.stringMatching(`/api/activities/${activityId}/catches`)
+          },
+          river: {
+            href: expect.stringMatching(`/api/activities/${activityId}/river`)
+          },
+          smallCatches: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/smallCatches`
+            )
+          }
+        }
+      })
+      expect(activity.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/smallCatches/0/activity'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
