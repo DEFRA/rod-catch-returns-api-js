@@ -1,7 +1,9 @@
 import {
+  extractDateFromISO,
   getMonthNameFromNumber,
   getMonthNumberFromName
 } from '../date-utils.js'
+
 describe('date-utils.unit', () => {
   describe('getMonthNumberFromName', () => {
     it('returns 1 for JANUARY', () => {
@@ -102,6 +104,64 @@ describe('date-utils.unit', () => {
     it('returns an error for undefined', () => {
       expect(() => getMonthNameFromNumber(undefined)).toThrow(
         'Invalid month number: monthNumber must be an integer between 1 and 12.'
+      )
+    })
+  })
+
+  describe('extractDateFromISO', () => {
+    it('should extract the correct date from a valid ISO 8601 string with UTC offset in summer', () => {
+      const isoDateTime = '2024-06-02T00:00:00+01:00'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-06-02')
+    })
+
+    it('should extract the correct date from a valid ISO 8601 string with UTC offset in winter', () => {
+      const isoDateTime = '2024-02-21T00:00:00+01:00'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-02-21')
+    })
+
+    it('should extract the correct date from a valid ISO 8601 string in UTC', () => {
+      const isoDateTime = '2024-03-21T00:00:00+00:00'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-03-21')
+    })
+
+    it('should extract the correct date from a valid ISO 8601 string with a negative UTC offset', () => {
+      const isoDateTime = '2024-12-25T15:00:00-05:00'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-12-25')
+    })
+
+    it('should extract the correct date when the ISO string has milliseconds', () => {
+      const isoDateTime = '2024-01-01T00:00:00.000Z'
+      const result = extractDateFromISO(isoDateTime)
+      expect(result).toBe('2024-01-01')
+    })
+
+    it('should throw an error if the input is not a valid ISO 8601 string', () => {
+      const invalidDateTime = 'invalid-date-time'
+      expect(() => extractDateFromISO(invalidDateTime)).toThrowError(
+        'Invalid ISO 8601 date-time string'
+      )
+    })
+
+    it('should handle edge cases like empty strings gracefully', () => {
+      const emptyString = ''
+      expect(() => extractDateFromISO(emptyString)).toThrowError(
+        'Invalid ISO 8601 date-time string'
+      )
+    })
+
+    it('should handle null input gracefully', () => {
+      expect(() => extractDateFromISO(null)).toThrowError(
+        'Invalid ISO 8601 date-time string'
+      )
+    })
+
+    it('should handle undefined input gracefully', () => {
+      expect(() => extractDateFromISO(undefined)).toThrowError(
+        'Invalid ISO 8601 date-time string'
       )
     })
   })

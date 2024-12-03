@@ -70,7 +70,7 @@ export const createActivitySchema = Joi.object({
     .required()
     .external(validateRiver)
     .pattern(/^rivers\//)
-    .description('The submission id prefixed with rivers/')
+    .description('The river id prefixed with rivers/')
 }).external(async (value, helper) => {
   const submissionId = extractSubmissionId(value.submission)
   const riverId = extractRiverId(value.river)

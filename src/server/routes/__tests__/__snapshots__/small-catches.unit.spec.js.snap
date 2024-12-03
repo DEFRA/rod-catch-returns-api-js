@@ -16,7 +16,7 @@ exports[`smallCatches.unit POST /smallCatches should return the created small ca
       "href": "http://localhost:3000/api/smallCatches/1",
     },
   },
-  "count": [
+  "counts": [
     {
       "_links": {
         "method": {

@@ -1,4 +1,4 @@
-export const getServerDetails = () => ({
+export const getServerDetails = (overrides = {}) => ({
   info: {
     host: 'localhost:3000'
   },
@@ -6,12 +6,19 @@ export const getServerDetails = () => ({
     info: {
       protocol: 'http'
     }
-  }
+  },
+  ...overrides
 })
 
 export const getResponseToolkit = () => ({
   response: jest.fn().mockReturnThis(),
   code: jest.fn()
+})
+
+export const getMockResponseToolkit = () => ({
+  response: jest.fn().mockImplementation((payload) => ({
+    code: (statusCode) => ({ payload, statusCode })
+  }))
 })
 
 export const createActivity = (
@@ -84,6 +91,39 @@ export const createSmallCatch = (
       released,
       counts,
       noMonthRecorded
+    }
+  })
+}
+
+export const createCatch = (
+  server,
+  activityId,
+  {
+    dateCaught = '2023-06-24T00:00:00+01:00',
+    species = 'species/1',
+    mass = {
+      kg: 9.61,
+      oz: 339,
+      type: 'IMPERIAL'
+    },
+    method = 'methods/1',
+    released = true,
+    onlyMonthRecorded = false,
+    noDateRecorded = false
+  } = {}
+) => {
+  return server.inject({
+    method: 'POST',
+    url: '/api/catches',
+    payload: {
+      activity: `activities/${activityId}`,
+      dateCaught,
+      species,
+      mass,
+      method,
+      released,
+      onlyMonthRecorded,
+      noDateRecorded
     }
   })
 }

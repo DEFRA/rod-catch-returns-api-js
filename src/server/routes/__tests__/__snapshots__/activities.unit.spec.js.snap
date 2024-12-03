@@ -1,5 +1,195 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`activities.unit GET /activities/{activityId}/catches should return a 200 status code and the catches if the activity is found 1`] = `
+{
+  "_embedded": {
+    "catches": [
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/catches/550/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/1",
+          },
+          "catch": {
+            "href": "http://localhost:3000/api/catches/550",
+          },
+          "method": {
+            "href": "http://localhost:3000/api/catches/550/method",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/catches/550",
+          },
+          "species": {
+            "href": "http://localhost:3000/api/catches/550/species",
+          },
+        },
+        "createdAt": "2024-11-15T10:32:02.650Z",
+        "dateCaught": "2024-06-23",
+        "id": "550",
+        "mass": {
+          "kg": 9.610488,
+          "oz": 339,
+          "type": "IMPERIAL",
+        },
+        "noDateRecorded": false,
+        "onlyMonthRecorded": false,
+        "released": true,
+        "reportingExclude": true,
+        "updatedAt": "2024-11-15T10:32:02.650Z",
+        "version": "2024-11-15T10:32:02.647Z",
+      },
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/catches/1600/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/1",
+          },
+          "catch": {
+            "href": "http://localhost:3000/api/catches/1600",
+          },
+          "method": {
+            "href": "http://localhost:3000/api/catches/1600/method",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/catches/1600",
+          },
+          "species": {
+            "href": "http://localhost:3000/api/catches/1600/species",
+          },
+        },
+        "createdAt": "2024-11-18T11:22:36.438Z",
+        "dateCaught": "2024-06-24",
+        "id": "1600",
+        "mass": {
+          "kg": 9.610488,
+          "oz": 339,
+          "type": "IMPERIAL",
+        },
+        "noDateRecorded": false,
+        "onlyMonthRecorded": false,
+        "released": true,
+        "reportingExclude": false,
+        "updatedAt": "2024-11-18T11:22:36.438Z",
+        "version": "2024-11-18T11:22:36.437Z",
+      },
+    ],
+  },
+}
+`;
+
+exports[`activities.unit GET /activities/{activityId}/smallCatches should return a 200 status code and the small catches if the activity is found 1`] = `
+{
+  "_embedded": {
+    "smallCatches": [
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/smallCatches/53/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/3",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/smallCatches/53",
+          },
+          "smallCatch": {
+            "href": "http://localhost:3000/api/smallCatches/53",
+          },
+        },
+        "counts": [
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/1",
+              },
+            },
+            "count": 3,
+          },
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/2",
+              },
+            },
+            "count": 2,
+          },
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/3",
+              },
+            },
+            "count": 1,
+          },
+        ],
+        "createdAt": "2024-10-11T09:30:57.463Z",
+        "id": "53",
+        "month": "APRIL",
+        "noMonthRecorded": false,
+        "released": 3,
+        "reportingExclude": false,
+        "updatedAt": "2024-10-11T09:30:57.463Z",
+        "version": "2024-10-11T09:30:57.463Z",
+      },
+      {
+        "_links": {
+          "activity": {
+            "href": "http://localhost:3000/api/smallCatches/700/activity",
+          },
+          "activityEntity": {
+            "href": "http://localhost:3000/api/activities/3",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/smallCatches/700",
+          },
+          "smallCatch": {
+            "href": "http://localhost:3000/api/smallCatches/700",
+          },
+        },
+        "counts": [
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/1",
+              },
+            },
+            "count": 1,
+          },
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/2",
+              },
+            },
+            "count": 2,
+          },
+          {
+            "_links": {
+              "method": {
+                "href": "http://localhost:3000/api/methods/3",
+              },
+            },
+            "count": 1,
+          },
+        ],
+        "createdAt": "2024-10-30T14:14:16.698Z",
+        "id": "700",
+        "month": "JUNE",
+        "noMonthRecorded": false,
+        "released": 3,
+        "reportingExclude": false,
+        "updatedAt": "2024-10-30T14:14:16.698Z",
+        "version": "2024-10-30T14:14:16.697Z",
+      },
+    ],
+  },
+}
+`;
+
 exports[`activities.unit POST /activities should return the created activity if the call to create the activity is successful 1`] = `
 {
   "_links": {

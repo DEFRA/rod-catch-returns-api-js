@@ -3,7 +3,9 @@ import {
   createSmallCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
+import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
+import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import { getMonthNameFromNumber } from '../../../utils/date-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -14,11 +16,8 @@ describe('small-catches.integration', () => {
   const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
     'contact-identifier-create-small-catch'
 
-  const mockCurrentDate = new Date()
-  const currentYear = mockCurrentDate.getFullYear()
-  const currentMonth = mockCurrentDate.getMonth() + 1
-
   beforeAll(async () => {
+    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
   })
 
@@ -37,12 +36,11 @@ describe('small-catches.integration', () => {
   }
 
   describe('POST /api/smallCatches ', () => {
-    beforeEach(
-      async () =>
-        await deleteSubmissionAndRelatedData(
-          CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-        )
-    )
+    beforeEach(async () => {
+      await deleteSubmissionAndRelatedData(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
+    })
 
     afterAll(
       async () =>
@@ -51,7 +49,7 @@ describe('small-catches.integration', () => {
         )
     )
 
-    it('should successfully create a activity for a submission with a valid request', async () => {
+    it('should successfully create a small catch for a submission with a valid request', async () => {
       const activityId = await setupSubmissionAndActivity()
 
       const smallCatches = await createSmallCatch(server, activityId)
@@ -60,7 +58,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatches.payload)).toEqual({
         id: expect.any(String),
         month: 'FEBRUARY',
-        count: [
+        counts: [
           {
             count: 3,
             _links: {
@@ -207,14 +205,15 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if small catch month is in the future', async () => {
-      const futureMonth = currentMonth === 12 ? 1 : currentMonth + 1
-      const futureSeason = currentMonth === 12 ? currentYear + 1 : currentYear
+      jest
+        .useFakeTimers({ advanceTimers: true })
+        .setSystemTime(new Date('2024-04-21')) // set month to April
 
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH,
         {
-          season: futureSeason
+          season: 2024
         }
       )
       const submissionId = JSON.parse(submission.payload).id
@@ -223,7 +222,7 @@ describe('small-catches.integration', () => {
       const activityId = JSON.parse(activity.payload).id
 
       const smallCatch = await createSmallCatch(server, activityId, {
-        month: getMonthNameFromNumber(futureMonth)
+        month: getMonthNameFromNumber(5) // set month to May
       })
 
       expect(JSON.parse(smallCatch.payload)).toEqual({
@@ -254,6 +253,7 @@ describe('small-catches.integration', () => {
         ]
       })
       expect(smallCatch.statusCode).toBe(400)
+      jest.useRealTimers()
     })
   })
 })
