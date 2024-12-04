@@ -131,7 +131,7 @@ export default [
         const catchId = request.params.catchId
 
         try {
-          const catchWithActivity = await Catch.findOne({
+          const catchWithSpecies = await Catch.findOne({
             where: {
               id: catchId
             },
@@ -143,14 +143,14 @@ export default [
             ]
           })
 
-          if (!catchWithActivity) {
+          if (!catchWithSpecies) {
             return handleNotFound(
               `Species not found for catch with ID ${catchId}`,
               h
             )
           }
 
-          const foundSpecies = catchWithActivity.toJSON().Species
+          const foundSpecies = catchWithSpecies.toJSON().Species
           const response = mapSpeciesToResponse(request, foundSpecies)
 
           return h.response(response).code(StatusCodes.OK)
