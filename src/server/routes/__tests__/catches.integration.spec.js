@@ -214,7 +214,7 @@ describe('catches.integration', () => {
     })
   })
 
-  describe.skip('GET /api/catches/{catchId}/species', () => {
+  describe('GET /api/catches/{catchId}/species', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SPECIES =
       'contact-identifier-get-activity-for-species'
 
@@ -247,11 +247,19 @@ describe('catches.integration', () => {
       })
 
       expect(JSON.parse(species.payload)).toEqual({
-        id: expect.any(String),
+        id: '1',
         name: 'Salmon',
-        smallCatchMass: '0.396893',
+        smallCatchMass: 0.396893,
         createdAt: expect.any(String),
-        updatedAt: expect.any(String)
+        updatedAt: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching('/api/species/1')
+          },
+          species: {
+            href: expect.stringMatching('/api/species/1')
+          }
+        }
       })
       expect(species.statusCode).toBe(200)
     })
