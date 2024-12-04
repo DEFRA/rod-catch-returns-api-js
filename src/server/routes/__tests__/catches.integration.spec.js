@@ -213,4 +213,57 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe.skip('GET /api/catches/{catchId}/species', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SPECIES =
+      'contact-identifier-get-activity-for-species'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SPECIES
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SPECIES
+        )
+    )
+
+    it('should successfully get the species associated with a catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SPECIES
+      )
+
+      const createdCatch = await createCatch(server, activityId)
+
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      const species = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/species`
+      })
+
+      expect(JSON.parse(species.payload)).toEqual({
+        id: expect.any(String),
+        name: 'Salmon',
+        smallCatchMass: '0.396893',
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String)
+      })
+      expect(species.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the species could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/catches/0/species'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
