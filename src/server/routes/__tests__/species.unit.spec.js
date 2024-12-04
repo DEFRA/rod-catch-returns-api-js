@@ -1,17 +1,27 @@
+import {
+  getMockResponseToolkit,
+  getServerDetails
+} from '../../../test-utils/server-test-utils.js'
 import { Species } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
+import { handleServerError } from '../../../utils/server-utils.js'
 import routes from '../species.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
+
+const [
+  {
+    options: { handler: getAllSpeciesHandler }
+  }
+] = routes
+
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('species.unit', () => {
   describe('GET /species', () => {
-    const getResponseToolkit = () => ({
-      response: jest.fn().mockReturnThis(),
-      code: jest.fn()
-    })
-
     const getSpeciesData = () => [
       {
         id: '1',
@@ -33,68 +43,42 @@ describe('species.unit', () => {
       jest.clearAllMocks()
     })
 
-    const handler = routes[0].options.handler
-
-    it('should return a 200 status code if the call to fetch all species is successful', async () => {
+    it('should return a 200 status code and the species if the call to fetch all species is successful', async () => {
       Species.findAll.mockResolvedValueOnce(getSpeciesData())
 
-      const h = getResponseToolkit()
-      await handler({}, h)
+      const result = await getAllSpeciesHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(200)
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
     })
 
-    it('should return all species if the call to fetch all species is successfu', async () => {
-      const speciesData = getSpeciesData()
-      Species.findAll.mockResolvedValueOnce(speciesData)
+    it('should call handleServerError if an error occurs while fetching species', async () => {
+      const error = new Error('Database error')
+      Species.findAll.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      const h = getResponseToolkit()
-      await handler({}, h)
+      await getAllSpeciesHandler(getServerDetails(), h)
 
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          _embedded: {
-            species: speciesData
-          }
-        })
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching species',
+        error,
+        h
       )
     })
 
-    it('should log an error if an error occurs while fetching species', async () => {
+    it('should an error response if an error occurs while fetching species', async () => {
       const error = new Error('Database error')
       Species.findAll.mockRejectedValueOnce(error)
 
-      const h = getResponseToolkit()
-      await handler({}, h)
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching species:',
-        error
+      const result = await getAllSpeciesHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
       )
-    })
 
-    it('should return 500 if an error occurs while fetching species', async () => {
-      const error = new Error('Database error')
-      Species.findAll.mockRejectedValueOnce(error)
-
-      const h = getResponseToolkit()
-      await handler({}, h)
-
-      expect(h.code).toHaveBeenCalledWith(500)
-    })
-
-    it('should return the error response in the body if an error occurs while fetching species', async () => {
-      const error = new Error('Database error')
-      Species.findAll.mockRejectedValueOnce(error)
-
-      const h = getResponseToolkit()
-      await handler({}, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable to fetch species'
-        })
-      )
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })
