@@ -274,4 +274,65 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe.skip('GET /api/catches/{catchId}/method', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_METHOD =
+      'contact-identifier-get-activity-for-method'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_METHOD
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_METHOD
+        )
+    )
+
+    it('should successfully get the method associated with a catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_METHOD
+      )
+
+      const createdCatch = await createCatch(server, activityId)
+
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      const fishingMethod = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/method`
+      })
+
+      expect(JSON.parse(fishingMethod.payload)).toEqual({
+        id: '1',
+        internal: false,
+        name: 'Fly',
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching('/api/method/1')
+          },
+          method: {
+            href: expect.stringMatching('/api/method/1')
+          }
+        }
+      })
+      expect(fishingMethod.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the method could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/catches/0/method'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
