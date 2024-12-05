@@ -31,6 +31,24 @@ exports[`catches.unit GET /catches/{catchId}/activity should return a 200 status
 }
 `;
 
+exports[`catches.unit GET /catches/{catchId}/method should return a 200 status code and the method if the catch and method is found 1`] = `
+{
+  "_links": {
+    "method": {
+      "href": "http://localhost:3000/api/methods/1",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/methods/1",
+    },
+  },
+  "createdAt": "2018-11-07T10:00:00.000Z",
+  "id": "1",
+  "internal": false,
+  "name": "Fly",
+  "updatedAt": "2018-11-07T10:00:00.000Z",
+}
+`;
+
 exports[`catches.unit GET /catches/{catchId}/species should return a 200 status code and the species if the catch and species is found 1`] = `
 {
   "_links": {
