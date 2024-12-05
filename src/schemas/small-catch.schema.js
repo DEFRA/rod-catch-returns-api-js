@@ -99,3 +99,7 @@ export const createSmallCatchSchema = Joi.object({
 
   return value
 })
+
+export const smallCatchIdSchema = Joi.object({
+  smallCatchId: Joi.number().required().description('The id of the small catch')
+})

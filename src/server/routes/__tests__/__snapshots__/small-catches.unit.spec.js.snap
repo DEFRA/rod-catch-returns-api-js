@@ -1,5 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`smallCatches.unit GET /smallCatches/{smallCatchId}/activity should return a 200 status code and the activity if the small catch and activity is found 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/activities/3",
+    },
+    "catches": {
+      "href": "http://localhost:3000/api/activities/3/catches",
+    },
+    "river": {
+      "href": "http://localhost:3000/api/activities/3/river",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/activities/3",
+    },
+    "smallCatches": {
+      "href": "http://localhost:3000/api/activities/3/smallCatches",
+    },
+    "submission": {
+      "href": "http://localhost:3000/api/activities/3/submission",
+    },
+  },
+  "createdAt": "2024-10-10T13:26:30.344Z",
+  "daysFishedOther": 0,
+  "daysFishedWithMandatoryRelease": 1,
+  "id": "3",
+  "updatedAt": "2024-10-10T13:26:30.344Z",
+  "version": "2024-10-10T13:26:30.345Z",
+}
+`;
+
 exports[`smallCatches.unit POST /smallCatches should return the created small catch if the call to create it is successful 1`] = `
 {
   "_links": {
