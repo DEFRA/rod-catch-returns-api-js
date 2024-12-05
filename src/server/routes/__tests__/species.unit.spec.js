@@ -69,7 +69,7 @@ describe('species.unit', () => {
       )
     })
 
-    it('should an error response if an error occurs while fetching species', async () => {
+    it('should return an error response if an error occurs while fetching species', async () => {
       const error = new Error('Database error')
       Species.findAll.mockRejectedValueOnce(error)
 
