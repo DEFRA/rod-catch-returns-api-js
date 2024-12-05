@@ -23,18 +23,34 @@ describe('species.integration', () => {
       expect(JSON.parse(result.payload)._embedded.species).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            id: expect.any(String),
+            id: '1',
             name: 'Salmon',
-            smallCatchMass: '0.396893',
+            smallCatchMass: 0.396893,
             createdAt: expect.any(String),
-            updatedAt: expect.any(String)
+            updatedAt: expect.any(String),
+            _links: {
+              self: {
+                href: expect.stringMatching('/api/species/1')
+              },
+              species: {
+                href: expect.stringMatching('/api/species/1')
+              }
+            }
           }),
           expect.objectContaining({
-            id: expect.any(String),
+            id: '2',
             name: 'Sea Trout',
-            smallCatchMass: '0.396893',
+            smallCatchMass: 0.396893,
             createdAt: expect.any(String),
-            updatedAt: expect.any(String)
+            updatedAt: expect.any(String),
+            _links: {
+              self: {
+                href: expect.stringMatching('/api/species/2')
+              },
+              species: {
+                href: expect.stringMatching('/api/species/2')
+              }
+            }
           })
         ])
       )
