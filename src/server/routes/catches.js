@@ -1,4 +1,4 @@
-import { Activity, Catch, Species } from '../../entities/index.js'
+import { Activity, Catch, Method, Species } from '../../entities/index.js'
 import { catchIdSchema, createCatchSchema } from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
@@ -7,6 +7,7 @@ import {
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
 
 export default [
@@ -164,6 +165,58 @@ export default [
       description: 'Retrieve the species associated with a catch',
       notes:
         'Retrieve the species associated with a catch using the catch ID from the database',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/catches/{catchId}/method',
+    options: {
+      /**
+       * Retrieve the fishing method associated with a catch using the catch ID from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch.
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Method}
+       */
+      handler: async (request, h) => {
+        const catchId = request.params.catchId
+
+        try {
+          const catchWithMethod = await Catch.findOne({
+            where: {
+              id: catchId
+            },
+            include: [
+              {
+                model: Method,
+                required: true // Ensures the join will only return results if an associated Method exists
+              }
+            ]
+          })
+
+          if (!catchWithMethod) {
+            return handleNotFound(
+              `Method not found for catch with ID ${catchId}`,
+              h
+            )
+          }
+
+          const foundMethod = catchWithMethod.toJSON().Method
+          const response = mapMethodToResponse(request, foundMethod)
+
+          return h.response(response).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error fetching method for catch', error, h)
+        }
+      },
+      validate: {
+        params: catchIdSchema
+      },
+      description: 'Retrieve the fishing method associated with a catch',
+      notes:
+        'Retrieve the fishing method associated with a catch using the catch ID from the database',
       tags: ['api', 'catches']
     }
   }

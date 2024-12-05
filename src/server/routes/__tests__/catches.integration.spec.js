@@ -275,7 +275,7 @@ describe('catches.integration', () => {
     })
   })
 
-  describe.skip('GET /api/catches/{catchId}/method', () => {
+  describe('GET /api/catches/{catchId}/method', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_METHOD =
       'contact-identifier-get-activity-for-method'
 
@@ -315,10 +315,10 @@ describe('catches.integration', () => {
         updatedAt: expect.any(String),
         _links: {
           self: {
-            href: expect.stringMatching('/api/method/1')
+            href: expect.stringMatching('/api/methods/1')
           },
           method: {
-            href: expect.stringMatching('/api/method/1')
+            href: expect.stringMatching('/api/methods/1')
           }
         }
       })
