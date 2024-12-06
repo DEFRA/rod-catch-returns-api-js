@@ -23,18 +23,40 @@ describe('rivers.integration', () => {
       expect(JSON.parse(result.payload)._embedded.rivers).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            id: expect.any(String),
+            id: '1',
             internal: false,
             name: 'Aber',
             createdAt: expect.any(String),
-            updatedAt: expect.any(String)
+            updatedAt: expect.any(String),
+            _links: {
+              self: {
+                href: expect.stringMatching('/api/rivers/1')
+              },
+              river: {
+                href: expect.stringMatching('/api/rivers/1')
+              },
+              catchment: {
+                href: expect.stringMatching('/api/rivers/1/catchment')
+              }
+            }
           }),
           expect.objectContaining({
-            id: expect.any(String),
+            id: '229',
             internal: true,
             name: 'Unknown (Anglian)',
             createdAt: expect.any(String),
-            updatedAt: expect.any(String)
+            updatedAt: expect.any(String),
+            _links: {
+              self: {
+                href: expect.stringMatching('/api/rivers/229')
+              },
+              river: {
+                href: expect.stringMatching('/api/rivers/229')
+              },
+              catchment: {
+                href: expect.stringMatching('/api/rivers/229/catchment')
+              }
+            }
           })
         ])
       )
