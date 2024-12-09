@@ -1,6 +1,7 @@
 import { SOURCES, STATUSES } from '../utils/constants.js'
 import Joi from 'joi'
 
+// TODO clean this up with correct error messages
 export const createSubmissionSchema = Joi.object({
   contactId: Joi.string().required().description('The contact identifier'),
   season: Joi.number()

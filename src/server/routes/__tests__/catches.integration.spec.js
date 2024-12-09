@@ -105,6 +105,7 @@ describe('catches.integration', () => {
       expect(JSON.parse(createdCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'Catch',
             message: 'CATCH_YEAR_MISMATCH',
             property: 'dateCaught',
             value: '2022-06-24T00:00:00+01:00'
@@ -126,6 +127,7 @@ describe('catches.integration', () => {
       expect(JSON.parse(createdCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'Catch',
             message: 'CATCH_METHOD_FORBIDDEN',
             property: 'method',
             value: 'methods/4'

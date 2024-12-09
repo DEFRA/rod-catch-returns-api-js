@@ -123,6 +123,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch2.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_DUPLICATE_FOUND',
             property: 'month',
             value: 'FEBRUARY'
@@ -150,6 +151,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
             property: 'counts',
             value: [
@@ -195,6 +197,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
             property: 'released',
             value: 6
@@ -228,6 +231,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_MONTH_IN_FUTURE',
             value: {
               activity: expect.any(String),

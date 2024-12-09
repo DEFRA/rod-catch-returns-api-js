@@ -105,12 +105,14 @@ describe('activities.integration', () => {
       expect(JSON.parse(activity.payload)).toEqual({
         errors: [
           {
-            message: 'The submission does not exist',
+            entity: 'Activity',
+            message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'submission',
             value: 'submissions/0'
           },
           {
-            message: 'The submission does not exist',
+            entity: 'Activity',
+            message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'daysFishedWithMandatoryRelease',
             value: 20
           }
@@ -140,7 +142,8 @@ describe('activities.integration', () => {
       expect(JSON.parse(activity.payload)).toEqual({
         errors: [
           {
-            message: 'This river is restricted',
+            entity: 'Activity',
+            message: 'ACTIVITY_RIVER_FORBIDDEN',
             property: 'river',
             value: 'rivers/229'
           }
@@ -181,7 +184,8 @@ describe('activities.integration', () => {
       expect(JSON.parse(activityFail.payload)).toEqual({
         errors: [
           {
-            message: 'River duplicate found',
+            entity: 'Activity',
+            message: 'ACTIVITY_RIVER_DUPLICATE_FOUND',
             property: 'river',
             value: 'rivers/3'
           }
