@@ -51,7 +51,8 @@ export default [
         }
       },
       validate: {
-        payload: createCatchSchema
+        payload: createCatchSchema,
+        options: { entity: 'Catch' }
       },
       description:
         'Create a catch (salmon and large sea trout) for an activity in the database',

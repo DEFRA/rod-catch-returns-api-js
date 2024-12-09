@@ -60,7 +60,8 @@ export default [
         }
       },
       validate: {
-        payload: createSubmissionSchema
+        payload: createSubmissionSchema,
+        options: { entity: 'Submission' }
       },
       description: 'Create a submission',
       notes: 'Create a submission',
@@ -266,7 +267,8 @@ export default [
         }
       },
       validate: {
-        payload: updateSubmissionSchema
+        payload: updateSubmissionSchema,
+        options: { entity: 'Submission' }
       },
       description: 'Update a submission',
       notes: 'Update a submission',

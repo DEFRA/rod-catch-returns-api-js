@@ -135,6 +135,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"season" is required',
             property: 'season',
             value: undefined
@@ -159,6 +160,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"season" must be a number',
             property: 'season',
             value: '20ab23'
@@ -182,6 +184,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"status" is required',
             property: 'status',
             value: undefined
@@ -206,6 +209,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"status" must be one of [INCOMPLETE, SUBMITTED]',
             property: 'status',
             value: 'INVALID'
@@ -229,6 +233,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"source" is required',
             property: 'source',
             value: undefined
@@ -253,6 +258,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"source" must be one of [WEB, PAPER]',
             property: 'source',
             value: 'INVALID'

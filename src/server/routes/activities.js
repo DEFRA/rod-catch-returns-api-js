@@ -58,7 +58,8 @@ export default [
         }
       },
       validate: {
-        payload: createActivitySchema
+        payload: createActivitySchema,
+        options: { entity: 'Activity' }
       },
       description: 'Create an activity for a submission in the database',
       notes: 'Create an activity for a submission in the database',
