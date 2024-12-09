@@ -7,6 +7,17 @@ describe('error-utils.unit', () => {
       code: jest.fn().mockReturnThis(),
       takeover: jest.fn().mockReturnValue('takeover-result')
     })
+
+    const getMockRequest = () => ({
+      route: {
+        settings: {
+          validate: {
+            options: { entity: 'Activity' }
+          }
+        }
+      }
+    })
+
     const getDefaultMockError = () => ({
       details: [
         {
@@ -26,16 +37,40 @@ describe('error-utils.unit', () => {
 
     it('should format Joi validation errors correctly', () => {
       const mockH = getMockH()
-      failAction({}, mockH, getDefaultMockError())
+      failAction(getMockRequest(), mockH, getDefaultMockError())
 
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Activity',
             message: '"name" is required',
             property: 'name',
             value: ''
           },
           {
+            entity: 'Activity',
+            message: '"age" must be a number',
+            property: 'age',
+            value: 'not-a-number'
+          }
+        ]
+      })
+    })
+
+    it('should return entity as Unknown if it is not present in the request', () => {
+      const mockH = getMockH()
+      failAction({}, mockH, getDefaultMockError())
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        errors: [
+          {
+            entity: 'Unknown',
+            message: '"name" is required',
+            property: 'name',
+            value: ''
+          },
+          {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: 'age',
             value: 'not-a-number'
@@ -61,11 +96,12 @@ describe('error-utils.unit', () => {
         }
       }
 
-      failAction({}, mockH, mockError)
+      failAction(getMockRequest(), mockH, mockError)
 
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Activity',
             message: '"river" must be a valid URL',
             property: 'river',
             value: 'rivers/21'
@@ -88,11 +124,13 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: 'name',
             value: ''
           },
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: 'age',
             value: 'not-a-number'
@@ -127,6 +165,7 @@ describe('error-utils.unit', () => {
       const mockError = {
         details: [
           {
+            entity: 'Unknown',
             message: '"age" is required',
             path: ['age']
           }
@@ -139,6 +178,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"age" is required',
             property: 'age',
             value: undefined
@@ -186,6 +226,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: 'age',
             value: 'not-a-number'
@@ -213,6 +254,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: undefined,
             value: undefined
@@ -237,6 +279,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: 'name',
             value: undefined
@@ -285,6 +328,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: undefined,
             value: undefined

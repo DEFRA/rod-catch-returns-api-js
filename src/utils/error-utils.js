@@ -15,6 +15,9 @@ import { StatusCodes } from 'http-status-codes'
  */
 
 export const failAction = (_request, h, err) => {
+  const entity =
+    _request?.route?.settings?.validate?.options?.entity || 'Unknown'
+
   const formattedErrors =
     err?.details?.map((detail) => {
       const detailPath = detail?.path?.length > 0 ? detail.path[0] : undefined
@@ -22,6 +25,7 @@ export const failAction = (_request, h, err) => {
         err._original && detailPath ? err._original[detailPath] : undefined
 
       return {
+        entity,
         message: detail.message,
         property: detail?.context?.path || detailPath,
         value: detail?.context?.value || value
