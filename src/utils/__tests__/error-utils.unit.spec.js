@@ -79,37 +79,6 @@ describe('error-utils.unit', () => {
       })
     })
 
-    it('should map Joi errors in the context correctly', () => {
-      const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            message: '"river" must be a valid URL',
-            context: {
-              path: 'river',
-              value: 'rivers/21'
-            }
-          }
-        ],
-        _original: {
-          river: 'invalid-url'
-        }
-      }
-
-      failAction(getMockRequest(), mockH, mockError)
-
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: [
-          {
-            entity: 'Activity',
-            message: '"river" must be a valid URL',
-            property: 'river',
-            value: 'rivers/21'
-          }
-        ]
-      })
-    })
-
     it('should return 400', () => {
       const mockH = getMockH()
       failAction({}, mockH, getDefaultMockError())
@@ -203,35 +172,6 @@ describe('error-utils.unit', () => {
             name: 'John Doe'
           }
         }
-      })
-    })
-
-    it('should handle missing property context gracefully', () => {
-      const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            message: '"age" must be a number',
-            path: ['age'],
-            context: null
-          }
-        ],
-        _original: {
-          age: 'not-a-number'
-        }
-      }
-
-      failAction({}, mockH, mockError)
-
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: [
-          {
-            entity: 'Unknown',
-            message: '"age" must be a number',
-            property: 'age',
-            value: 'not-a-number'
-          }
-        ]
       })
     })
 

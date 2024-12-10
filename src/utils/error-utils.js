@@ -14,9 +14,9 @@ import { StatusCodes } from 'http-status-codes'
  * @returns {import('@hapi/hapi').ResponseObject} - A Hapi response object containing formatted error details.
  */
 
-export const failAction = (_request, h, err) => {
+export const failAction = (request, h, err) => {
   const entity =
-    _request?.route?.settings?.validate?.options?.entity || 'Unknown'
+    request?.route?.settings?.validate?.options?.entity || 'Unknown'
 
   const formattedErrors =
     err?.details?.map((detail) => {
@@ -27,8 +27,8 @@ export const failAction = (_request, h, err) => {
       return {
         entity,
         message: detail.message,
-        property: detail?.context?.path || detailPath,
-        value: detail?.context?.value || value
+        property: detailPath,
+        value
       }
     }) || err
 

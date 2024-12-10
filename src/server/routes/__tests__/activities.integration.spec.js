@@ -114,7 +114,7 @@ describe('activities.integration', () => {
             entity: 'Activity',
             message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'daysFishedWithMandatoryRelease',
-            value: 20
+            value: '20'
           }
         ]
       })
