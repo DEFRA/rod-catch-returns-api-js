@@ -108,18 +108,17 @@ export const createActivitySchema = Joi.object({
       'string.empty': 'ACTIVITY_RIVER_REQUIRED',
       'string.pattern.base': 'ACTIVITY_RIVER_PATTERN_INVALID'
     })
-}).external(async (value, helper) => {
-  // TODO move this
-  const submissionId = extractSubmissionId(value.submission)
-  const riverId = extractRiverId(value.river)
+    .external(async (value, helper) => {
+      const submissionId = extractSubmissionId(
+        helper.state.ancestors[0].submission
+      )
+      const riverId = extractRiverId(value)
 
-  const activityExists = await isActivityExists(submissionId, riverId)
+      const activityExists = await isActivityExists(submissionId, riverId)
 
-  if (activityExists) {
-    return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND', {
-      path: 'river',
-      value: value.river
+      if (activityExists) {
+        return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
+      }
+      return value
     })
-  }
-  return value
 })
