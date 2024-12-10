@@ -135,7 +135,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"season" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_SEASON_REQUIRED',
             property: 'season',
             value: undefined
           }
@@ -159,7 +160,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"season" must be a number',
+            entity: 'Submission',
+            message: 'SUBMISSION_SEASON_INVALID',
             property: 'season',
             value: '20ab23'
           }
@@ -182,7 +184,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"status" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_STATUS_REQUIRED',
             property: 'status',
             value: undefined
           }
@@ -206,6 +209,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"status" must be one of [INCOMPLETE, SUBMITTED]',
             property: 'status',
             value: 'INVALID'
@@ -229,7 +233,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"source" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_SOURCE_REQUIRED',
             property: 'source',
             value: undefined
           }
@@ -253,6 +258,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"source" must be one of [WEB, PAPER]',
             property: 'source',
             value: 'INVALID'

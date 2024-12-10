@@ -48,7 +48,8 @@ export default [
         }
       },
       validate: {
-        payload: createSmallCatchSchema
+        payload: createSmallCatchSchema,
+        options: { entity: 'SmallCatch' }
       },
       description: 'Create a small catch for an activity in the database',
       notes: 'Create a small catch for an activity in the database',

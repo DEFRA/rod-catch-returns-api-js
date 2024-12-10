@@ -53,7 +53,7 @@ describe('activities.schema.unit', () => {
       const payload = getValidPayload()
 
       await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
-        'River duplicate found'
+        'ACTIVITY_RIVER_DUPLICATE_FOUND'
       )
     })
 
@@ -64,7 +64,16 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"submission" is required')
+        ).rejects.toThrow('ACTIVITY_SUBMISSION_REQUIRED')
+      })
+
+      it('should return an error if "submission" is an empty string', async () => {
+        getSuccessMocks()
+        const payload = { ...getValidPayload(), submission: '' }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('ACTIVITY_SUBMISSION_REQUIRED')
       })
 
       it('should return an error if "submission" does not start with "submissions/"', async () => {
@@ -73,7 +82,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"submission"')
+        ).rejects.toThrow('ACTIVITY_SUBMISSION_PATTERN_INVALID')
       })
 
       it('should return an error if submission does not exist', async () => {
@@ -82,7 +91,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('The submission does not exist')
+        ).rejects.toThrow('ACTIVITY_SUBMISSION_NOT_FOUND')
       })
     })
 
@@ -93,7 +102,16 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"river" is required')
+        ).rejects.toThrow('ACTIVITY_RIVER_REQUIRED')
+      })
+
+      it('should return an error if "river" is an empty string', async () => {
+        getSuccessMocks()
+        const payload = { ...getValidPayload(), river: '' }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('ACTIVITY_RIVER_REQUIRED')
       })
 
       it('should return an error if "river" does not start with "rivers/"', async () => {
@@ -102,7 +120,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"river"')
+        ).rejects.toThrow('ACTIVITY_RIVER_PATTERN_INVALID')
       })
 
       it('should return an error if river is restricted', async () => {
@@ -113,11 +131,29 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('This river is restricted')
+        ).rejects.toThrow('ACTIVITY_RIVER_FORBIDDEN')
       })
     })
 
     describe('daysFishedWithMandatoryRelease', () => {
+      it('should validate successfully if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther is more than 0', async () => {
+        getSuccessMocks()
+        const payload = {
+          ...getValidPayload(),
+          daysFishedOther: 2,
+          daysFishedWithMandatoryRelease: 0
+        }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).resolves.toStrictEqual({
+          daysFishedOther: 2,
+          daysFishedWithMandatoryRelease: 0,
+          river: 'rivers/456',
+          submission: 'submissions/123'
+        })
+      })
+
       it('should return an error if "daysFishedWithMandatoryRelease" is not a number', async () => {
         getSuccessMocks()
         const payload = {
@@ -127,7 +163,9 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedWithMandatoryRelease" must be a number')
+        ).rejects.toThrow(
+          'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NOT_A_NUMBER'
+        )
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is negative', async () => {
@@ -140,21 +178,7 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow(
-          '"daysFishedWithMandatoryRelease" must be greater than or equal to 1'
-        )
-      })
-
-      it('should return an error if "daysFishedWithMandatoryRelease" is 0', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
-          daysFishedWithMandatoryRelease: 0
-        }
-
-        await expect(
-          createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow(
-          '"daysFishedWithMandatoryRelease" must be greater than or equal to 1'
+          'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NEGATIVE'
         )
       })
 
@@ -193,7 +217,7 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow(
-          '"daysFishedWithMandatoryRelease" must be less than or equal to 167'
+          'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
         )
       })
 
@@ -230,7 +254,7 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow(
-          '"daysFishedWithMandatoryRelease" must be less than or equal to 168'
+          'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
         )
       })
 
@@ -243,7 +267,9 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedWithMandatoryRelease" is required')
+        ).rejects.toThrow(
+          'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_REQUIRED'
+        )
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is a non-integer number', async () => {
@@ -255,18 +281,36 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedWithMandatoryRelease" must be an integer')
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_WITH_MANDATORY_NOT_AN_INTEGER')
       })
     })
 
     describe('daysFishedOther', () => {
+      it('should validate successfully if "daysFishedOther" is 0 and "daysFishedWithMandatoryRelease is more than 0', async () => {
+        getSuccessMocks()
+        const payload = {
+          ...getValidPayload(),
+          daysFishedOther: 0,
+          daysFishedWithMandatoryRelease: 3
+        }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).resolves.toStrictEqual({
+          daysFishedOther: 0,
+          daysFishedWithMandatoryRelease: 3,
+          river: 'rivers/456',
+          submission: 'submissions/123'
+        })
+      })
+
       it('should return an error if "daysFishedOther" is not a number', async () => {
         getSuccessMocks()
         const payload = { ...getValidPayload(), daysFishedOther: 'three' }
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedOther" must be a number')
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER')
       })
 
       it('should return an error if "daysFishedOther" is negative', async () => {
@@ -275,9 +319,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow(
-          '"daysFishedOther" must be greater than or equal to 0'
-        )
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NEGATIVE')
       })
 
       it('should return an error if "daysFishedOther" is missing', async () => {
@@ -286,7 +328,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedOther" is required')
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_REQUIRED')
       })
 
       it('should return an error if "daysFishedOther" is a non-integer number', async () => {
@@ -295,7 +337,20 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('"daysFishedOther" must be an integer')
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER')
+      })
+
+      it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0', async () => {
+        getSuccessMocks()
+        const payload = {
+          ...getValidPayload(),
+          daysFishedWithMandatoryRelease: 0,
+          daysFishedOther: 0
+        }
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
       })
     })
   })

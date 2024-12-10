@@ -7,6 +7,17 @@ describe('error-utils.unit', () => {
       code: jest.fn().mockReturnThis(),
       takeover: jest.fn().mockReturnValue('takeover-result')
     })
+
+    const getMockRequest = () => ({
+      route: {
+        settings: {
+          validate: {
+            options: { entity: 'Activity' }
+          }
+        }
+      }
+    })
+
     const getDefaultMockError = () => ({
       details: [
         {
@@ -26,16 +37,18 @@ describe('error-utils.unit', () => {
 
     it('should format Joi validation errors correctly', () => {
       const mockH = getMockH()
-      failAction({}, mockH, getDefaultMockError())
+      failAction(getMockRequest(), mockH, getDefaultMockError())
 
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Activity',
             message: '"name" is required',
             property: 'name',
             value: ''
           },
           {
+            entity: 'Activity',
             message: '"age" must be a number',
             property: 'age',
             value: 'not-a-number'
@@ -44,31 +57,23 @@ describe('error-utils.unit', () => {
       })
     })
 
-    it('should map Joi errors in the context correctly', () => {
+    it('should return entity as Unknown if it is not present in the request', () => {
       const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            message: '"river" must be a valid URL',
-            context: {
-              path: 'river',
-              value: 'rivers/21'
-            }
-          }
-        ],
-        _original: {
-          river: 'invalid-url'
-        }
-      }
-
-      failAction({}, mockH, mockError)
+      failAction({}, mockH, getDefaultMockError())
 
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
-            message: '"river" must be a valid URL',
-            property: 'river',
-            value: 'rivers/21'
+            entity: 'Unknown',
+            message: '"name" is required',
+            property: 'name',
+            value: ''
+          },
+          {
+            entity: 'Unknown',
+            message: '"age" must be a number',
+            property: 'age',
+            value: 'not-a-number'
           }
         ]
       })
@@ -88,11 +93,13 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: 'name',
             value: ''
           },
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: 'age',
             value: 'not-a-number'
@@ -127,6 +134,7 @@ describe('error-utils.unit', () => {
       const mockError = {
         details: [
           {
+            entity: 'Unknown',
             message: '"age" is required',
             path: ['age']
           }
@@ -139,6 +147,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"age" is required',
             property: 'age',
             value: undefined
@@ -166,34 +175,6 @@ describe('error-utils.unit', () => {
       })
     })
 
-    it('should handle missing property context gracefully', () => {
-      const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            message: '"age" must be a number',
-            path: ['age'],
-            context: null
-          }
-        ],
-        _original: {
-          age: 'not-a-number'
-        }
-      }
-
-      failAction({}, mockH, mockError)
-
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: [
-          {
-            message: '"age" must be a number',
-            property: 'age',
-            value: 'not-a-number'
-          }
-        ]
-      })
-    })
-
     it('should handle missing path gracefully', () => {
       const mockH = getMockH()
       const mockError = {
@@ -213,6 +194,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
             property: undefined,
             value: undefined
@@ -237,6 +219,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: 'name',
             value: undefined
@@ -285,6 +268,7 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         errors: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
             property: undefined,
             value: undefined

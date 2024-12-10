@@ -29,15 +29,18 @@ export const createCatchSchema = Joi.object({
     .when('noDateRecorded', {
       is: true,
       then: Joi.required().messages({
-        'any.required': 'CATCH_DEFAULT_DATE_REQUIRED'
+        'any.required': 'CATCH_DEFAULT_DATE_REQUIRED',
+        'string.base': 'CATCH_DEFAULT_DATE_REQUIRED'
       }),
       otherwise: Joi.when('onlyMonthRecorded', {
         is: true,
         then: Joi.required().messages({
-          'any.required': 'CATCH_DEFAULT_DATE_REQUIRED'
+          'any.required': 'CATCH_DEFAULT_DATE_REQUIRED',
+          'string.base': 'CATCH_DEFAULT_DATE_REQUIRED'
         }),
         otherwise: Joi.string().required().messages({
-          'any.required': 'CATCH_DATE_REQUIRED'
+          'any.required': 'CATCH_DATE_REQUIRED',
+          'string.base': 'CATCH_DATE_REQUIRED'
         })
       })
     })
@@ -90,6 +93,7 @@ export const createCatchSchema = Joi.object({
         })
       })
       .messages({
+        'number.base': 'CATCH_MASS_KG_REQUIRED',
         'number.positive': 'CATCH_MASS_KG_POSITIVE',
         'number.min': 'CATCH_MASS_BELOW_MINIMUM',
         'number.max': 'CATCH_MASS_MAX_EXCEEDED'
@@ -105,6 +109,7 @@ export const createCatchSchema = Joi.object({
         })
       })
       .messages({
+        'number.base': 'CATCH_MASS_OZ_REQUIRED',
         'number.positive': 'CATCH_MASS_OZ_POSITIVE',
         'number.min': 'CATCH_MASS_BELOW_MINIMUM',
         'number.max': 'CATCH_MASS_MAX_EXCEEDED'
@@ -137,7 +142,8 @@ export const createCatchSchema = Joi.object({
     .required()
     .description('Was the catch released?')
     .messages({
-      'any.required': 'CATCH_RELEASED_REQUIRED'
+      'any.required': 'CATCH_RELEASED_REQUIRED',
+      'boolean.base': 'CATCH_RELEASED_REQUIRED'
     }),
   reportingExclude: Joi.boolean().description(
     'Is this entry excluded from reporting'
