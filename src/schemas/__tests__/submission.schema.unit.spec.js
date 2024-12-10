@@ -40,12 +40,22 @@ describe('Validation Schemas', () => {
       expect(error2).toBeUndefined()
     })
 
+    it('should return an error if "contactId" is undefined', () => {
+      const payload = { ...getValidPayload(), contactId: undefined }
+      const { error } = createSubmissionSchema.validate(payload)
+
+      expect(error.details[0].message).toContain(
+        'SUBMISSION_CONTACT_ID_REQUIRED'
+      )
+    })
+
     it('should return an error if "contactId" is not a string', () => {
       const payload = { ...getValidPayload(), contactId: 123456 }
       const { error } = createSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"contactId" must be a string')
+      expect(error.details[0].message).toContain(
+        'SUBMISSION_CONTACT_ID_INVALID'
+      )
     })
 
     it('should validate successfully if "season" is a number passed in as a string', () => {
@@ -55,12 +65,18 @@ describe('Validation Schemas', () => {
       expect(error).toBeUndefined()
     })
 
+    it('should return an error if "season" is undefined', () => {
+      const payload = { ...getValidPayload(), season: undefined }
+      const { error } = createSubmissionSchema.validate(payload)
+
+      expect(error.details[0].message).toContain('SUBMISSION_SEASON_REQUIRED')
+    })
+
     it('should return an error if "season" a string without numbers', () => {
       const payload = { ...getValidPayload(), season: 'abc123' }
       const { error } = createSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"season" must be a number')
+      expect(error.details[0].message).toContain('SUBMISSION_SEASON_INVALID')
     })
 
     const currentYear = new Date().getFullYear()
@@ -86,27 +102,37 @@ describe('Validation Schemas', () => {
         ...getValidPayload(),
         season: currentYear + 1
       })
-      expect(result.error).toBeDefined()
-      expect(result.error.details[0].message).toBe(
-        `Season must not be later than the current year (${currentYear}).`
-      )
+
+      expect(result.error.details[0].message).toBe('SUBMISSION_SEASON_INVALID')
+    })
+
+    it('should return an error if "status" undefined', () => {
+      const payload = { ...getValidPayload(), status: undefined }
+      const { error } = createSubmissionSchema.validate(payload)
+
+      expect(error.details[0].message).toBe('SUBMISSION_STATUS_REQUIRED')
     })
 
     it('should return an error if "status" is not one of the allowed values', () => {
       const payload = { ...getValidPayload(), status: 'PENDING' }
       const { error } = createSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"status" must be one of [INCOMPLETE, SUBMITTED]'
       )
+    })
+
+    it('should return an error if "source" is undefined', () => {
+      const payload = { ...getValidPayload(), source: undefined }
+      const { error } = createSubmissionSchema.validate(payload)
+
+      expect(error.details[0].message).toBe('SUBMISSION_SOURCE_REQUIRED')
     })
 
     it('should return an error if "source" is not one of the allowed values', () => {
       const payload = { ...getValidPayload(), source: 'EMAIL' }
       const { error } = createSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"source" must be one of [WEB, PAPER]'
       )
@@ -151,7 +177,6 @@ describe('Validation Schemas', () => {
       const payload = { status: 'PENDING' }
       const { error } = updateSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"status" must be one of [INCOMPLETE, SUBMITTED]'
       )
@@ -161,7 +186,6 @@ describe('Validation Schemas', () => {
       const payload = { reportingExclude: 'yes' }
       const { error } = updateSubmissionSchema.validate(payload)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"reportingExclude" must be a boolean'
       )
@@ -196,7 +220,6 @@ describe('Validation Schemas', () => {
       const query = { ...getValidQuery(), contact_id: 123456 }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"contact_id" must be a string'
       )
@@ -213,7 +236,6 @@ describe('Validation Schemas', () => {
       const query = { ...getValidQuery(), season: 'invalidYear' }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"season" must be a number')
     })
 
@@ -221,7 +243,6 @@ describe('Validation Schemas', () => {
       const query = { ...getValidQuery(), season: undefined }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"season" is required')
     })
 
@@ -229,7 +250,6 @@ describe('Validation Schemas', () => {
       const query = { ...getValidQuery(), contact_id: undefined }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"contact_id" is required')
     })
   })
@@ -246,7 +266,6 @@ describe('Validation Schemas', () => {
       const params = { submissionId: undefined }
       const { error } = getBySubmissionIdSchema.validate(params)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"submissionId" is required')
     })
 
@@ -254,7 +273,6 @@ describe('Validation Schemas', () => {
       const params = { submissionId: 'abc' }
       const { error } = getBySubmissionIdSchema.validate(params)
 
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain(
         '"submissionId" must be a number'
       )

@@ -136,7 +136,7 @@ describe('submissions.integration', () => {
         errors: [
           {
             entity: 'Submission',
-            message: '"season" is required',
+            message: 'SUBMISSION_SEASON_REQUIRED',
             property: 'season',
             value: undefined
           }
@@ -161,7 +161,7 @@ describe('submissions.integration', () => {
         errors: [
           {
             entity: 'Submission',
-            message: '"season" must be a number',
+            message: 'SUBMISSION_SEASON_INVALID',
             property: 'season',
             value: '20ab23'
           }
@@ -185,7 +185,7 @@ describe('submissions.integration', () => {
         errors: [
           {
             entity: 'Submission',
-            message: '"status" is required',
+            message: 'SUBMISSION_STATUS_REQUIRED',
             property: 'status',
             value: undefined
           }
@@ -234,7 +234,7 @@ describe('submissions.integration', () => {
         errors: [
           {
             entity: 'Submission',
-            message: '"source" is required',
+            message: 'SUBMISSION_SOURCE_REQUIRED',
             property: 'source',
             value: undefined
           }
