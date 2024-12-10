@@ -233,26 +233,8 @@ describe('small-catches.integration', () => {
           {
             entity: 'SmallCatch',
             message: 'SMALL_CATCH_MONTH_IN_FUTURE',
-            value: {
-              activity: expect.any(String),
-              counts: [
-                {
-                  count: 3,
-                  method: 'methods/1'
-                },
-                {
-                  count: 2,
-                  method: 'methods/2'
-                },
-                {
-                  count: 1,
-                  method: 'methods/3'
-                }
-              ],
-              month: expect.any(String),
-              noMonthRecorded: false,
-              released: 3
-            }
+            property: 'month',
+            value: 'MAY'
           }
         ]
       })

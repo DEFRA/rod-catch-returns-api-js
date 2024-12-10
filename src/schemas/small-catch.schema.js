@@ -24,11 +24,27 @@ export const createSmallCatchSchema = Joi.object({
     .external(async (value, helper) => {
       const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
+      // check duplicates
       const month = getMonthNumberFromName(value)
-
       const duplicateExists = await isDuplicateSmallCatch(activityId, month)
       if (duplicateExists) {
         return helper.message('SMALL_CATCH_DUPLICATE_FOUND')
+      }
+
+      // check month in future
+      const submission = await getSubmissionByActivityId(activityId)
+
+      const currentDate = new Date()
+      const currentYear = currentDate.getFullYear()
+      const currentMonth = currentDate.getMonth() + 1
+
+      const inputMonth = getMonthNumberFromName(value)
+
+      if (
+        submission.season > currentYear ||
+        (submission.season === currentYear && inputMonth > currentMonth)
+      ) {
+        return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
       }
 
       return value
@@ -84,28 +100,7 @@ export const createSmallCatchSchema = Joi.object({
       return value
     }),
   noMonthRecorded: Joi.boolean()
-})
-  .external(async (value, helper) => {
-    // TODO clean up
-    const activityId = extractActivityId(value.activity)
-    const submission = await getSubmissionByActivityId(activityId)
-
-    const currentDate = new Date()
-    const currentYear = currentDate.getFullYear()
-    const currentMonth = currentDate.getMonth() + 1
-
-    const inputMonth = getMonthNumberFromName(value.month)
-
-    if (
-      submission.season > currentYear ||
-      (submission.season === currentYear && inputMonth > currentMonth)
-    ) {
-      return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
-    }
-
-    return value
-  })
-  .unknown()
+}).unknown()
 
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
