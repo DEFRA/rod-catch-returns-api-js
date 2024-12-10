@@ -14,6 +14,8 @@ const validateDaysFished = (daysFishedOther, helper) => {
   if (daysFishedOther < 1 && daysFishedWithMandatoryRelease < 1) {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
+
+  return daysFishedOther
 }
 
 const validateDaysFishedWithMandatoryRelease = async (
