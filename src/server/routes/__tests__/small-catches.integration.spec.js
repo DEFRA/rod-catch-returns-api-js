@@ -13,9 +13,6 @@ describe('small-catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
-  const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
-    'contact-identifier-create-small-catch'
-
   beforeAll(async () => {
     createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
@@ -25,17 +22,17 @@ describe('small-catches.integration', () => {
     await server.stop()
   })
 
-  const setupSubmissionAndActivity = async () => {
-    const submission = await createSubmission(
-      server,
-      CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-    )
+  const setupSubmissionAndActivity = async (contactId) => {
+    const submission = await createSubmission(server, contactId)
     const submissionId = JSON.parse(submission.payload).id
     const activity = await createActivity(server, submissionId)
     return JSON.parse(activity.payload).id
   }
 
   describe('POST /api/smallCatches ', () => {
+    const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
+      'contact-identifier-create-small-catch'
+
     beforeEach(async () => {
       await deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
@@ -50,7 +47,9 @@ describe('small-catches.integration', () => {
     )
 
     it('should successfully create a small catch for a submission with a valid request', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatches = await createSmallCatch(server, activityId)
 
@@ -111,7 +110,9 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if a small catch with the same month has already been created', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatch1 = await createSmallCatch(server, activityId)
 
@@ -132,7 +133,9 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if a small catch has the same method twice', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatch = await createSmallCatch(server, activityId, {
         counts: [

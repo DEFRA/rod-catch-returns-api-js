@@ -480,6 +480,7 @@ describe('activities.integration', () => {
       const activity = await createActivity(server, submissionId)
       const activityId = JSON.parse(activity.payload).id
 
+      // TODO this api endpoint does not exist, need to add it first before finishing this ticket
       // make sure activity exists
       const foundActivity = await server.inject({
         method: 'GET',
