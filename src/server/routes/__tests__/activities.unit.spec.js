@@ -1,4 +1,10 @@
 import {
+  Activity,
+  Catch,
+  SmallCatch,
+  SmallCatchCount
+} from '../../../entities/index.js'
+import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
@@ -6,12 +12,27 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { Activity } from '../../../entities/index.js'
 import routes from '../activities.js'
+import { sequelize } from '../../../services/database.service.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/database.service.js', () => ({
+  sequelize: {
+    transaction: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      destroy: jest.fn()
+    })),
+    literal: jest.fn()
+  }
+}))
 
 const [
   {
@@ -28,6 +49,9 @@ const [
   },
   {
     options: { handler: getActivityHandler }
+  },
+  {
+    options: { handler: deleteActivityHandler }
   }
 ] = routes
 
@@ -642,6 +666,175 @@ describe('activities.unit', () => {
       const h = getMockResponseToolkit()
 
       const result = await getActivityHandler(getActivityRequest('1'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('DELETE /activities/{activityId}', () => {
+    const getDeleteRequest = (activityId) =>
+      getServerDetails({ params: { activityId } })
+
+    const getTransaction = () => ({ commit: jest.fn(), rollback: jest.fn() })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    describe('successful deletion', () => {
+      const transaction = { commit: jest.fn(), rollback: jest.fn() }
+      const activityId = '3'
+      const smallCatchIds = [1, 2, 3]
+
+      beforeEach(() => {
+        sequelize.transaction.mockResolvedValueOnce(transaction)
+        SmallCatch.findAll.mockResolvedValueOnce(
+          smallCatchIds.map((id) => ({ id, toJSON: jest.fn() }))
+        )
+        SmallCatchCount.destroy.mockResolvedValueOnce(3)
+        SmallCatch.destroy.mockResolvedValueOnce(3)
+        Catch.destroy.mockResolvedValueOnce(2)
+        Activity.destroy.mockResolvedValueOnce(1)
+      })
+
+      it('should call Activity.destroy with the correct parameters', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(Activity.destroy).toHaveBeenCalledWith({
+          where: { id: activityId },
+          transaction
+        })
+      })
+
+      it('should call SmallCatch.findAll to fetch associated small catches', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(SmallCatch.findAll).toHaveBeenCalledWith({
+          attributes: ['id'],
+          where: { activity_id: activityId },
+          transaction
+        })
+      })
+
+      it('should delete all associated SmallCatchCount records', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
+          where: { small_catch_id: smallCatchIds },
+          transaction
+        })
+      })
+
+      it('should delete all associated SmallCatch records', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(SmallCatch.destroy).toHaveBeenCalledWith({
+          where: { activity_id: activityId },
+          transaction
+        })
+      })
+
+      it('should delete all associated Catch records', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(Catch.destroy).toHaveBeenCalledWith({
+          where: { activity_id: activityId },
+          transaction
+        })
+      })
+
+      it('should commit the transaction on successful deletion', async () => {
+        await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(transaction.commit).toHaveBeenCalled()
+      })
+
+      it('should return a 204 status code on successful deletion', async () => {
+        const result = await deleteActivityHandler(
+          getDeleteRequest(activityId),
+          getMockResponseToolkit()
+        )
+
+        expect(result.statusCode).toBe(204)
+      })
+    })
+
+    it('should call handleNotFound if the activity does not exist', async () => {
+      const activityId = 'nonexistent-id'
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      Activity.destroy.mockResolvedValueOnce(0)
+      const h = getMockResponseToolkit()
+      await deleteActivityHandler(getDeleteRequest(activityId), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        `Activity with ID ${activityId} not found`,
+        h
+      )
+    })
+
+    it('should rollback the transaction if the activity does not exist', async () => {
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      Activity.destroy.mockResolvedValueOnce(0)
+      const h = getMockResponseToolkit()
+      await deleteActivityHandler(getDeleteRequest('nonexistent-id'), h)
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should call handleServerError if an error occurs during Activity.destroy', async () => {
+      const error = new Error('Database error')
+      sequelize.transaction.mockResolvedValueOnce(getTransaction())
+      Activity.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await deleteActivityHandler(getDeleteRequest('3'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting activity',
+        error,
+        h
+      )
+    })
+
+    it('should rollback the transaction if an error occurs during deletion', async () => {
+      const error = new Error('Database error')
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      Activity.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await deleteActivityHandler(getDeleteRequest('3'), h)
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should return SERVER_ERROR_SYMBOL if an error occurs during deletion', async () => {
+      const error = new Error('Database error')
+      sequelize.transaction.mockResolvedValueOnce(getTransaction())
+      Activity.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await deleteActivityHandler(getDeleteRequest('3'), h)
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
