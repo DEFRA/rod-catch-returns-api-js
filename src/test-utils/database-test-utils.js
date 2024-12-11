@@ -13,13 +13,16 @@ export const deleteCatches = async (activityId) => {
 }
 
 export const deleteSmallCatches = async (activityId) => {
-  const smallCatch = await SmallCatch.findOne({
-    where: { activity_id: activityId }
-  })
+  const smallCatchIds = (
+    await SmallCatch.findAll({
+      attributes: ['id'],
+      where: { activity_id: activityId }
+    })
+  ).map((smallCatch) => smallCatch.id)
 
-  if (smallCatch) {
+  if (smallCatchIds.length > 0) {
     await SmallCatchCount.destroy({
-      where: { small_catch_id: smallCatch.id }
+      where: { small_catch_id: smallCatchIds }
     })
   }
 
