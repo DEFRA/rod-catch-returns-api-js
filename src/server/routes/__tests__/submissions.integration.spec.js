@@ -2,8 +2,11 @@ import {
   createActivity,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
+import {
+  createActivity as createActivityCRM,
+  updateActivity as updateActivityCRM
+} from '@defra-fish/dynamics-lib'
 import { Submission } from '../../../entities/index.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -574,6 +577,17 @@ describe('submissions.integration', () => {
   describe('PATCH /api/submissions/{submissionId}', () => {
     const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
       'contact-identifier-update-submission'
+
+    const getUpdateActivityResponse = () => ({
+      '@odata.context':
+        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+      ReturnStatus: 'success',
+      SuccessMessage: 'RCR Activity - updated successfully',
+      ErrorMessage: null,
+      oDataContext:
+        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+    })
+
     beforeEach(async () => {
       createActivityCRM.mockResolvedValue(getCreateActivityResponse())
       await Submission.destroy({
@@ -592,6 +606,7 @@ describe('submissions.integration', () => {
     })
 
     it('should successfully update a submission with a valid status', async () => {
+      updateActivityCRM.mockResolvedValue(getUpdateActivityResponse())
       const createdSubmission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_UPDATE_SUBMISSION
@@ -664,6 +679,56 @@ describe('submissions.integration', () => {
 
       expect(updatedSubmission.payload).toBe('')
       expect(updatedSubmission.statusCode).toBe(404)
+    })
+
+    it('should successfully update a Submission when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      updateActivityCRM.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to update activity',
+        oDataContext:
+          'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+      })
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
+
+      const result = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(result.statusCode).toBe(201)
+    })
+
+    it('should return a 500 when the call to create an activity in CRM throws an error', async () => {
+      updateActivityCRM.mockRejectedValueOnce(new Error('CRM error'))
+
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(result.payload).toBe('some sort of error')
+      expect(result.statusCode).toBe(500)
     })
   })
 })

@@ -1,4 +1,8 @@
 import {
+  createActivity as createActivityCRM,
+  updateActivity as updateActivityCRM
+} from '@defra-fish/dynamics-lib'
+import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
@@ -7,7 +11,6 @@ import {
   handleServerError
 } from '../../../utils/server-utils.js'
 import { Submission } from '../../../entities/index.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
@@ -671,6 +674,60 @@ describe('submissions.unit', () => {
     it('should return an error response if an error occurs while updating the submission', async () => {
       const error = new Error('Database error')
       Submission.findByPk.mockRejectedValueOnce(error)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should log an error but still return 200 when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to update activity'
+      })
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+      expect(logger.error).toHaveBeenCalledWith(
+        'failed to update activity in CRM for contact-identifier-111',
+        'Failed to update activity'
+      )
+    })
+
+    it('should call handleServerError when the call to update an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      const error = new Error('CRM')
+      updateActivityCRM.mockRejectedValueOnce(error)
+
+      const h = getMockResponseToolkit()
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'COMPLETE' }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating submission',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response when the call to update an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      const error = new Error('CRM')
+      updateActivityCRM.mockRejectedValueOnce(error)
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'COMPLETE' }),

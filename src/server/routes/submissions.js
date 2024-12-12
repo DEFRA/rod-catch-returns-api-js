@@ -1,4 +1,5 @@
 import { Activity, Submission } from '../../entities/index.js'
+import { createActivity, updateActivity } from '@defra-fish/dynamics-lib'
 import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
@@ -6,8 +7,8 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
+import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
-import { createActivity } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
@@ -254,6 +255,19 @@ export default [
             reportingExclude,
             version: new Date()
           })
+
+          if (status === STATUSES.SUBMITTED) {
+            logger.info(
+              'Updating crm activity with request:',
+              submission.contactId,
+              submission.season
+            )
+            const updateCrmActivityResult = updateActivity(
+              submission.contactId,
+              submission.season
+            )
+            logger.info('Updated CRM with result:', updateCrmActivityResult)
+          }
 
           const mappedSubmission = mapSubmissionToResponse(
             request,
