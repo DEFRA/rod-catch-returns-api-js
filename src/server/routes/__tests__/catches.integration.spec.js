@@ -335,4 +335,81 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('GET /api/catches/{catchId}', () => {
+    const CONTACT_IDENTIFIER_GET_CATCH = 'contact-identifier-get-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_CATCH)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_CATCH)
+    )
+
+    it('should successfully get a catch if it exists', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_CATCH
+      )
+
+      const createdCatch = await createCatch(server, activityId)
+
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      const species = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}`
+      })
+
+      expect(JSON.parse(species.payload)).toEqual({
+        id: expect.any(String),
+        dateCaught: '2023-06-24',
+        mass: {
+          type: 'IMPERIAL',
+          kg: 9.610488,
+          oz: 339
+        },
+        released: true,
+        reportingExclude: false,
+        noDateRecorded: false,
+        onlyMonthRecorded: false,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/catches/${catchId}`)
+          },
+          catch: {
+            href: expect.stringMatching(`/api/catches/${catchId}`)
+          },
+          activityEntity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          species: {
+            href: expect.stringMatching(`/api/catches/${catchId}/species`)
+          },
+          method: {
+            href: expect.stringMatching(`/api/catches/${catchId}/method`)
+          },
+          activity: {
+            href: expect.stringMatching(`/api/catches/${catchId}/activity`)
+          }
+        }
+      })
+      expect(species.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the catch could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/catches/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
