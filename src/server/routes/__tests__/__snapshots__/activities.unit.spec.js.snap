@@ -1,5 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`activities.unit GET /activities/{activityId} should return a 200 status code and the activity if it is found 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/activities/400",
+    },
+    "catches": {
+      "href": "http://localhost:3000/api/activities/400/catches",
+    },
+    "river": {
+      "href": "http://localhost:3000/api/activities/400/river",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/activities/400",
+    },
+    "smallCatches": {
+      "href": "http://localhost:3000/api/activities/400/smallCatches",
+    },
+    "submission": {
+      "href": "http://localhost:3000/api/activities/400/submission",
+    },
+  },
+  "createdAt": "2024-10-18T07:52:06.331Z",
+  "daysFishedOther": 0,
+  "daysFishedWithMandatoryRelease": 2,
+  "id": "400",
+  "updatedAt": "2024-11-06T14:31:59.922Z",
+  "version": "2024-11-06T14:31:59.922Z",
+}
+`;
+
 exports[`activities.unit GET /activities/{activityId}/catches should return a 200 status code and the catches if the activity is found 1`] = `
 {
   "_embedded": {
@@ -78,37 +109,6 @@ exports[`activities.unit GET /activities/{activityId}/catches should return a 20
       },
     ],
   },
-}
-`;
-
-exports[`activities.unit GET /activities/{activityId}/river should return a 200 status code and the activity if it is found 1`] = `
-{
-  "_links": {
-    "activity": {
-      "href": "http://localhost:3000/api/activities/400",
-    },
-    "catches": {
-      "href": "http://localhost:3000/api/activities/400/catches",
-    },
-    "river": {
-      "href": "http://localhost:3000/api/activities/400/river",
-    },
-    "self": {
-      "href": "http://localhost:3000/api/activities/400",
-    },
-    "smallCatches": {
-      "href": "http://localhost:3000/api/activities/400/smallCatches",
-    },
-    "submission": {
-      "href": "http://localhost:3000/api/activities/400/submission",
-    },
-  },
-  "createdAt": "2024-10-18T07:52:06.331Z",
-  "daysFishedOther": 0,
-  "daysFishedWithMandatoryRelease": 2,
-  "id": "400",
-  "updatedAt": "2024-11-06T14:31:59.922Z",
-  "version": "2024-11-06T14:31:59.922Z",
 }
 `;
 
