@@ -560,7 +560,7 @@ describe('activities.unit', () => {
     })
   })
 
-  describe('GET /activities/{activityId}/river', () => {
+  describe('GET /activities/{activityId}', () => {
     const getActivityRequest = (activityId) => ({
       ...getServerDetails(),
       params: {
