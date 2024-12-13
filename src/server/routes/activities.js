@@ -223,5 +223,43 @@ export default [
         'Retrieve catches (salmon and large sea trout) with an activity in the database',
       tags: ['api', 'activities']
     }
+  },
+  {
+    method: 'GET',
+    path: '/activities/{activityId}',
+    options: {
+      /**
+       * Retrieve an activity by its ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.activityId - The activity id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Activity}
+       */
+      handler: async (request, h) => {
+        try {
+          const activityId = request.params.activityId
+          const activity = await Activity.findOne({
+            where: { id: activityId }
+          })
+
+          if (!activity) {
+            return handleNotFound(`Activity not found for ID: ${activityId}`, h)
+          }
+
+          const mappedActivity = mapActivityToResponse(
+            request,
+            activity.toJSON()
+          )
+
+          return h.response(mappedActivity).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error fetching activity by ID', error, h)
+        }
+      },
+      description: 'Retrieve an activity by its ID',
+      notes: 'Retrieve an activity from the database by its ID',
+      tags: ['api', 'activities']
+    }
   }
 ]
