@@ -25,6 +25,9 @@ const [
   },
   {
     options: { handler: getCatchesForActivityHandler }
+  },
+  {
+    options: { handler: getActivityHandler }
   }
 ] = routes
 
@@ -552,6 +555,93 @@ describe('activities.unit', () => {
         getActivityRequest('1'),
         h
       )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /activities/{activityId}', () => {
+    const getActivityRequest = (activityId) => ({
+      ...getServerDetails(),
+      params: {
+        activityId
+      }
+    })
+
+    const getActivity = () => ({
+      toJSON: jest.fn().mockReturnValue({
+        id: '400',
+        daysFishedWithMandatoryRelease: 2,
+        daysFishedOther: 0,
+        createdAt: '2024-10-18T07:52:06.331Z',
+        updatedAt: '2024-11-06T14:31:59.922Z',
+        version: '2024-11-06T14:31:59.922Z',
+        submission_id: '2802',
+        river_id: '1',
+        SubmissionId: '2802'
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the activity if it is found', async () => {
+      Activity.findOne.mockResolvedValueOnce(getActivity())
+
+      const result = await getActivityHandler(
+        getActivityRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getActivityHandler(getActivityRequest('nonexistent-id'), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Activity not found for ID: nonexistent-id',
+        h
+      )
+    })
+
+    it('should return a not found response if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      const result = await getActivityHandler(
+        getActivityRequest('nonexistent-id'),
+        h
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getActivityHandler(getActivityRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching activity by ID',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while fetching the the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await getActivityHandler(getActivityRequest('1'), h)
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
