@@ -25,6 +25,9 @@ const [
   },
   {
     options: { handler: getMethodForCatchHandler }
+  },
+  {
+    options: { handler: getCatchHandler }
   }
 ] = routes
 
@@ -431,6 +434,97 @@ describe('catches.unit', () => {
       const h = getMockResponseToolkit()
 
       const result = await getMethodForCatchHandler(getCatchRequest('1'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /catches/{catchId}', () => {
+    const getCatchRequest = (catchId) =>
+      getServerDetails({
+        params: {
+          catchId
+        }
+      })
+
+    const getCatch = () => ({
+      toJSON: jest.fn().mockReturnValue({
+        id: '1',
+        dateCaught: '2024-06-24',
+        massKg: '9.610488',
+        massOz: '339.000000',
+        massType: 'IMPERIAL',
+        released: true,
+        onlyMonthRecorded: false,
+        noDateRecorded: false,
+        reportingExclude: false,
+        createdAt: '2024-11-06T14:25:47.950Z',
+        updatedAt: '2024-11-06T14:25:47.950Z',
+        version: '2024-11-06T14:25:47.958Z',
+        ActivityId: '404',
+        activity_id: '404',
+        method_id: '1',
+        species_id: '1'
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the catch if it is found', async () => {
+      Catch.findOne.mockResolvedValueOnce(getCatch())
+
+      const result = await getCatchHandler(
+        getCatchRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the catch is not found', async () => {
+      Catch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getCatchHandler(getCatchRequest('nonexistent-id'), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Catch not found for ID: nonexistent-id',
+        h
+      )
+    })
+
+    it('should return a not found response if the catch is not found', async () => {
+      Catch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      const result = await getCatchHandler(getCatchRequest('nonexistent-id'), h)
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the catch', async () => {
+      const error = new Error('Database error')
+      Catch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getCatchHandler(getCatchRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching catch by ID',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while fetching the the catch', async () => {
+      const error = new Error('Database error')
+      Catch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await getCatchHandler(getCatchRequest('1'), h)
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
