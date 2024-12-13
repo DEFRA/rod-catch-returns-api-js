@@ -219,5 +219,40 @@ export default [
         'Retrieve the fishing method associated with a catch using the catch ID from the database',
       tags: ['api', 'catches']
     }
+  },
+  {
+    method: 'GET',
+    path: '/catches/{catchId}',
+    options: {
+      /**
+       * Retrieve a catch by its ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The catch id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        try {
+          const catchId = request.params.catchId
+          const foundCatch = await Catch.findOne({
+            where: { id: catchId }
+          })
+
+          if (!foundCatch) {
+            return handleNotFound(`Catch not found for ID: ${catchId}`, h)
+          }
+
+          const mappedCatch = mapCatchToResponse(request, foundCatch.toJSON())
+
+          return h.response(mappedCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error fetching catch by ID', error, h)
+        }
+      },
+      description: 'Retrieve a catch by its ID',
+      notes: 'Retrieve a catch from the database by its ID',
+      tags: ['api', 'catches']
+    }
   }
 ]
