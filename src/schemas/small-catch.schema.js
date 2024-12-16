@@ -1,3 +1,4 @@
+import { getMonth, getYear, isAfter } from 'date-fns'
 import Joi from 'joi'
 import { extractActivityId } from '../utils/entity-utils.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
@@ -35,15 +36,14 @@ export const createSmallCatchSchema = Joi.object({
       const submission = await getSubmissionByActivityId(activityId)
 
       const currentDate = new Date()
-      const currentYear = currentDate.getFullYear()
-      const currentMonth = currentDate.getMonth() + 1
+      const currentYear = getYear(currentDate)
+      const currentMonth = getMonth(currentDate) + 1 // getMonth is zero-based in date-fns
 
-      const inputMonth = getMonthNumberFromName(value)
+      const inputMonth = getMonthNumberFromName(value) // Month is not one-based in our app
+      const inputDate = new Date(submission.season, inputMonth - 1) // Month is zero-based in js Date
+      const currentYearMonth = new Date(currentYear, currentMonth - 1) // Month is zero-based js Date
 
-      if (
-        submission.season > currentYear ||
-        (submission.season === currentYear && inputMonth > currentMonth)
-      ) {
+      if (isAfter(inputDate, currentYearMonth)) {
         return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
       }
 
