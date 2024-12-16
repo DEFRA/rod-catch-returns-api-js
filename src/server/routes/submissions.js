@@ -38,6 +38,8 @@ export default [
             version: Date.now()
           })
 
+          logger.info('Creating CRM activity with request:', contactId, season)
+
           const createCrmActivityResponse = await createActivity(
             contactId,
             season
@@ -47,6 +49,11 @@ export default [
             logger.error(
               `failed to create activity in CRM for ${contactId}`,
               createCrmActivityResponse.ErrorMessage
+            )
+          } else {
+            logger.info(
+              'Created CRM activity with result:',
+              createCrmActivityResponse
             )
           }
 
@@ -256,12 +263,14 @@ export default [
             version: new Date()
           })
 
+          // Update CRM Activity is status is SUBMITTED
           if (status === STATUSES.SUBMITTED) {
             logger.info(
-              'Updating crm activity with request:',
+              'Updating CRM activity with request:',
               submission.contactId,
               submission.season
             )
+
             const updateCrmActivityResult = await updateActivity(
               submission.contactId,
               submission.season
@@ -273,7 +282,10 @@ export default [
                 updateCrmActivityResult.ErrorMessage
               )
             } else {
-              logger.info('Updated CRM with result:', updateCrmActivityResult)
+              logger.info(
+                'Updated CRM activity with result:',
+                updateCrmActivityResult
+              )
             }
           }
 
