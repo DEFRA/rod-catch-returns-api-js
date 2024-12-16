@@ -49,7 +49,7 @@ describe('submissions.unit', () => {
       id: '1',
       contactId: 'contact-identifier-111',
       season: '2024',
-      status: 'COMPLETE',
+      status: 'SUBMITTED',
       source: 'WEB',
       version: '2024-10-10T13:13:11.000Z',
       reportingExclude: false,
@@ -334,7 +334,7 @@ describe('submissions.unit', () => {
         reportingExclude: false,
         season: '2024',
         source: 'WEB',
-        status: 'COMPLETE',
+        status: 'SUBMITTED',
         updatedAt: '2024-10-10T13:13:11.000Z',
         version: '2024-10-10T13:13:11.000Z',
         _links: {
@@ -403,7 +403,7 @@ describe('submissions.unit', () => {
       id: '1',
       contactId: 'contact-identifier-111',
       season: '2024',
-      status: 'COMPLETE',
+      status: 'SUBMITTED',
       source: 'WEB',
       version: '2024-10-10T13:13:11.000Z',
       Activities: activities,
@@ -555,12 +555,21 @@ describe('submissions.unit', () => {
       })
 
     const getFoundSubmission = () => ({
+      id: '1',
+      contactId: 'contact-identifier-111',
+      season: '2024',
+      status: 'SUBMITTED',
+      source: 'WEB',
+      version: '2024-10-10T13:13:11.000Z',
+      reportingExclude: false,
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z',
       update: jest.fn().mockResolvedValue({
         toJSON: jest.fn().mockReturnValue({
           id: '1',
           contactId: 'contact-identifier-111',
           season: '2024',
-          status: 'COMPLETE',
+          status: 'SUBMITTED',
           source: 'WEB',
           version: '2024-10-10T13:13:11.000Z',
           reportingExclude: false,
@@ -570,15 +579,26 @@ describe('submissions.unit', () => {
       })
     })
 
+    const getSuccessUpdateActivityCRM = () => ({
+      '@odata.context':
+        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+      ReturnStatus: 'success',
+      SuccessMessage: 'RCR Activity - updated successfully',
+      ErrorMessage: null,
+      oDataContext:
+        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
     })
 
     it('should return a 200 status code if the submission is updated successfully', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
@@ -588,14 +608,15 @@ describe('submissions.unit', () => {
     it('should call update with the "status"', async () => {
       const foundSubmission = getFoundSubmission()
       Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
 
       await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
       expect(foundSubmission.update).toHaveBeenCalledWith({
-        status: 'COMPLETE',
+        status: 'SUBMITTED',
         reportingExclude: undefined,
         version: expect.any(Date)
       })
@@ -604,6 +625,7 @@ describe('submissions.unit', () => {
     it('should call update with "reportingExclude"', async () => {
       const foundSubmission = getFoundSubmission()
       Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
 
       await patchSubmissionByIdHandler(
         getSubmissionRequest({ reportingExclude: true }),
@@ -619,9 +641,10 @@ describe('submissions.unit', () => {
 
     it('should return the updated submission in the response body', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
@@ -633,7 +656,7 @@ describe('submissions.unit', () => {
       const h = getMockResponseToolkit()
 
       await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         h
       )
 
@@ -647,7 +670,7 @@ describe('submissions.unit', () => {
       Submission.findByPk.mockResolvedValueOnce(null)
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
@@ -660,7 +683,7 @@ describe('submissions.unit', () => {
       const h = getMockResponseToolkit()
 
       await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         h
       )
 
@@ -676,7 +699,7 @@ describe('submissions.unit', () => {
       Submission.findByPk.mockRejectedValueOnce(error)
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
@@ -695,7 +718,7 @@ describe('submissions.unit', () => {
       })
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 
@@ -713,12 +736,12 @@ describe('submissions.unit', () => {
 
       const h = getMockResponseToolkit()
       await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         h
       )
 
       expect(handleServerError).toHaveBeenCalledWith(
-        'Error creating submission',
+        'Error updating submission',
         error,
         h
       )
@@ -730,7 +753,7 @@ describe('submissions.unit', () => {
       updateActivityCRM.mockRejectedValueOnce(error)
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'COMPLETE' }),
+        getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
 

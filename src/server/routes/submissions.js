@@ -262,11 +262,19 @@ export default [
               submission.contactId,
               submission.season
             )
-            const updateCrmActivityResult = updateActivity(
+            const updateCrmActivityResult = await updateActivity(
               submission.contactId,
               submission.season
             )
-            logger.info('Updated CRM with result:', updateCrmActivityResult)
+
+            if (updateCrmActivityResult.ErrorMessage) {
+              logger.error(
+                `failed to update activity in CRM for ${submission.contactId}`,
+                updateCrmActivityResult.ErrorMessage
+              )
+            } else {
+              logger.info('Updated CRM with result:', updateCrmActivityResult)
+            }
           }
 
           const mappedSubmission = mapSubmissionToResponse(

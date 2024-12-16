@@ -19,7 +19,7 @@ exports[`submissions.unit GET /submissions/search/getByContactIdAndSeason should
   "reportingExclude": false,
   "season": "2024",
   "source": "WEB",
-  "status": "COMPLETE",
+  "status": "SUBMITTED",
   "updatedAt": "2024-10-10T13:13:11.000Z",
   "version": "2024-10-10T13:13:11.000Z",
 }
@@ -44,7 +44,7 @@ exports[`submissions.unit PATCH /submissions/{submissionId} should return the up
   "reportingExclude": false,
   "season": "2024",
   "source": "WEB",
-  "status": "COMPLETE",
+  "status": "SUBMITTED",
   "updatedAt": "2024-10-10T13:13:11.000Z",
   "version": "2024-10-10T13:13:11.000Z",
 }
