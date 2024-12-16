@@ -708,7 +708,7 @@ describe('submissions.integration', () => {
         }
       })
 
-      expect(result.statusCode).toBe(201)
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return a 500 when the call to create an activity in CRM throws an error', async () => {
@@ -728,7 +728,9 @@ describe('submissions.integration', () => {
         }
       })
 
-      expect(result.payload).toBe('some sort of error')
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        error: 'Error updating submission'
+      })
       expect(result.statusCode).toBe(500)
     })
   })
