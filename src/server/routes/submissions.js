@@ -263,7 +263,7 @@ export default [
             version: new Date()
           })
 
-          // Update CRM Activity is status is SUBMITTED
+          // Update CRM Activity if status is SUBMITTED
           if (status === STATUSES.SUBMITTED) {
             logger.info(
               'Updating CRM activity with request:',

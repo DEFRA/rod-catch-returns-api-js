@@ -589,6 +589,15 @@ describe('submissions.unit', () => {
         'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
     })
 
+    const getErrorUpdateActivityCRM = () => ({
+      '@odata.context':
+        'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+      RCRActivityId: null,
+      ReturnStatus: 'error',
+      SuccessMessage: '',
+      ErrorMessage: 'Failed to update activity'
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
     })
@@ -706,16 +715,9 @@ describe('submissions.unit', () => {
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
 
-    it('should log an error but still return 200 when the call to update an activity in CRM returns an ErrorMessage', async () => {
+    it('should still return 200 when the call to update an activity in CRM returns an ErrorMessage', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      updateActivityCRM.mockResolvedValue({
-        '@odata.context':
-          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage: 'Failed to update activity'
-      })
+      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),
@@ -723,6 +725,17 @@ describe('submissions.unit', () => {
       )
 
       expect(result.statusCode).toBe(200)
+    })
+
+    it('should log an error when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
       expect(logger.error).toHaveBeenCalledWith(
         'failed to update activity in CRM for contact-identifier-111',
         'Failed to update activity'

@@ -574,7 +574,6 @@ describe('submissions.integration', () => {
     })
   })
 
-  // TODO finish integration tests off
   describe('PATCH /api/submissions/{submissionId}', () => {
     const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
       'contact-identifier-update-submission'
