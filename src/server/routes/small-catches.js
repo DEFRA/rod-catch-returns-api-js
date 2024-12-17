@@ -110,5 +110,47 @@ export default [
         'Retrieve the activity associated with a small catch using the small catch ID from the database',
       tags: ['api', 'smallCatches']
     }
+  },
+  {
+    method: 'GET',
+    path: '/smallCatches/{smallCatchId}',
+    options: {
+      /**
+       * Retrieve a small catch by its ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.smallCatchId - The small catch id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link SmallCatch}
+       */
+      handler: async (request, h) => {
+        try {
+          const smallCatchId = request.params.smallCatchId
+          const smallCatch = await SmallCatch.findOne({
+            where: { id: smallCatchId },
+            include: [{ association: SmallCatch.associations.counts }]
+          })
+
+          if (!smallCatch) {
+            return handleNotFound(
+              `Small catch not found for ID: ${smallCatchId}`,
+              h
+            )
+          }
+
+          const mappedSmallCatch = mapSmallCatchToResponse(
+            request,
+            smallCatch.toJSON()
+          )
+
+          return h.response(mappedSmallCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error fetching small catch by ID', error, h)
+        }
+      },
+      description: 'Retrieve a small catch by its ID',
+      notes: 'Retrieve a small catch from the database by its ID',
+      tags: ['api', 'smallCatches']
+    }
   }
 ]
