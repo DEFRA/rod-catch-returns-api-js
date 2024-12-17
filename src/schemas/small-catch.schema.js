@@ -1,3 +1,4 @@
+import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
 import { extractActivityId } from '../utils/entity-utils.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
@@ -13,20 +14,40 @@ export const createSmallCatchSchema = Joi.object({
     .when('noMonthRecorded', {
       is: true,
       then: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
+        'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED',
+        'string.base': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
       }),
       otherwise: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_MONTH_REQUIRED'
+        'any.required': 'SMALL_CATCH_MONTH_REQUIRED',
+        'string.base': 'SMALL_CATCH_MONTH_REQUIRED'
       })
     })
     .external(async (value, helper) => {
       const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
+      // check duplicates
       const month = getMonthNumberFromName(value)
-
       const duplicateExists = await isDuplicateSmallCatch(activityId, month)
       if (duplicateExists) {
         return helper.message('SMALL_CATCH_DUPLICATE_FOUND')
+      }
+
+      // check month in future
+      const submission = await getSubmissionByActivityId(activityId)
+
+      const currentYearAndMonth = set(new Date(), {
+        date: 1,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        milliseconds: 0
+      }) // Reset to the start of the first day of the current month
+
+      const inputMonth = getMonthNumberFromName(value) // Month is not one-based in our app
+      const inputDate = new Date(submission.season, inputMonth - 1) // Month is zero-based in js Date
+
+      if (isAfter(inputDate, currentYearAndMonth)) {
+        return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
       }
 
       return value
@@ -47,9 +68,11 @@ export const createSmallCatchSchema = Joi.object({
       })
     )
     .required()
+    .min(1)
     .messages({
       'any.required': 'SMALL_CATCH_COUNTS_REQUIRED',
-      'array.base': 'SMALL_CATCH_COUNTS_REQUIRED'
+      'array.base': 'SMALL_CATCH_COUNTS_REQUIRED',
+      'array.min': 'SMALL_CATCH_COUNTS_REQUIRED'
     })
     .custom((value, helper) => {
       const methods = value.map((item) => item.method)
@@ -80,25 +103,7 @@ export const createSmallCatchSchema = Joi.object({
       return value
     }),
   noMonthRecorded: Joi.boolean()
-}).external(async (value, helper) => {
-  const activityId = extractActivityId(value.activity)
-  const submission = await getSubmissionByActivityId(activityId)
-
-  const currentDate = new Date()
-  const currentYear = currentDate.getFullYear()
-  const currentMonth = currentDate.getMonth() + 1
-
-  const inputMonth = getMonthNumberFromName(value.month)
-
-  if (
-    submission.season > currentYear ||
-    (submission.season === currentYear && inputMonth > currentMonth)
-  ) {
-    return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
-  }
-
-  return value
-})
+}).unknown()
 
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')

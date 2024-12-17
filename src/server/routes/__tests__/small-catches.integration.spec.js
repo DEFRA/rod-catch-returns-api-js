@@ -123,6 +123,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch2.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_DUPLICATE_FOUND',
             property: 'month',
             value: 'FEBRUARY'
@@ -152,16 +153,17 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
             property: 'counts',
             value: [
               {
                 method: 'methods/1',
-                count: 3
+                count: '3'
               },
               {
                 method: 'methods/1',
-                count: 2
+                count: '2'
               }
             ]
           }
@@ -197,6 +199,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
             property: 'released',
             value: 6
@@ -230,27 +233,10 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_MONTH_IN_FUTURE',
-            value: {
-              activity: expect.any(String),
-              counts: [
-                {
-                  count: 3,
-                  method: 'methods/1'
-                },
-                {
-                  count: 2,
-                  method: 'methods/2'
-                },
-                {
-                  count: 1,
-                  method: 'methods/3'
-                }
-              ],
-              month: expect.any(String),
-              noMonthRecorded: false,
-              released: 3
-            }
+            property: 'month',
+            value: 'MAY'
           }
         ]
       })
