@@ -1,4 +1,5 @@
 import { Activity, Submission } from '../../entities/index.js'
+import { createActivity, updateActivity } from '@defra-fish/dynamics-lib'
 import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
@@ -6,8 +7,8 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
+import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
-import { createActivity } from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
@@ -37,6 +38,8 @@ export default [
             version: Date.now()
           })
 
+          logger.info('Creating CRM activity with request:', contactId, season)
+
           const createCrmActivityResponse = await createActivity(
             contactId,
             season
@@ -46,6 +49,11 @@ export default [
             logger.error(
               `failed to create activity in CRM for ${contactId}`,
               createCrmActivityResponse.ErrorMessage
+            )
+          } else {
+            logger.info(
+              'Created CRM activity with result:',
+              createCrmActivityResponse
             )
           }
 
@@ -255,6 +263,32 @@ export default [
             reportingExclude,
             version: new Date()
           })
+
+          // Update CRM Activity if status is SUBMITTED
+          if (status === STATUSES.SUBMITTED) {
+            logger.info(
+              'Updating CRM activity with request:',
+              submission.contactId,
+              submission.season
+            )
+
+            const updateCrmActivityResult = await updateActivity(
+              submission.contactId,
+              submission.season
+            )
+
+            if (updateCrmActivityResult.ErrorMessage) {
+              logger.error(
+                `failed to update activity in CRM for ${submission.contactId}`,
+                updateCrmActivityResult.ErrorMessage
+              )
+            } else {
+              logger.info(
+                'Updated CRM activity with result:',
+                updateCrmActivityResult
+              )
+            }
+          }
 
           const mappedSubmission = mapSubmissionToResponse(
             request,
