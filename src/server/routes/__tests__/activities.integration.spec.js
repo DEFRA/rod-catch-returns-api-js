@@ -543,4 +543,122 @@ describe('activities.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('DELETE /api/activities/{activityId}', () => {
+    const CONTACT_IDENTIFIER_DELETE_ACTIVITY =
+      'contact-identifier-delete-activity'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_ACTIVITY)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_ACTIVITY)
+    )
+
+    it('should return a 204 and delete an activity', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+
+      // make sure activity exists
+      const foundActivity = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}`
+      })
+      expect(foundActivity.statusCode).toBe(200)
+
+      // delete activity
+      const deletedActivity = await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+      expect(deletedActivity.statusCode).toBe(204)
+      expect(deletedActivity.body).toBeUndefined()
+
+      // make sure activity has been deleted
+      const foundActivityAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}`
+      })
+      expect(foundActivityAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 204 and delete associated catches', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+      const createdCatch = await createCatch(server, activityId)
+      const createdCatchId = JSON.parse(createdCatch.payload).id
+
+      // make sure catch exists
+      const foundCatch = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdCatchId}`
+      })
+      expect(foundCatch.statusCode).toBe(200)
+
+      await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+
+      // make sure catch has been deleted
+      const foundCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdCatchId}`
+      })
+      expect(foundCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 204 and delete associated small catches', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+      const createdSmallCatch = await createSmallCatch(server, activityId)
+      const createdSmallCatchId = JSON.parse(createdSmallCatch.payload).id
+
+      // make sure small catch exists
+      const foundSmallCatch = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${createdSmallCatchId}`
+      })
+      expect(foundSmallCatch.statusCode).toBe(200)
+
+      await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+
+      // make sure small catch has been deleted
+      const foundSmallCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdSmallCatchId}`
+      })
+      expect(foundSmallCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 404 and empty body if the activity could not be deleted', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/activities/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })

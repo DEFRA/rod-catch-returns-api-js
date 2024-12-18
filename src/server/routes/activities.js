@@ -1,4 +1,10 @@
-import { Activity, Catch, River, SmallCatch } from '../../entities/index.js'
+import {
+  Activity,
+  Catch,
+  River,
+  SmallCatch,
+  SmallCatchCount
+} from '../../entities/index.js'
 import {
   extractRiverId,
   extractSubmissionId
@@ -10,6 +16,7 @@ import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'
+import { sequelize } from '../../services/database.service.js'
 
 export default [
   {
@@ -260,6 +267,76 @@ export default [
       },
       description: 'Retrieve an activity by its ID',
       notes: 'Retrieve an activity from the database by its ID',
+      tags: ['api', 'activities']
+    }
+  },
+  {
+    method: 'DELETE',
+    path: '/activities/{activityId}',
+    options: {
+      /**
+       * Delete an activity by ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.activityId - The activity id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response indicating success or failure
+       */
+      handler: async (request, h) => {
+        const activityId = request.params.activityId
+
+        // Begin transaction for atomic operation
+        const transaction = await sequelize.transaction()
+
+        try {
+          // Find IDs of all SmallCatch records associated with the Activity
+          const smallCatchIds = (
+            await SmallCatch.findAll({
+              attributes: ['id'],
+              where: { activity_id: activityId },
+              transaction
+            })
+          )?.map((smallCatch) => smallCatch.id)
+
+          // Delete associated SmallCatchCount
+          await SmallCatchCount.destroy({
+            where: { small_catch_id: smallCatchIds },
+            transaction
+          })
+
+          // Delete associated SmallCatches
+          await SmallCatch.destroy({
+            where: { activity_id: activityId },
+            transaction
+          })
+
+          // Delete associated Catches
+          await Catch.destroy({
+            where: { activity_id: activityId },
+            transaction
+          })
+
+          // Delete the Activity
+          const deletedCount = await Activity.destroy({
+            where: { id: activityId },
+            transaction
+          })
+
+          if (deletedCount === 0) {
+            await transaction.rollback()
+            return handleNotFound(`Activity with ID ${activityId} not found`, h)
+          }
+
+          // Commit transaction
+          await transaction.commit()
+          return h.response().code(StatusCodes.NO_CONTENT)
+        } catch (error) {
+          await transaction.rollback()
+          return handleServerError('Error deleting activity', error, h)
+        }
+      },
+      description: 'Delete an activity by ID',
+      notes: 'Deletes an activity from the database by its ID',
       tags: ['api', 'activities']
     }
   }
