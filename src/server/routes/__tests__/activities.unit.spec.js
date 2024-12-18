@@ -677,104 +677,122 @@ describe('activities.unit', () => {
 
     const getTransaction = () => ({ commit: jest.fn(), rollback: jest.fn() })
 
+    const setUpDeleteSuccess = ({
+      smallCatchIds = [1, 2, 3],
+      transaction
+    } = {}) => {
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findAll.mockResolvedValueOnce(
+        smallCatchIds.map((id) => ({ id, toJSON: jest.fn() }))
+      )
+      SmallCatchCount.destroy.mockResolvedValueOnce(3)
+      SmallCatch.destroy.mockResolvedValueOnce(3)
+      Catch.destroy.mockResolvedValueOnce(2)
+      Activity.destroy.mockResolvedValueOnce(1)
+    }
+
     afterEach(() => {
       jest.clearAllMocks()
     })
 
-    describe('successful deletion', () => {
-      const transaction = { commit: jest.fn(), rollback: jest.fn() }
+    it('should call Activity.destroy with the correct parameters', async () => {
       const activityId = '3'
-      const smallCatchIds = [1, 2, 3]
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-      beforeEach(() => {
-        sequelize.transaction.mockResolvedValueOnce(transaction)
-        SmallCatch.findAll.mockResolvedValueOnce(
-          smallCatchIds.map((id) => ({ id, toJSON: jest.fn() }))
-        )
-        SmallCatchCount.destroy.mockResolvedValueOnce(3)
-        SmallCatch.destroy.mockResolvedValueOnce(3)
-        Catch.destroy.mockResolvedValueOnce(2)
-        Activity.destroy.mockResolvedValueOnce(1)
+      expect(Activity.destroy).toHaveBeenCalledWith({
+        where: { id: activityId },
+        transaction
       })
+    })
 
-      it('should call Activity.destroy with the correct parameters', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should call SmallCatch.findAll to fetch associated small catches', async () => {
+      const activityId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-        expect(Activity.destroy).toHaveBeenCalledWith({
-          where: { id: activityId },
-          transaction
-        })
+      expect(SmallCatch.findAll).toHaveBeenCalledWith({
+        attributes: ['id'],
+        where: { activity_id: activityId },
+        transaction
       })
+    })
 
-      it('should call SmallCatch.findAll to fetch associated small catches', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should delete all associated SmallCatchCount records', async () => {
+      const smallCatchIds = [1, 2, 3, 4]
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ smallCatchIds, transaction })
+      await deleteActivityHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
 
-        expect(SmallCatch.findAll).toHaveBeenCalledWith({
-          attributes: ['id'],
-          where: { activity_id: activityId },
-          transaction
-        })
+      expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
+        where: { small_catch_id: smallCatchIds },
+        transaction
       })
+    })
 
-      it('should delete all associated SmallCatchCount records', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should delete all associated SmallCatch records', async () => {
+      const activityId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-        expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
-          where: { small_catch_id: smallCatchIds },
-          transaction
-        })
+      expect(SmallCatch.destroy).toHaveBeenCalledWith({
+        where: { activity_id: activityId },
+        transaction
       })
+    })
 
-      it('should delete all associated SmallCatch records', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should delete all associated Catch records', async () => {
+      const activityId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-        expect(SmallCatch.destroy).toHaveBeenCalledWith({
-          where: { activity_id: activityId },
-          transaction
-        })
+      expect(Catch.destroy).toHaveBeenCalledWith({
+        where: { activity_id: activityId },
+        transaction
       })
+    })
 
-      it('should delete all associated Catch records', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should commit the transaction on successful deletion', async () => {
+      const activityId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-        expect(Catch.destroy).toHaveBeenCalledWith({
-          where: { activity_id: activityId },
-          transaction
-        })
-      })
+      expect(transaction.commit).toHaveBeenCalled()
+    })
 
-      it('should commit the transaction on successful deletion', async () => {
-        await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
+    it('should return a 204 status code on successful deletion', async () => {
+      const activityId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+      const result = await deleteActivityHandler(
+        getDeleteRequest(activityId),
+        getMockResponseToolkit()
+      )
 
-        expect(transaction.commit).toHaveBeenCalled()
-      })
-
-      it('should return a 204 status code on successful deletion', async () => {
-        const result = await deleteActivityHandler(
-          getDeleteRequest(activityId),
-          getMockResponseToolkit()
-        )
-
-        expect(result.statusCode).toBe(204)
-      })
+      expect(result.statusCode).toBe(204)
     })
 
     it('should call handleNotFound if the activity does not exist', async () => {
