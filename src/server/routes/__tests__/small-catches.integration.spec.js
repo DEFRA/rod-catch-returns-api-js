@@ -341,13 +341,9 @@ describe('small-catches.integration', () => {
         CONTACT_IDENTIFIER_GET_SMALL_CATCH
       )
 
-      console.log(activityId)
-
       const smallCatch = await createSmallCatch(server, activityId)
 
       const smallCatchId = JSON.parse(smallCatch.payload).id
-
-      console.log(smallCatch)
 
       const result = await server.inject({
         method: 'GET',

@@ -283,62 +283,55 @@ export default [
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response indicating success or failure
        */
       handler: async (request, h) => {
+        const activityId = request.params.activityId
+
+        // Begin transaction for atomic operation
+        const transaction = await sequelize.transaction()
+
         try {
-          const activityId = request.params.activityId
-
-          // Begin transaction for atomic operation
-          const transaction = await sequelize.transaction()
-
-          try {
-            // Find IDs of all SmallCatch records associated with the Activity
-            const smallCatchIds = (
-              await SmallCatch.findAll({
-                attributes: ['id'],
-                where: { activity_id: activityId },
-                transaction
-              })
-            )?.map((smallCatch) => smallCatch.id)
-
-            // Delete associated SmallCatchCount
-            await SmallCatchCount.destroy({
-              where: { small_catch_id: smallCatchIds },
-              transaction
-            })
-
-            // Delete associated SmallCatches
-            await SmallCatch.destroy({
+          // Find IDs of all SmallCatch records associated with the Activity
+          const smallCatchIds = (
+            await SmallCatch.findAll({
+              attributes: ['id'],
               where: { activity_id: activityId },
               transaction
             })
+          )?.map((smallCatch) => smallCatch.id)
 
-            // Delete associated Catches
-            await Catch.destroy({
-              where: { activity_id: activityId },
-              transaction
-            })
+          // Delete associated SmallCatchCount
+          await SmallCatchCount.destroy({
+            where: { small_catch_id: smallCatchIds },
+            transaction
+          })
 
-            // Delete the Activity
-            const deletedCount = await Activity.destroy({
-              where: { id: activityId },
-              transaction
-            })
+          // Delete associated SmallCatches
+          await SmallCatch.destroy({
+            where: { activity_id: activityId },
+            transaction
+          })
 
-            if (deletedCount === 0) {
-              await transaction.rollback()
-              return handleNotFound(
-                `Activity with ID ${activityId} not found`,
-                h
-              )
-            }
+          // Delete associated Catches
+          await Catch.destroy({
+            where: { activity_id: activityId },
+            transaction
+          })
 
-            // Commit transaction
-            await transaction.commit()
-            return h.response().code(StatusCodes.NO_CONTENT)
-          } catch (error) {
+          // Delete the Activity
+          const deletedCount = await Activity.destroy({
+            where: { id: activityId },
+            transaction
+          })
+
+          if (deletedCount === 0) {
             await transaction.rollback()
-            throw error
+            return handleNotFound(`Activity with ID ${activityId} not found`, h)
           }
+
+          // Commit transaction
+          await transaction.commit()
+          return h.response().code(StatusCodes.NO_CONTENT)
         } catch (error) {
+          await transaction.rollback()
           return handleServerError('Error deleting activity', error, h)
         }
       },
