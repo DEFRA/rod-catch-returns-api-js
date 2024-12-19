@@ -86,6 +86,10 @@ Then run the following to bring the database up to the latest version:
 npm run migrate:up
 ```
 
+N.B. if this fails to run with an error saying that that the liquibase-migrations container can't be found, try
+setting the DOCKER_BUILDKIT env var to 1 (even if you're on a version of Docker Desktop that says it shouldn't
+need this) and running it again.
+
 If you would like to go back to a previous version of the database, run the following command:
 
 ```shell script
