@@ -6,12 +6,16 @@ import {
   SmallCatchCount
 } from '../../entities/index.js'
 import {
+  createActivitySchema,
+  updateActivitySchema
+} from '../../schemas/activities.schema.js'
+import {
   extractRiverId,
   extractSubmissionId
 } from '../../utils/entity-utils.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
-import { createActivitySchema } from '../../schemas/activities.schema.js'
+
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
@@ -337,6 +341,57 @@ export default [
       },
       description: 'Delete an activity by ID',
       notes: 'Deletes an activity from the database by its ID',
+      tags: ['api', 'activities']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: '/activities/{activityId}',
+    options: {
+      /**
+       * Update a activities in the database using the activities ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.activityId - The ID of the activity to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Activity}
+       */
+      handler: async (request, h) => {
+        const { activityId } = request.params
+        const { daysFishedWithMandatoryRelease, daysFishedOther, river } =
+          request.payload
+
+        try {
+          const activity = await Activity.findByPk(activityId)
+
+          if (!activity) {
+            return handleNotFound(`Activity not found for ${activityId}`, h)
+          }
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedActivity = await activity.update({
+            daysFishedWithMandatoryRelease,
+            daysFishedOther,
+            river,
+            version: new Date()
+          })
+
+          const mappedActivity = mapActivityToResponse(
+            request,
+            updatedActivity.toJSON()
+          )
+
+          return h.response(mappedActivity).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error updating activity', error, h)
+        }
+      },
+      validate: {
+        payload: updateActivitySchema,
+        options: { entity: 'Activity' }
+      },
+      description: 'Update an activity',
+      notes: 'Update an activity',
       tags: ['api', 'activities']
     }
   }

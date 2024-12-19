@@ -124,3 +124,5 @@ export const createActivitySchema = Joi.object({
       return value
     })
 })
+
+export const updateActivitySchema = createActivitySchema
