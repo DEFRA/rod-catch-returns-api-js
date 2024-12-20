@@ -10,7 +10,7 @@ import { River } from '../entities/index.js'
 export const isRiverInternal = async (riverId) => {
   const foundRiver = await River.findOne({ where: { id: riverId } })
   if (foundRiver === null) {
-    throw new Error('River does not exist')
+    throw new Error('RIVER_NOT_FOUND')
   }
 
   // Normal users cannot add internal rivers, but admin users can

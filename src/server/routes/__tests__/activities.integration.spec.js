@@ -662,7 +662,7 @@ describe('activities.integration', () => {
     })
   })
 
-  describe.skip('PATCH /api/activities/{activityId}', () => {
+  describe('PATCH /api/activities/{activityId}', () => {
     const CONTACT_IDENTIFIER_UPDATE_ACTIVITY =
       'contact-identifier-update-activity'
     beforeEach(
@@ -689,13 +689,14 @@ describe('activities.integration', () => {
       ).toBe(20)
 
       // Update activity
-      await server.inject({
+      const updatedActivity = await server.inject({
         method: 'PATCH',
         url: `/api/activities/${createdActivityId}`,
         payload: {
           daysFishedWithMandatoryRelease: '5'
         }
       })
+      expect(updatedActivity.statusCode).toBe(200)
 
       // check daysFishedWithMandatoryRelease in activity has been updated
       const foundApdatedSubmission = await server.inject({
@@ -718,16 +719,17 @@ describe('activities.integration', () => {
       const submissionId = JSON.parse(submission.payload).id
       const createdActivity = await createActivity(server, submissionId)
       const createdActivityId = JSON.parse(createdActivity.payload).id
-      expect(JSON.parse(createdActivity.payload).daysFishedOther).toBe(20)
+      expect(JSON.parse(createdActivity.payload).daysFishedOther).toBe(10)
 
       // Update activity
-      await server.inject({
+      const updatedActivity = await server.inject({
         method: 'PATCH',
         url: `/api/activities/${createdActivityId}`,
         payload: {
           daysFishedOther: '3'
         }
       })
+      expect(updatedActivity.statusCode).toBe(200)
 
       // check daysFishedOther in activity has been updated
       const foundApdatedSubmission = await server.inject({
@@ -747,7 +749,6 @@ describe('activities.integration', () => {
       const submissionId = JSON.parse(submission.payload).id
       const createdActivity = await createActivity(server, submissionId)
       const createdActivityId = JSON.parse(createdActivity.payload).id
-      expect(JSON.parse(createdActivity.payload).river).toBe('rivers/1')
 
       // Update activity
       await server.inject({
@@ -759,12 +760,12 @@ describe('activities.integration', () => {
       })
 
       // check daysFishedOther in activity has been updated
-      const foundApdatedSubmission = await server.inject({
+      const foundApdatedRiver = await server.inject({
         method: 'GET',
-        url: `/api/activities/${createdActivityId}`
+        url: `/api/activities/${createdActivityId}/river`
       })
 
-      expect(JSON.parse(foundApdatedSubmission.payload).river).toBe('rivers/12')
+      expect(JSON.parse(foundApdatedRiver.payload).id).toBe('12')
     })
 
     it('should throw an error if the river is already used in another activity', async () => {
@@ -800,6 +801,39 @@ describe('activities.integration', () => {
             message: 'ACTIVITY_RIVER_DUPLICATE_FOUND',
             property: 'river',
             value: 'rivers/2'
+          }
+        ]
+      })
+    })
+
+    it('should throw an error if the river does not exist', async () => {
+      // create submission
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      // create activity with valid river
+      const createdActivity = await createActivity(server, submissionId)
+      const createdActivityId = JSON.parse(createdActivity.payload).id
+
+      // update with activity that does not exist
+      const result = await server.inject({
+        method: 'PATCH',
+        url: `/api/activities/${createdActivityId}`,
+        payload: {
+          river: 'rivers/0'
+        }
+      })
+
+      expect(JSON.parse(result.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Activity',
+            message: 'ACTIVITY_RIVER_NOT_FOUND',
+            property: 'river',
+            value: 'rivers/0'
           }
         ]
       })

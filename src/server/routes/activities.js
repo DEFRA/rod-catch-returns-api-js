@@ -368,11 +368,13 @@ export default [
             return handleNotFound(`Activity not found for ${activityId}`, h)
           }
 
+          const riverId = river ? extractRiverId(river) : undefined
+
           // if a value is undefined, it is not updated by Sequelize
           const updatedActivity = await activity.update({
             daysFishedWithMandatoryRelease,
             daysFishedOther,
-            river,
+            river_id: riverId,
             version: new Date()
           })
 
