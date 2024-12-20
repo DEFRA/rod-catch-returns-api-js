@@ -46,11 +46,6 @@ const validateDaysFishedWithMandatoryRelease = async (
 }
 
 const validateSubmission = async (value, helper) => {
-  // TODO find neater way of doing value==undefined
-  // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-  if (value === undefined) {
-    return value
-  }
   const submissionId = extractSubmissionId(value)
   const submissionExists = await isSubmissionExists(submissionId)
   return submissionExists
@@ -59,11 +54,6 @@ const validateSubmission = async (value, helper) => {
 }
 
 const validateRiver = async (value, helper) => {
-  // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-  if (value === undefined) {
-    return value
-  }
-
   try {
     const riverId = extractRiverId(value)
     const riverInternal = await isRiverInternal(riverId)
@@ -131,7 +121,6 @@ export const createActivitySchema = Joi.object({
 
   river: Joi.string()
     .required()
-    .external(validateRiver)
     .pattern(/^rivers\//)
     .description('The river id prefixed with rivers/')
     .messages({
@@ -139,6 +128,7 @@ export const createActivitySchema = Joi.object({
       'string.empty': 'ACTIVITY_RIVER_REQUIRED',
       'string.pattern.base': 'ACTIVITY_RIVER_PATTERN_INVALID'
     })
+    .external(validateRiver)
     .external(async (value, helper) => {
       const submissionId = extractSubmissionId(
         helper.state.ancestors[0].submission
@@ -184,7 +174,6 @@ export const updateActivitySchema = Joi.object({
   daysFishedOther: createActivitySchema.extract('daysFishedOther').optional(),
   river: Joi.string()
     .optional()
-    .external(validateRiver)
     .pattern(/^rivers\//)
     .description('The river id prefixed with rivers/')
     .messages({
@@ -197,11 +186,17 @@ export const updateActivitySchema = Joi.object({
       if (value === undefined) {
         return value
       }
+      return validateRiver(value, helper)
+    })
+    .external(async (value, helper) => {
+      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+      if (value === undefined) {
+        return value
+      }
       // Get activityId from the request context
       const activityId = extractActivityId(
         helper.prefs.context.params.activityId
       )
-      console.log('not here')
       const riverId = extractRiverId(value)
       const submission = await getSubmissionByActivityId(activityId)
 
