@@ -71,6 +71,42 @@ const validateRiver = async (value, helper) => {
   }
 }
 
+const daysFishedWithMandatoryReleaseField = Joi.number()
+  .integer()
+  .min(0)
+  .description('The number of days fished during the mandatory release period')
+  .messages({
+    'any.required': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_REQUIRED',
+    'number.min': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NEGATIVE',
+    'number.base': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NOT_A_NUMBER',
+    'number.integer': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_NOT_AN_INTEGER'
+  })
+
+const daysFishedOtherField = Joi.number()
+  .integer()
+  .min(0)
+  .max(198)
+  .required()
+  .description('The number of days fished at other times during the season')
+  .messages({
+    'any.required': 'ACTIVITY_DAYS_FISHED_OTHER_REQUIRED',
+    'number.min': 'ACTIVITY_DAYS_FISHED_OTHER_NEGATIVE',
+    'number.max': 'ACTIVITY_DAYS_FISHED_OTHER_MAX_EXCEEDED',
+    'number.base': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER',
+    'number.integer': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER'
+  })
+  .external(validateDaysFished)
+
+const riverField = Joi.string()
+
+  .pattern(/^rivers\//)
+  .description('The river id prefixed with rivers/')
+  .messages({
+    'any.required': 'ACTIVITY_RIVER_REQUIRED',
+    'string.empty': 'ACTIVITY_RIVER_REQUIRED',
+    'string.pattern.base': 'ACTIVITY_RIVER_PATTERN_INVALID'
+  })
+
 export const createActivitySchema = Joi.object({
   submission: Joi.string()
     .required()
@@ -83,9 +119,7 @@ export const createActivitySchema = Joi.object({
       'string.pattern.base': 'ACTIVITY_SUBMISSION_PATTERN_INVALID'
     }),
 
-  daysFishedWithMandatoryRelease: Joi.number()
-    .integer()
-    .min(0)
+  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
     .required()
     .external(async (value, helper) => {
       const submissionId = extractSubmissionId(
@@ -93,41 +127,11 @@ export const createActivitySchema = Joi.object({
       )
       const submission = await getSubmission(submissionId)
       return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    })
-    .description(
-      'The number of days fished during the mandatory release period'
-    )
-    .messages({
-      'any.required': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_REQUIRED',
-      'number.min': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NEGATIVE',
-      'number.base': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NOT_A_NUMBER',
-      'number.integer': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_NOT_AN_INTEGER'
     }),
+  daysFishedOther: daysFishedOtherField.required(),
 
-  daysFishedOther: Joi.number()
-    .integer()
-    .min(0)
-    .max(198)
+  river: riverField
     .required()
-    .description('The number of days fished at other times during the season')
-    .messages({
-      'any.required': 'ACTIVITY_DAYS_FISHED_OTHER_REQUIRED',
-      'number.min': 'ACTIVITY_DAYS_FISHED_OTHER_NEGATIVE',
-      'number.max': 'ACTIVITY_DAYS_FISHED_OTHER_MAX_EXCEEDED',
-      'number.base': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER',
-      'number.integer': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER'
-    })
-    .external(validateDaysFished),
-
-  river: Joi.string()
-    .required()
-    .pattern(/^rivers\//)
-    .description('The river id prefixed with rivers/')
-    .messages({
-      'any.required': 'ACTIVITY_RIVER_REQUIRED',
-      'string.empty': 'ACTIVITY_RIVER_REQUIRED',
-      'string.pattern.base': 'ACTIVITY_RIVER_PATTERN_INVALID'
-    })
     .external(validateRiver)
     .external(async (value, helper) => {
       const submissionId = extractSubmissionId(
@@ -145,10 +149,7 @@ export const createActivitySchema = Joi.object({
 })
 
 export const updateActivitySchema = Joi.object({
-  daysFishedWithMandatoryRelease: Joi.number()
-    // .extract('daysFishedWithMandatoryRelease')
-    .integer()
-    .min(0)
+  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
     .optional()
     .external(async (value, helper) => {
       // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
@@ -161,26 +162,10 @@ export const updateActivitySchema = Joi.object({
       )
       const submission = await getSubmissionByActivityId(activityId)
       return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    })
-    .description(
-      'The number of days fished during the mandatory release period'
-    )
-    .messages({
-      'any.required': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_REQUIRED',
-      'number.min': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NEGATIVE',
-      'number.base': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_NOT_A_NUMBER',
-      'number.integer': 'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_NOT_AN_INTEGER'
     }),
-  daysFishedOther: createActivitySchema.extract('daysFishedOther').optional(),
-  river: Joi.string()
+  daysFishedOther: daysFishedOtherField.optional(),
+  river: riverField
     .optional()
-    .pattern(/^rivers\//)
-    .description('The river id prefixed with rivers/')
-    .messages({
-      'any.required': 'ACTIVITY_RIVER_REQUIRED',
-      'string.empty': 'ACTIVITY_RIVER_REQUIRED',
-      'string.pattern.base': 'ACTIVITY_RIVER_PATTERN_INVALID'
-    })
     .external(async (value, helper) => {
       // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
       if (value === undefined) {
