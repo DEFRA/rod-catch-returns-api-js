@@ -3,30 +3,28 @@ import {
   isActivityExists
 } from '../activities.service.js'
 import { Activity } from '../../entities/index.js'
+import { Op } from 'sequelize'
 
 jest.mock('../../entities/index.js')
 
 describe('activity.service.unit', () => {
   describe('isActivityExists', () => {
-    const mockSubmissionId = 'abc123'
-    const mockRiverId = 'abc123'
-
     afterEach(() => {
       jest.clearAllMocks()
     })
 
-    it('should return true if the activity exists', async () => {
+    it('should return true if the activity exists and no activityId is provided', async () => {
       Activity.count.mockResolvedValue(1)
 
-      const result = await isActivityExists(mockSubmissionId, mockRiverId)
+      const result = await isActivityExists('3', '4')
 
       expect(result).toBe(true)
     })
 
-    it('should return false if activity does not exist', async () => {
+    it('should return false if activity does not exist and no activityId is provided', async () => {
       Activity.count.mockResolvedValue(0)
 
-      const result = await isActivityExists(mockSubmissionId, mockRiverId)
+      const result = await isActivityExists('3', '4')
 
       expect(result).toBe(false)
     })
@@ -34,9 +32,55 @@ describe('activity.service.unit', () => {
     it('should handle errors thrown by Activity.count', async () => {
       Activity.count.mockRejectedValue(new Error('Database error'))
 
-      await expect(
-        isActivityExists(mockSubmissionId, mockRiverId)
-      ).rejects.toThrow('Database error')
+      await expect(isActivityExists('3', '4')).rejects.toThrow('Database error')
+    })
+
+    it('should have a where clause with only the submission and river id if no activityId is provided', async () => {
+      const mockSubmissionId = '3'
+      const mockRiverId = '4'
+      Activity.count.mockResolvedValue(1)
+
+      await isActivityExists(mockSubmissionId, mockRiverId)
+
+      expect(Activity.count).toHaveBeenCalledWith({
+        where: {
+          submission_id: mockSubmissionId,
+          river_id: mockRiverId
+        }
+      })
+    })
+
+    it('should return true if an activity is found and an activityId is provided', async () => {
+      Activity.count.mockResolvedValue(1)
+
+      const result = await isActivityExists('3', '4', '2')
+
+      expect(result).toBe(true)
+    })
+
+    it('should return false if activityId is included and no matching activity exists', async () => {
+      Activity.count.mockResolvedValue(0)
+
+      const result = await isActivityExists('3', '4', '2')
+
+      expect(result).toBe(false)
+    })
+
+    it('should exclude the provided activityId in the where clause', async () => {
+      const mockSubmissionId = '3'
+      const mockRiverId = '4'
+      const mockActivityId = 3
+      Activity.count.mockResolvedValue(1)
+
+      await isActivityExists(mockSubmissionId, mockRiverId, mockActivityId)
+
+      expect(Activity.count).toHaveBeenCalledWith({
+        where: {
+          submission_id: mockSubmissionId,
+          river_id: mockRiverId,
+          id: { [Op.ne]: mockActivityId }
+        }
+      })
     })
   })
 
