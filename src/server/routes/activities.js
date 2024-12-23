@@ -22,6 +22,8 @@ import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
+const BASE_ACTIVITIES_URL = '/activities/{activityId}'
+
 export default [
   {
     method: 'POST',
@@ -79,7 +81,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/activities/{activityId}/river',
+    path: `${BASE_ACTIVITIES_URL}/river`,
     options: {
       /**
        * Retrieve the river associated with an activity
@@ -131,7 +133,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/activities/{activityId}/smallCatches',
+    path: `${BASE_ACTIVITIES_URL}/smallCatches`,
     options: {
       /**
        * Retrieve the small catches associated with an activity
@@ -188,7 +190,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/activities/{activityId}/catches',
+    path: `${BASE_ACTIVITIES_URL}/catches`,
     options: {
       /**
        * Retrieve the catches (salmon and large sea trout) associated with an activity
@@ -238,7 +240,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/activities/{activityId}',
+    path: BASE_ACTIVITIES_URL,
     options: {
       /**
        * Retrieve an activity by its ID
@@ -276,7 +278,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/activities/{activityId}',
+    path: BASE_ACTIVITIES_URL,
     options: {
       /**
        * Delete an activity by ID
@@ -346,7 +348,7 @@ export default [
   },
   {
     method: 'PATCH',
-    path: '/activities/{activityId}',
+    path: BASE_ACTIVITIES_URL,
     options: {
       /**
        * Update a activities in the database using the activities ID
