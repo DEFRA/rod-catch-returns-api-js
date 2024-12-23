@@ -26,6 +26,7 @@ jest.mock('../../../services/database.service.js', () => ({
       hasMany: jest.fn(),
       belongsTo: jest.fn(),
       findAll: jest.fn(),
+      findByPk: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       destroy: jest.fn()
@@ -52,6 +53,9 @@ const [
   },
   {
     options: { handler: deleteActivityHandler }
+  },
+  {
+    options: { handler: patchActivityHandler }
   }
 ] = routes
 
@@ -853,6 +857,169 @@ describe('activities.unit', () => {
       const h = getMockResponseToolkit()
 
       const result = await deleteActivityHandler(getDeleteRequest('3'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('PATCH /activities/{activityId}', () => {
+    const getActivityRequest = (payload) => ({
+      ...getServerDetails(),
+      params: { activityId: '1' },
+      payload
+    })
+
+    const getFoundActivity = () => ({
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: 1,
+          daysFishedWithMandatoryRelease: 8,
+          daysFishedOther: 12,
+          river_id: '3',
+          submission_id: '1',
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z',
+          version: '2024-10-10T13:13:11.000Z'
+        })
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the activity is updated successfully', async () => {
+      const foundActivity = getFoundActivity()
+      Activity.findByPk.mockResolvedValueOnce(foundActivity)
+
+      const result = await patchActivityHandler(
+        getActivityRequest({
+          daysFishedWithMandatoryRelease: 8,
+          daysFishedOther: 12,
+          river: 'rivers/3'
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return the updated activity if the call to update the activity is successful', async () => {
+      const foundActivity = getFoundActivity()
+      Activity.findByPk.mockResolvedValueOnce(foundActivity)
+
+      const result = await patchActivityHandler(
+        getActivityRequest({
+          daysFishedWithMandatoryRelease: 8,
+          daysFishedOther: 12,
+          river: 'rivers/3'
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call update with "daysFishedWithMandatoryRelease"', async () => {
+      const foundActivity = getFoundActivity()
+      Activity.findByPk.mockResolvedValueOnce(foundActivity)
+
+      await patchActivityHandler(
+        getActivityRequest({
+          daysFishedWithMandatoryRelease: 8
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundActivity.update).toHaveBeenCalledWith({
+        daysFishedWithMandatoryRelease: 8,
+        daysFishedOther: undefined,
+        river_id: undefined,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should call update with "daysFishedOther"', async () => {
+      const foundActivity = getFoundActivity()
+      Activity.findByPk.mockResolvedValueOnce(foundActivity)
+
+      await patchActivityHandler(
+        getActivityRequest({
+          daysFishedOther: 3
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundActivity.update).toHaveBeenCalledWith({
+        daysFishedWithMandatoryRelease: undefined,
+        daysFishedOther: 3,
+        river_id: undefined,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should call update with "river"', async () => {
+      const foundActivity = getFoundActivity()
+      Activity.findByPk.mockResolvedValueOnce(foundActivity)
+
+      await patchActivityHandler(
+        getActivityRequest({
+          river: 'rivers/12'
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundActivity.update).toHaveBeenCalledWith({
+        daysFishedWithMandatoryRelease: undefined,
+        daysFishedOther: undefined,
+        river_id: '12',
+        version: expect.any(Date)
+      })
+    })
+
+    it('should return a 404 status code if the activity does not exist', async () => {
+      Activity.findByPk.mockResolvedValueOnce(null)
+
+      const result = await patchActivityHandler(
+        getActivityRequest({
+          daysFishedWithMandatoryRelease: 8
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while updating the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await patchActivityHandler(
+        getActivityRequest({
+          daysFishedWithMandatoryRelease: 8
+        }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating activity',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while updating the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await patchActivityHandler(
+        getActivityRequest({
+          daysFishedOther: 12
+        }),
+        h
+      )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
