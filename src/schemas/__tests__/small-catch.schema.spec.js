@@ -71,6 +71,16 @@ describe('smallCatch.schema.unit', () => {
       ).resolves.toStrictEqual(payload)
     })
 
+    it('should validate successfully when additional parameters (that are not part of the schema) are passed in', async () => {
+      setupMocks({ season: currentYear })
+
+      const payload = { ...getValidPayload(), submission: 'submission/123' }
+
+      await expect(
+        createSmallCatchSchema.validateAsync(payload)
+      ).resolves.toStrictEqual(payload)
+    })
+
     describe('activity', () => {
       it('should return an error if "activity" is missing', async () => {
         const payload = { ...getValidPayload(), activity: undefined }
@@ -203,6 +213,13 @@ describe('smallCatch.schema.unit', () => {
     describe('counts', () => {
       it('should return an error if counts is missing', async () => {
         const payload = { ...getValidPayload(), counts: undefined }
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_COUNTS_REQUIRED')
+      })
+
+      it('should return an error if counts is an empty array', async () => {
+        const payload = { ...getValidPayload(), counts: [] }
         await expect(
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_COUNTS_REQUIRED')

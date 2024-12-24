@@ -1,6 +1,7 @@
 import { River } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
+import { handleServerError } from '../../utils/server-utils.js'
+import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 
 export default [
   {
@@ -14,21 +15,23 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link River}
        */
-      handler: async (_request, h) => {
+      handler: async (request, h) => {
         try {
-          const rivers = await River.findAll()
+          const foundRivers = await River.findAll()
+
+          const mappedRivers = foundRivers.map((river) =>
+            mapRiverToResponse(request, river)
+          )
+
           return h
             .response({
               _embedded: {
-                rivers
+                rivers: mappedRivers
               }
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching rivers:', error)
-          return h
-            .response({ error: 'Unable to fetch rivers' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching rivers', error, h)
         }
       },
       description: 'Retrieve all the rivers in the database',

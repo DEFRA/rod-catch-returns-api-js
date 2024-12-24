@@ -1,6 +1,7 @@
 import { Species } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
+import { handleServerError } from '../../utils/server-utils.js'
+import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
 
 export default [
   {
@@ -14,21 +15,23 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Species}
        */
-      handler: async (_request, h) => {
+      handler: async (request, h) => {
         try {
-          const species = await Species.findAll()
+          const foundSpecies = await Species.findAll()
+
+          const mappedSpecies = foundSpecies.map((species) =>
+            mapSpeciesToResponse(request, species)
+          )
+
           return h
             .response({
               _embedded: {
-                species
+                species: mappedSpecies
               }
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching species:', error)
-          return h
-            .response({ error: 'Unable to fetch species' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching species', error, h)
         }
       },
       description: 'Retrieve all the species in the database',

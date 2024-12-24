@@ -13,9 +13,6 @@ describe('small-catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
-  const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
-    'contact-identifier-create-small-catch'
-
   beforeAll(async () => {
     createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
@@ -25,17 +22,16 @@ describe('small-catches.integration', () => {
     await server.stop()
   })
 
-  const setupSubmissionAndActivity = async () => {
-    const submission = await createSubmission(
-      server,
-      CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-    )
+  const setupSubmissionAndActivity = async (contactId) => {
+    const submission = await createSubmission(server, contactId)
     const submissionId = JSON.parse(submission.payload).id
     const activity = await createActivity(server, submissionId)
     return JSON.parse(activity.payload).id
   }
 
   describe('POST /api/smallCatches ', () => {
+    const CONTACT_IDENTIFIER_CREATE_SMALL_CATCH =
+      'contact-identifier-create-small-catch'
     beforeEach(async () => {
       await deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
@@ -50,7 +46,9 @@ describe('small-catches.integration', () => {
     )
 
     it('should successfully create a small catch for a submission with a valid request', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatches = await createSmallCatch(server, activityId)
 
@@ -111,7 +109,9 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if a small catch with the same month has already been created', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatch1 = await createSmallCatch(server, activityId)
 
@@ -123,6 +123,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch2.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_DUPLICATE_FOUND',
             property: 'month',
             value: 'FEBRUARY'
@@ -132,7 +133,9 @@ describe('small-catches.integration', () => {
     })
 
     it('should throw an error if a small catch has the same method twice', async () => {
-      const activityId = await setupSubmissionAndActivity()
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
 
       const smallCatch = await createSmallCatch(server, activityId, {
         counts: [
@@ -150,16 +153,17 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
             property: 'counts',
             value: [
               {
                 method: 'methods/1',
-                count: 3
+                count: '3'
               },
               {
                 method: 'methods/1',
-                count: 2
+                count: '2'
               }
             ]
           }
@@ -195,6 +199,7 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
             property: 'released',
             value: 6
@@ -228,32 +233,186 @@ describe('small-catches.integration', () => {
       expect(JSON.parse(smallCatch.payload)).toEqual({
         errors: [
           {
+            entity: 'SmallCatch',
             message: 'SMALL_CATCH_MONTH_IN_FUTURE',
-            value: {
-              activity: expect.any(String),
-              counts: [
-                {
-                  count: 3,
-                  method: 'methods/1'
-                },
-                {
-                  count: 2,
-                  method: 'methods/2'
-                },
-                {
-                  count: 1,
-                  method: 'methods/3'
-                }
-              ],
-              month: expect.any(String),
-              noMonthRecorded: false,
-              released: 3
-            }
+            property: 'month',
+            value: 'MAY'
           }
         ]
       })
       expect(smallCatch.statusCode).toBe(400)
       jest.useRealTimers()
+    })
+  })
+
+  describe('GET /api/smallCatches/{smallCatchId}/activity', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH =
+      'contact-identifier-get-activity-for-small-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+        )
+    )
+
+    it('should successfully get the activity associated with a small catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_ACTIVITY_FOR_SMALL_CATCH
+      )
+
+      const smallCatch = await createSmallCatch(server, activityId)
+
+      const smallCatchId = JSON.parse(smallCatch.payload).id
+
+      const activity = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}/activity`
+      })
+
+      expect(JSON.parse(activity.payload)).toEqual({
+        id: expect.any(String),
+        daysFishedWithMandatoryRelease: 20,
+        daysFishedOther: 10,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          submission: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/submission`
+            )
+          },
+          catches: {
+            href: expect.stringMatching(`/api/activities/${activityId}/catches`)
+          },
+          river: {
+            href: expect.stringMatching(`/api/activities/${activityId}/river`)
+          },
+          smallCatches: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/smallCatches`
+            )
+          }
+        }
+      })
+      expect(activity.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/smallCatches/0/activity'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
+
+  describe('GET /api/smallCatches/{smallCatchId}', () => {
+    const CONTACT_IDENTIFIER_GET_SMALL_CATCH =
+      'contact-identifier-get-small-catch'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_SMALL_CATCH)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_SMALL_CATCH)
+    )
+
+    it('should return an a small catch if it exists', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_GET_SMALL_CATCH
+      )
+
+      const smallCatch = await createSmallCatch(server, activityId)
+
+      const smallCatchId = JSON.parse(smallCatch.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}`
+      })
+
+      expect(JSON.parse(result.payload)).toEqual({
+        id: expect.any(String),
+        month: 'FEBRUARY',
+        counts: [
+          {
+            count: 3,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/1`)
+              }
+            }
+          },
+          {
+            count: 2,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/2`)
+              }
+            }
+          },
+          {
+            count: 1,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/3`)
+              }
+            }
+          }
+        ],
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        released: 3,
+        reportingExclude: false,
+        noMonthRecorded: false,
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchId}`)
+          },
+          smallCatch: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchId}`)
+          },
+          activityEntity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(
+              `/api/smallCatches/${smallCatchId}/activity`
+            )
+          }
+        }
+      })
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the small catch could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/smallCatches/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
     })
   })
 })

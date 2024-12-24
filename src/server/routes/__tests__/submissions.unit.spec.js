@@ -1,15 +1,23 @@
 import {
+  createActivity as createActivityCRM,
+  updateActivity as updateActivityCRM
+} from '@defra-fish/dynamics-lib'
+import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import {
+  handleNotFound,
+  handleServerError
+} from '../../../utils/server-utils.js'
 import { Submission } from '../../../entities/index.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
 
 const [
   {
@@ -23,8 +31,17 @@ const [
   },
   {
     options: { handler: getSubmissionByIdHandler }
+  },
+  {
+    options: { handler: patchSubmissionByIdHandler }
   }
 ] = routes
+
+const NOT_FOUND_SYMBOL = Symbol('NOT_FOUND')
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('submissions.unit', () => {
   const getFoundSubmission = () => ({
@@ -32,7 +49,7 @@ describe('submissions.unit', () => {
       id: '1',
       contactId: 'contact-identifier-111',
       season: '2024',
-      status: 'COMPLETE',
+      status: 'SUBMITTED',
       source: 'WEB',
       version: '2024-10-10T13:13:11.000Z',
       reportingExclude: false,
@@ -42,15 +59,15 @@ describe('submissions.unit', () => {
   })
 
   describe('POST /submissions', () => {
-    const getSubmissionRequest = () => ({
-      ...getServerDetails(),
-      payload: {
-        contactId: 'contact-identifier-111',
-        season: '2024',
-        status: 'INCOMPLETE',
-        source: 'WEB'
-      }
-    })
+    const getSubmissionRequest = () =>
+      getServerDetails({
+        payload: {
+          contactId: 'contact-identifier-111',
+          season: '2024',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
 
     const getCreatedSubmission = () => ({
       toJSON: jest.fn().mockReturnValue({
@@ -60,7 +77,7 @@ describe('submissions.unit', () => {
         status: 'INCOMPLETE',
         source: 'WEB',
         version: '2024-10-10T13:13:11.000Z',
-        reportingExclude: false,
+        reportingExclude: true,
         createdAt: '2024-10-10T13:13:11.000Z',
         updatedAt: '2024-10-10T13:13:11.000Z'
       })
@@ -95,7 +112,7 @@ describe('submissions.unit', () => {
         contactId: 'contact-identifier-111',
         createdAt: '2024-10-10T13:13:11.000Z',
         id: '1',
-        reportingExclude: false,
+        reportingExclude: true,
         season: '2024',
         source: 'WEB',
         status: 'INCOMPLETE',
@@ -115,22 +132,22 @@ describe('submissions.unit', () => {
       })
     })
 
-    it('should log an error if submission creation fails', async () => {
+    it('should call handleServerError if submission creation fails', async () => {
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
-      await postSubmissionHandler(
-        getSubmissionRequest(),
-        getMockResponseToolkit()
-      )
+      const h = getMockResponseToolkit()
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error creating submission:',
-        error
+      await postSubmissionHandler(getSubmissionRequest(), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating submission',
+        error,
+        h
       )
     })
 
-    it('should return 500 and an error if an error occurs while creating submission', async () => {
+    it('should return a error response if an error occurs while creating submission', async () => {
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
@@ -139,10 +156,7 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable create submission'
-      })
-      expect(result.statusCode).toBe(500)
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
 
     it('should log an error but still return 201 when the call to create an activity in CRM returns an ErrorMessage', async () => {
@@ -168,23 +182,22 @@ describe('submissions.unit', () => {
       )
     })
 
-    it('should log an error when the call to create an activity in CRM returns an error', async () => {
+    it('should call handleServerError when the call to create an activity in CRM returns an error', async () => {
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
 
-      await postSubmissionHandler(
-        getSubmissionRequest(),
-        getMockResponseToolkit()
-      )
+      const h = getMockResponseToolkit()
+      await postSubmissionHandler(getSubmissionRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error creating submission:',
-        error
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating submission',
+        error,
+        h
       )
     })
 
-    it('should return 500 and an error when the call to create an activity in CRM returns an error', async () => {
+    it('should return an error response when the call to create an activity in CRM returns an error', async () => {
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
@@ -194,21 +207,18 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable create submission'
-      })
-      expect(result.statusCode).toBe(500)
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 
   describe('GET /submissions/search/getByContactIdAndSeason', () => {
-    const getSubmissionRequest = () => ({
-      ...getServerDetails(),
-      query: {
-        contact_id: 'contact-identifier-111',
-        season: '2024'
-      }
-    })
+    const getSubmissionRequest = () =>
+      getServerDetails({
+        query: {
+          contact_id: 'contact-identifier-111',
+          season: '2024'
+        }
+      })
 
     afterEach(() => {
       jest.clearAllMocks()
@@ -236,7 +246,19 @@ describe('submissions.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should return 404 if the submission is not found', async () => {
+    it('should call handleNotFound if the submission is not found', async () => {
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getSubmissionByContactIdAndSeasonHandler(getSubmissionRequest(), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Submission not found for contact-identifier-111 and 2024',
+        h
+      )
+    })
+
+    it('should return a not found response if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
 
       const result = await getSubmissionByContactIdAndSeasonHandler(
@@ -244,25 +266,24 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.statusCode).toBe(404)
+      expect(result).toBe(NOT_FOUND_SYMBOL)
     })
 
-    it('should log an error if fetching submission fails', async () => {
+    it('should call handleServerError if fetching a submission fails', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await getSubmissionByContactIdAndSeasonHandler(
-        getSubmissionRequest(),
-        getMockResponseToolkit()
-      )
+      await getSubmissionByContactIdAndSeasonHandler(getSubmissionRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error finding submission:',
-        error
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error finding submission',
+        error,
+        h
       )
     })
 
-    it('should return 500 and an error if an error occurs while fetching submission', async () => {
+    it('should return an error message if an error occurs while fetching submission', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
 
@@ -271,20 +292,17 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable find submission'
-      })
-      expect(result.statusCode).toBe(500)
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 
   describe('GET /submissions/{submissionId}', () => {
-    const getSubmissionRequest = () => ({
-      ...getServerDetails(),
-      params: {
-        submissionId: '1'
-      }
-    })
+    const getSubmissionRequest = () =>
+      getServerDetails({
+        params: {
+          submissionId: '1'
+        }
+      })
 
     afterEach(() => {
       jest.clearAllMocks()
@@ -316,7 +334,7 @@ describe('submissions.unit', () => {
         reportingExclude: false,
         season: '2024',
         source: 'WEB',
-        status: 'COMPLETE',
+        status: 'SUBMITTED',
         updatedAt: '2024-10-10T13:13:11.000Z',
         version: '2024-10-10T13:13:11.000Z',
         _links: {
@@ -333,7 +351,16 @@ describe('submissions.unit', () => {
       })
     })
 
-    it('should return 404 if the submission is not found', async () => {
+    it('should call handleNotFound if the submission is not found', async () => {
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getSubmissionByIdHandler(getSubmissionRequest(), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith('Submission not found 1', h)
+    })
+
+    it('should call a not found response if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
 
       const result = await getSubmissionByIdHandler(
@@ -341,25 +368,24 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.statusCode).toBe(404)
+      expect(result).toBe(NOT_FOUND_SYMBOL)
     })
 
-    it('should log an error if fetching submission fails', async () => {
+    it('should call handleServerError if fetching submission fails', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await getSubmissionByIdHandler(
-        getSubmissionRequest(),
-        getMockResponseToolkit()
-      )
+      await getSubmissionByIdHandler(getSubmissionRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error finding submission:',
-        error
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error finding submission',
+        error,
+        h
       )
     })
 
-    it('should return 500 and an error if an error occurs while fetching submission', async () => {
+    it('should return an error response  if an error occurs while fetching submission', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
 
@@ -368,10 +394,7 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable find submission'
-      })
-      expect(result.statusCode).toBe(500)
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 
@@ -380,7 +403,7 @@ describe('submissions.unit', () => {
       id: '1',
       contactId: 'contact-identifier-111',
       season: '2024',
-      status: 'COMPLETE',
+      status: 'SUBMITTED',
       source: 'WEB',
       version: '2024-10-10T13:13:11.000Z',
       Activities: activities,
@@ -399,12 +422,12 @@ describe('submissions.unit', () => {
       })
     })
 
-    const getActivitiesRequest = () => ({
-      ...getServerDetails(),
-      params: {
-        submissionId: '1'
-      }
-    })
+    const getActivitiesRequest = () =>
+      getServerDetails({
+        params: {
+          submissionId: '1'
+        }
+      })
 
     afterEach(() => {
       jest.clearAllMocks()
@@ -472,7 +495,19 @@ describe('submissions.unit', () => {
       expect(result.statusCode).toBe(200)
     })
 
-    it('should return 404 if the submission does not exist', async () => {
+    it('should call handleNotFound if the submission does not exist', async () => {
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Activities not found for submission with id 1',
+        h
+      )
+    })
+
+    it('should return a not found response if the submission does not exist', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
 
       const result = await getActivitiesBySubmissionIdHandler(
@@ -480,25 +515,24 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.statusCode).toBe(404)
+      expect(result).toBe(NOT_FOUND_SYMBOL)
     })
 
     it('should log an error if fetching submission with activities fails', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
 
-      await getActivitiesBySubmissionIdHandler(
-        getActivitiesRequest(),
-        getMockResponseToolkit()
-      )
+      await getActivitiesBySubmissionIdHandler(getActivitiesRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error activities for submission:',
-        error
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error finding activities for submission',
+        error,
+        h
       )
     })
 
-    it('should return 500 and an error if an error occurs while fetching submission with activities', async () => {
+    it('should an error response if an error occurs while fetching submission with activities', async () => {
       const error = new Error('Database error')
       Submission.findOne.mockRejectedValueOnce(error)
 
@@ -507,10 +541,236 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        error: 'Unable to find activities for submission'
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('PATCH /submissions/{submissionId}', () => {
+    const getSubmissionRequest = (payload) =>
+      getServerDetails({
+        params: {
+          submissionId: '1'
+        },
+        payload
       })
-      expect(result.statusCode).toBe(500)
+
+    const getFoundSubmission = () => ({
+      id: '1',
+      contactId: 'contact-identifier-111',
+      season: '2024',
+      status: 'SUBMITTED',
+      source: 'WEB',
+      version: '2024-10-10T13:13:11.000Z',
+      reportingExclude: false,
+      createdAt: '2024-10-10T13:13:11.000Z',
+      updatedAt: '2024-10-10T13:13:11.000Z',
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: '1',
+          contactId: 'contact-identifier-111',
+          season: '2024',
+          status: 'SUBMITTED',
+          source: 'WEB',
+          version: '2024-10-10T13:13:11.000Z',
+          reportingExclude: false,
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z'
+        })
+      })
+    })
+
+    const getSuccessUpdateActivityCRM = () => ({
+      '@odata.context':
+        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+      ReturnStatus: 'success',
+      SuccessMessage: 'RCR Activity - updated successfully',
+      ErrorMessage: null,
+      oDataContext:
+        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+    })
+
+    const getErrorUpdateActivityCRM = () => ({
+      '@odata.context':
+        'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+      RCRActivityId: null,
+      ReturnStatus: 'error',
+      SuccessMessage: '',
+      ErrorMessage: 'Failed to update activity'
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the submission is updated successfully', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call update with the "status"', async () => {
+      const foundSubmission = getFoundSubmission()
+      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundSubmission.update).toHaveBeenCalledWith({
+        status: 'SUBMITTED',
+        reportingExclude: undefined,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should call update with "reportingExclude"', async () => {
+      const foundSubmission = getFoundSubmission()
+      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ reportingExclude: true }),
+        getMockResponseToolkit()
+      )
+
+      expect(foundSubmission.update).toHaveBeenCalledWith({
+        status: undefined,
+        reportingExclude: true,
+        version: expect.any(Date)
+      })
+    })
+
+    it('should return the updated submission in the response body', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call handleNotFound if the submission is not found', async () => {
+      Submission.findByPk.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        h
+      )
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Submission not found for 1',
+        h
+      )
+    })
+
+    it('should return a not found response if the submission is not found', async () => {
+      Submission.findByPk.mockResolvedValueOnce(null)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if updating the submission fails', async () => {
+      const error = new Error('Database error')
+      Submission.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating submission',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while updating the submission', async () => {
+      const error = new Error('Database error')
+      Submission.findByPk.mockRejectedValueOnce(error)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should still return 200 when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should log an error when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
+
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'failed to update activity in CRM for contact-identifier-111',
+        'Failed to update activity'
+      )
+    })
+
+    it('should call handleServerError when the call to update an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      const error = new Error('CRM')
+      updateActivityCRM.mockRejectedValueOnce(error)
+
+      const h = getMockResponseToolkit()
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating submission',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response when the call to update an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      const error = new Error('CRM')
+      updateActivityCRM.mockRejectedValueOnce(error)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })

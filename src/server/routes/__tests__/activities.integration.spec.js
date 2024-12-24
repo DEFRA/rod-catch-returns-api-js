@@ -105,14 +105,16 @@ describe('activities.integration', () => {
       expect(JSON.parse(activity.payload)).toEqual({
         errors: [
           {
-            message: 'The submission does not exist',
+            entity: 'Activity',
+            message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'submission',
             value: 'submissions/0'
           },
           {
-            message: 'The submission does not exist',
+            entity: 'Activity',
+            message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'daysFishedWithMandatoryRelease',
-            value: 20
+            value: '20'
           }
         ]
       })
@@ -140,7 +142,8 @@ describe('activities.integration', () => {
       expect(JSON.parse(activity.payload)).toEqual({
         errors: [
           {
-            message: 'This river is restricted',
+            entity: 'Activity',
+            message: 'ACTIVITY_RIVER_FORBIDDEN',
             property: 'river',
             value: 'rivers/229'
           }
@@ -181,7 +184,8 @@ describe('activities.integration', () => {
       expect(JSON.parse(activityFail.payload)).toEqual({
         errors: [
           {
-            message: 'River duplicate found',
+            entity: 'Activity',
+            message: 'ACTIVITY_RIVER_DUPLICATE_FOUND',
             property: 'river',
             value: 'rivers/3'
           }
@@ -451,6 +455,206 @@ describe('activities.integration', () => {
       const result = await server.inject({
         method: 'GET',
         url: '/api/activities/0/catches'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
+
+  describe('GET /api/activities/{activityId}', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY = 'contact-identifier-get-activity'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_ACTIVITY)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_GET_ACTIVITY)
+    )
+
+    it('should return an activity if it exists', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_GET_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/3'
+        }
+      })
+      const activityId = JSON.parse(activity.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        id: activityId,
+        daysFishedWithMandatoryRelease: 20,
+        daysFishedOther: 10,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          submission: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/submission`
+            )
+          },
+          catches: {
+            href: expect.stringMatching(`/api/activities/${activityId}/catches`)
+          },
+          river: {
+            href: expect.stringMatching(`/api/activities/${activityId}/river`)
+          },
+          smallCatches: {
+            href: expect.stringMatching(
+              `/api/activities/${activityId}/smallCatches`
+            )
+          }
+        }
+      })
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/activities/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
+
+  describe('DELETE /api/activities/{activityId}', () => {
+    const CONTACT_IDENTIFIER_DELETE_ACTIVITY =
+      'contact-identifier-delete-activity'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_ACTIVITY)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_ACTIVITY)
+    )
+
+    it('should return a 204 and delete an activity', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+
+      // make sure activity exists
+      const foundActivity = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}`
+      })
+      expect(foundActivity.statusCode).toBe(200)
+
+      // delete activity
+      const deletedActivity = await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+      expect(deletedActivity.statusCode).toBe(204)
+      expect(deletedActivity.body).toBeUndefined()
+
+      // make sure activity has been deleted
+      const foundActivityAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}`
+      })
+      expect(foundActivityAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 204 and delete associated catches', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+      const createdCatch = await createCatch(server, activityId)
+      const createdCatchId = JSON.parse(createdCatch.payload).id
+
+      // make sure catch exists
+      const foundCatch = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdCatchId}`
+      })
+      expect(foundCatch.statusCode).toBe(200)
+
+      await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+
+      // make sure catch has been deleted
+      const foundCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdCatchId}`
+      })
+      expect(foundCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 204 and delete associated small catches', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+      const createdSmallCatch = await createSmallCatch(server, activityId)
+      const createdSmallCatchId = JSON.parse(createdSmallCatch.payload).id
+
+      // make sure small catch exists
+      const foundSmallCatch = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${createdSmallCatchId}`
+      })
+      expect(foundSmallCatch.statusCode).toBe(200)
+
+      await server.inject({
+        method: 'DELETE',
+        url: `/api/activities/${activityId}`
+      })
+
+      // make sure small catch has been deleted
+      const foundSmallCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${createdSmallCatchId}`
+      })
+      expect(foundSmallCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 404 and empty body if the activity could not be deleted', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/activities/0'
       })
 
       expect(result.statusCode).toBe(404)

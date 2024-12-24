@@ -1,6 +1,6 @@
 {
   "name": "rod-catch-returns-api",
-  "version": "0.2.0",
+  "version": "0.3.0-rc.11",
   "description": "rod catch returns api js",
   "main": "index.js",
   "type": "module",
@@ -43,10 +43,11 @@
   },
   "homepage": "https://github.com/DEFRA/rod-catch-returns-api-js#readme",
   "dependencies": {
-    "@defra-fish/dynamics-lib": "^1.55.0-rc.0",
+    "@defra-fish/dynamics-lib": "^v1.57.0-rc.12",
     "@hapi/hapi": "^21.3.10",
     "@hapi/inert": "^7.1.0",
     "@hapi/vision": "^7.0.3",
+    "date-fns": "^4.1.0",
     "debug": "^4.3.7",
     "dotenv": "^16.4.5",
     "hapi-and-healthy": "^7.1.0",

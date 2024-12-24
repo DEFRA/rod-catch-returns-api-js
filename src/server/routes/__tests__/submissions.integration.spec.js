@@ -1,6 +1,12 @@
+import {
+  createActivity,
+  createSubmission
+} from '../../../test-utils/server-test-utils.js'
+import {
+  createActivity as createActivityCRM,
+  updateActivity as updateActivityCRM
+} from '@defra-fish/dynamics-lib'
 import { Submission } from '../../../entities/index.js'
-import { createActivity } from '../../../test-utils/server-test-utils.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -60,7 +66,7 @@ describe('submissions.integration', () => {
       'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse'
   })
 
-  describe('POST /api/submissions ', () => {
+  describe('POST /api/submissions', () => {
     const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
       'contact-identifier-create-submission'
     beforeEach(async () => {
@@ -132,7 +138,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"season" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_SEASON_REQUIRED',
             property: 'season',
             value: undefined
           }
@@ -156,7 +163,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"season" must be a number',
+            entity: 'Submission',
+            message: 'SUBMISSION_SEASON_INVALID',
             property: 'season',
             value: '20ab23'
           }
@@ -179,7 +187,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"status" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_STATUS_REQUIRED',
             property: 'status',
             value: undefined
           }
@@ -203,6 +212,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"status" must be one of [INCOMPLETE, SUBMITTED]',
             property: 'status',
             value: 'INVALID'
@@ -226,7 +236,8 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
-            message: '"source" is required',
+            entity: 'Submission',
+            message: 'SUBMISSION_SOURCE_REQUIRED',
             property: 'source',
             value: undefined
           }
@@ -250,6 +261,7 @@ describe('submissions.integration', () => {
       expect(JSON.parse(result.payload)).toEqual({
         errors: [
           {
+            entity: 'Submission',
             message: '"source" must be one of [WEB, PAPER]',
             property: 'source',
             value: 'INVALID'
@@ -565,6 +577,166 @@ describe('submissions.integration', () => {
           activities: []
         }
       })
+    })
+  })
+
+  describe('PATCH /api/submissions/{submissionId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
+      'contact-identifier-update-submission'
+
+    const getUpdateActivityResponse = () => ({
+      '@odata.context':
+        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+      ReturnStatus: 'success',
+      SuccessMessage: 'RCR Activity - updated successfully',
+      ErrorMessage: null,
+      oDataContext:
+        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+    })
+
+    beforeEach(async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+        }
+      })
+    })
+
+    it('should successfully update a submission with a valid status', async () => {
+      updateActivityCRM.mockResolvedValue(getUpdateActivityResponse())
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).status).toBe('INCOMPLETE')
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(JSON.parse(updatedSubmission.payload).status).toBe('SUBMITTED')
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should successfully update a submission when reportingExclude is true', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).reportingExclude).toBeFalsy()
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          reportingExclude: true
+        }
+      })
+
+      expect(
+        JSON.parse(updatedSubmission.payload).reportingExclude
+      ).toBeTruthy()
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should not update a field that is not updateable, but still return a 200 and the original submission', async () => {
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
+
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          season: 2024
+        }
+      })
+
+      expect(JSON.parse(updatedSubmission.payload).season).toBe(2023)
+      expect(updatedSubmission.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and an empty body if the submission does not exist', async () => {
+      const updatedSubmission = await server.inject({
+        method: 'PATCH',
+        url: '/api/submissions/0',
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(updatedSubmission.payload).toBe('')
+      expect(updatedSubmission.statusCode).toBe(404)
+    })
+
+    it('should successfully update a Submission when the call to update an activity in CRM returns an ErrorMessage', async () => {
+      updateActivityCRM.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to update activity',
+        oDataContext:
+          'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
+      })
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
+
+      const result = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return a 500 when the call to create an activity in CRM throws an error', async () => {
+      updateActivityCRM.mockRejectedValueOnce(new Error('CRM error'))
+
+      const createdSubmission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
+      )
+      const submissionId = JSON.parse(createdSubmission.payload).id
+
+      const result = await server.inject({
+        method: 'PATCH',
+        url: `/api/submissions/${submissionId}`,
+        payload: {
+          status: 'SUBMITTED'
+        }
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        error: 'Error updating submission'
+      })
+      expect(result.statusCode).toBe(500)
     })
   })
 })

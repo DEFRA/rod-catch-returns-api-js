@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`rivers.unit GET /rivers should return all rivers with a 200 status code 1`] = `
+{
+  "_embedded": {
+    "rivers": [
+      {
+        "_links": {
+          "catchment": {
+            "href": "http://localhost:3000/api/rivers/1/catchment",
+          },
+          "river": {
+            "href": "http://localhost:3000/api/rivers/1",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/rivers/1",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "1",
+        "internal": false,
+        "name": "Aber",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+        "version": "2018-11-07T10:00:00.000Z",
+      },
+      {
+        "_links": {
+          "catchment": {
+            "href": "http://localhost:3000/api/rivers/2/catchment",
+          },
+          "river": {
+            "href": "http://localhost:3000/api/rivers/2",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/rivers/2",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "2",
+        "internal": false,
+        "name": "Adur",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+        "version": "2018-11-07T10:00:00.000Z",
+      },
+    ],
+  },
+}
+`;

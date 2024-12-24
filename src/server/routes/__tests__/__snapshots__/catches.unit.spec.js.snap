@@ -1,5 +1,111 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`catches.unit GET /catches/{catchId} should return a 200 status code and the catch if it is found 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/catches/1/activity",
+    },
+    "activityEntity": {
+      "href": "http://localhost:3000/api/activities/404",
+    },
+    "catch": {
+      "href": "http://localhost:3000/api/catches/1",
+    },
+    "method": {
+      "href": "http://localhost:3000/api/catches/1/method",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/catches/1",
+    },
+    "species": {
+      "href": "http://localhost:3000/api/catches/1/species",
+    },
+  },
+  "createdAt": "2024-11-06T14:25:47.950Z",
+  "dateCaught": "2024-06-24",
+  "id": "1",
+  "mass": {
+    "kg": 9.610488,
+    "oz": 339,
+    "type": "IMPERIAL",
+  },
+  "noDateRecorded": false,
+  "onlyMonthRecorded": false,
+  "released": true,
+  "reportingExclude": false,
+  "updatedAt": "2024-11-06T14:25:47.950Z",
+  "version": "2024-11-06T14:25:47.958Z",
+}
+`;
+
+exports[`catches.unit GET /catches/{catchId}/activity should return a 200 status code and the activity if the catch and activity is found 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:3000/api/activities/404",
+    },
+    "catches": {
+      "href": "http://localhost:3000/api/activities/404/catches",
+    },
+    "river": {
+      "href": "http://localhost:3000/api/activities/404/river",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/activities/404",
+    },
+    "smallCatches": {
+      "href": "http://localhost:3000/api/activities/404/smallCatches",
+    },
+    "submission": {
+      "href": "http://localhost:3000/api/activities/404/submission",
+    },
+  },
+  "createdAt": "2024-10-18T10:01:25.957Z",
+  "daysFishedOther": 0,
+  "daysFishedWithMandatoryRelease": 1,
+  "id": "404",
+  "updatedAt": "2024-10-18T10:01:25.957Z",
+  "version": "2024-10-18T10:01:25.958Z",
+}
+`;
+
+exports[`catches.unit GET /catches/{catchId}/method should return a 200 status code and the method if the catch and method is found 1`] = `
+{
+  "_links": {
+    "method": {
+      "href": "http://localhost:3000/api/methods/1",
+    },
+    "self": {
+      "href": "http://localhost:3000/api/methods/1",
+    },
+  },
+  "createdAt": "2018-11-07T10:00:00.000Z",
+  "id": "1",
+  "internal": false,
+  "name": "Fly",
+  "updatedAt": "2018-11-07T10:00:00.000Z",
+}
+`;
+
+exports[`catches.unit GET /catches/{catchId}/species should return a 200 status code and the species if the catch and species is found 1`] = `
+{
+  "_links": {
+    "self": {
+      "href": "http://localhost:3000/api/species/1",
+    },
+    "species": {
+      "href": "http://localhost:3000/api/species/1",
+    },
+  },
+  "createdAt": "2018-11-07T10:00:00.000Z",
+  "id": "1",
+  "name": "Salmon",
+  "smallCatchMass": 0.396893,
+  "updatedAt": "2018-11-07T10:00:00.000Z",
+}
+`;
+
 exports[`catches.unit POST /catches should return the created catch if the call to create it is successful 1`] = `
 {
   "_links": {

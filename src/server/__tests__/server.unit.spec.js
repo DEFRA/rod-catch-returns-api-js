@@ -101,7 +101,31 @@ describe('server.unit', () => {
         method: 'GET',
         path: '/activities/{activityId}/catches'
       }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/activities/{activityId}'
+      }),
+      expect.objectContaining({
+        method: 'DELETE',
+        path: '/activities/{activityId}'
+      }),
       expect.objectContaining({ method: 'POST', path: '/catches' }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/catches/{catchId}/activity'
+      }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/catches/{catchId}/species'
+      }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/catches/{catchId}/method'
+      }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/catches/{catchId}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/catchments' }),
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
       expect.objectContaining({ method: 'GET', path: '/methods' }),
@@ -109,6 +133,14 @@ describe('server.unit', () => {
       expect.objectContaining({ method: 'GET', path: '/regions' }),
       expect.objectContaining({ method: 'GET', path: '/rivers' }),
       expect.objectContaining({ method: 'POST', path: '/smallCatches' }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/smallCatches/{smallCatchId}/activity'
+      }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/smallCatches/{smallCatchId}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/species' }),
       expect.objectContaining({ method: 'POST', path: '/submissions' }),
       expect.objectContaining({
@@ -121,6 +153,10 @@ describe('server.unit', () => {
       }),
       expect.objectContaining({
         method: 'GET',
+        path: '/submissions/{submissionId}'
+      }),
+      expect.objectContaining({
+        method: 'PATCH',
         path: '/submissions/{submissionId}'
       })
     ])

@@ -1,19 +1,35 @@
 import {
-  getResponseToolkit,
+  getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import {
+  handleNotFound,
+  handleServerError
+} from '../../../utils/server-utils.js'
 import { SmallCatch } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
 import routes from '../small-catches.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
 
 const [
   {
     options: { handler: postSmallCatchHandler }
+  },
+  {
+    options: { handler: getActivityForSmallCatchHandler }
+  },
+  {
+    options: { handler: getSmallCatchHandler }
   }
 ] = routes
+
+const NOT_FOUND_SYMBOL = Symbol('NOT_FOUND')
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('smallCatches.unit', () => {
   describe('POST /smallCatches', () => {
@@ -68,48 +84,257 @@ describe('smallCatches.unit', () => {
 
     it('should return a 201 status code if the small catch is created successfully', async () => {
       SmallCatch.create.mockResolvedValueOnce(getCreatedSmallCatch())
-      const h = getResponseToolkit()
 
-      await postSmallCatchHandler(getSmallCatchRequest(), h)
+      const result = await postSmallCatchHandler(
+        getSmallCatchRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(201)
+      expect(result.statusCode).toBe(201)
     })
 
     it('should return the created small catch if the call to create it is successful', async () => {
       SmallCatch.create.mockResolvedValueOnce(getCreatedSmallCatch())
-      const h = getResponseToolkit()
 
-      await postSmallCatchHandler(getSmallCatchRequest(), h)
+      const result = await postSmallCatchHandler(
+        getSmallCatchRequest(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response.mock.calls[0][0]).toMatchSnapshot()
+      expect(result.payload).toMatchSnapshot()
     })
 
-    it('should log an error if an error occurs while creating the small catch', async () => {
+    it('should call handleServerError if an error occurs while creating the small catch', async () => {
       const error = new Error('Database error')
       SmallCatch.create.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
+      const h = getMockResponseToolkit()
 
       await postSmallCatchHandler(getSmallCatchRequest(), h)
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error create small catch:',
-        error
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error creating small catch',
+        error,
+        h
       )
     })
 
-    it('should return 500 and error message if an error occurs while creating the small catch', async () => {
+    it('should return an error response if an error occurs while creating the small catch', async () => {
       const error = new Error('Database error')
       SmallCatch.create.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await postSmallCatchHandler(getSmallCatchRequest(), h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable to create small catch'
-        })
+      const result = await postSmallCatchHandler(
+        getSmallCatchRequest(),
+        getMockResponseToolkit()
       )
-      expect(h.code).toHaveBeenCalledWith(500)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /smallCatches/{smallCatchId}/activity', () => {
+    const getSmallCatchRequest = (smallCatchId) =>
+      getServerDetails({
+        params: {
+          smallCatchId
+        }
+      })
+
+    const getSmallCatchWithActivity = () => ({
+      toJSON: jest.fn().mockReturnValue({
+        id: '1',
+        month: 1,
+        released: 1,
+        reportingExclude: false,
+        noMonthRecorded: false,
+        createdAt: '2024-10-10T13:27:41.096Z',
+        updatedAt: '2024-10-10T13:27:41.096Z',
+        version: '2024-10-10T13:27:41.097Z',
+        ActivityId: '3',
+        activity_id: '3',
+        Activity: {
+          id: '3',
+          daysFishedWithMandatoryRelease: 1,
+          daysFishedOther: 0,
+          createdAt: '2024-10-10T13:26:30.344Z',
+          updatedAt: '2024-10-10T13:26:30.344Z',
+          version: '2024-10-10T13:26:30.345Z',
+          submission_id: '2802',
+          river_id: '104',
+          SubmissionId: '2802'
+        }
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the activity if the small catch and activity is found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(getSmallCatchWithActivity())
+
+      const result = await getActivityForSmallCatchHandler(
+        getSmallCatchRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the activity for the small catch is not found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getActivityForSmallCatchHandler(
+        getSmallCatchRequest('nonexistent-id'),
+        h
+      )
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Activity not found for small catch with ID nonexistent-id',
+        h
+      )
+    })
+
+    it('should return a not found response if the activity for the small catch is not found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      const result = await getActivityForSmallCatchHandler(
+        getSmallCatchRequest('nonexistent-id'),
+        h
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the activity for the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getActivityForSmallCatchHandler(getSmallCatchRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching activity for small catch',
+        error,
+        h
+      )
+    })
+
+    it('should an error response if an error occurs while fetching the activity for the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await getActivityForSmallCatchHandler(
+        getSmallCatchRequest('1'),
+        h
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /smallCatches/{smallCatchId}', () => {
+    const getSmallCatchRequest = (smallCatchId) =>
+      getServerDetails({
+        params: {
+          smallCatchId
+        }
+      })
+
+    const getSmallCatch = () => ({
+      toJSON: jest.fn().mockReturnValue({
+        id: '33551',
+        month: 1,
+        released: 1,
+        reportingExclude: false,
+        noMonthRecorded: false,
+        createdAt: '2024-12-11T10:07:11.726Z',
+        updatedAt: '2024-12-11T10:07:11.726Z',
+        version: '2024-12-11T10:07:11.729Z',
+        ActivityId: '133750',
+        activity_id: '133750',
+        counts: [
+          {
+            small_catch_id: '33551',
+            method_id: '1',
+            count: 2,
+            SmallCatchId: '33551'
+          },
+          {
+            small_catch_id: '33551',
+            method_id: '3',
+            count: 2,
+            SmallCatchId: '33551'
+          }
+        ]
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the small catch if it is found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(getSmallCatch())
+
+      const result = await getSmallCatchHandler(
+        getSmallCatchRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the small catch is not found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getSmallCatchHandler(getSmallCatchRequest('nonexistent-id'), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Small catch not found for ID: nonexistent-id',
+        h
+      )
+    })
+
+    it('should return a not found response if the small catch is not found', async () => {
+      SmallCatch.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      const result = await getSmallCatchHandler(
+        getSmallCatchRequest('nonexistent-id'),
+        h
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getSmallCatchHandler(getSmallCatchRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching small catch by ID',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while fetching the the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await getSmallCatchHandler(getSmallCatchRequest('1'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })
