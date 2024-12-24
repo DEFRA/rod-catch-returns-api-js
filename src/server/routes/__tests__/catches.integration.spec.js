@@ -415,7 +415,7 @@ describe('catches.integration', () => {
     })
   })
 
-  describe.skip('DELETE /api/catches/{catchId}', () => {
+  describe('DELETE /api/catches/{catchId}', () => {
     const CONTACT_IDENTIFIER_DELETE_CATCH = 'contact-identifier-delete-catch'
 
     beforeEach(
