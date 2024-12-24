@@ -28,6 +28,9 @@ const [
   },
   {
     options: { handler: getCatchHandler }
+  },
+  {
+    options: { handler: deleteCatchHandler }
   }
 ] = routes
 
@@ -38,6 +41,10 @@ handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
 handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('catches.unit', () => {
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
   describe('POST /catches', () => {
     const getCatchRequest = () =>
       getServerDetails({
@@ -77,10 +84,6 @@ describe('catches.unit', () => {
         createdAt: '2024-11-18T11:22:36.438Z',
         ActivityId: '404'
       })
-    })
-
-    afterEach(() => {
-      jest.clearAllMocks()
     })
 
     it('should return a 201 status code if the catch is created successfully', async () => {
@@ -170,10 +173,6 @@ describe('catches.unit', () => {
           SubmissionId: '2802'
         }
       })
-    })
-
-    afterEach(() => {
-      jest.clearAllMocks()
     })
 
     it('should return a 200 status code and the activity if the catch and activity is found', async () => {
@@ -273,10 +272,6 @@ describe('catches.unit', () => {
       })
     })
 
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
     it('should return a 200 status code and the species if the catch and species is found', async () => {
       Catch.findOne.mockResolvedValueOnce(getCatchWithSpecies())
 
@@ -374,10 +369,6 @@ describe('catches.unit', () => {
       })
     })
 
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
     it('should return a 200 status code and the method if the catch and method is found', async () => {
       Catch.findOne.mockResolvedValueOnce(getCatchWithMethod())
 
@@ -468,10 +459,6 @@ describe('catches.unit', () => {
       })
     })
 
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
     it('should return a 200 status code and the catch if it is found', async () => {
       Catch.findOne.mockResolvedValueOnce(getCatch())
 
@@ -525,6 +512,77 @@ describe('catches.unit', () => {
       const h = getMockResponseToolkit()
 
       const result = await getCatchHandler(getCatchRequest('1'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('DELETE /catches/{catchId}', () => {
+    const getDeleteRequest = (catchId) =>
+      getServerDetails({
+        params: {
+          catchId
+        }
+      })
+
+    it('should return a 204 status code if the catch is deleted successfully', async () => {
+      Catch.destroy.mockResolvedValueOnce(1)
+
+      const result = await deleteCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(204)
+    })
+
+    it('should return an empty response body when the catch is deleted successfully', async () => {
+      Catch.destroy.mockResolvedValueOnce(1)
+
+      const result = await deleteCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toBeUndefined()
+    })
+
+    it('should call handleNotFound if no catch is found to delete', async () => {
+      Catch.destroy.mockResolvedValueOnce(0)
+      const h = getMockResponseToolkit()
+
+      const result = await deleteCatchHandler(getDeleteRequest('0'), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Catch not found for ID: 0',
+        h
+      )
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while deleting the catch', async () => {
+      const error = new Error('Database error')
+      Catch.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await deleteCatchHandler(getDeleteRequest('2'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting catch',
+        error,
+        h
+      )
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should return an error response if an error occurs while deleting the catch', async () => {
+      const error = new Error('Database error')
+      Catch.destroy.mockRejectedValueOnce(error)
+
+      const result = await deleteCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
