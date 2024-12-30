@@ -699,6 +699,7 @@ describe('activities.unit', () => {
       const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       await deleteActivityHandler(
         getDeleteRequest(activityId),
         getMockResponseToolkit()
@@ -714,6 +715,7 @@ describe('activities.unit', () => {
       const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       await deleteActivityHandler(
         getDeleteRequest(activityId),
         getMockResponseToolkit()
@@ -730,6 +732,7 @@ describe('activities.unit', () => {
       const smallCatchIds = [1, 2, 3, 4]
       const transaction = getTransaction()
       setUpDeleteSuccess({ smallCatchIds, transaction })
+
       await deleteActivityHandler(
         getDeleteRequest('2'),
         getMockResponseToolkit()
@@ -745,6 +748,7 @@ describe('activities.unit', () => {
       const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       await deleteActivityHandler(
         getDeleteRequest(activityId),
         getMockResponseToolkit()
@@ -760,6 +764,7 @@ describe('activities.unit', () => {
       const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       await deleteActivityHandler(
         getDeleteRequest(activityId),
         getMockResponseToolkit()
@@ -775,6 +780,7 @@ describe('activities.unit', () => {
       const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       await deleteActivityHandler(
         getDeleteRequest(activityId),
         getMockResponseToolkit()
@@ -784,15 +790,27 @@ describe('activities.unit', () => {
     })
 
     it('should return a 204 status code on successful deletion', async () => {
-      const activityId = '3'
       const transaction = getTransaction()
       setUpDeleteSuccess({ transaction })
+
       const result = await deleteActivityHandler(
-        getDeleteRequest(activityId),
+        getDeleteRequest('3'),
         getMockResponseToolkit()
       )
 
       expect(result.statusCode).toBe(204)
+    })
+
+    it('should return an empty response body on successful deletion', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      const result = await deleteActivityHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toBeUndefined()
     })
 
     it('should call handleNotFound if the activity does not exist', async () => {
@@ -801,6 +819,7 @@ describe('activities.unit', () => {
       sequelize.transaction.mockResolvedValueOnce(transaction)
       Activity.destroy.mockResolvedValueOnce(0)
       const h = getMockResponseToolkit()
+
       await deleteActivityHandler(getDeleteRequest(activityId), h)
 
       expect(handleNotFound).toHaveBeenCalledWith(
@@ -814,6 +833,7 @@ describe('activities.unit', () => {
       sequelize.transaction.mockResolvedValueOnce(transaction)
       Activity.destroy.mockResolvedValueOnce(0)
       const h = getMockResponseToolkit()
+
       await deleteActivityHandler(getDeleteRequest('nonexistent-id'), h)
 
       expect(transaction.rollback).toHaveBeenCalled()

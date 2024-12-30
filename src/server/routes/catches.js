@@ -255,5 +255,39 @@ export default [
       notes: 'Retrieve a catch from the database by its ID',
       tags: ['api', 'catches']
     }
+  },
+  {
+    method: 'DELETE',
+    path: '/catches/{catchId}',
+    options: {
+      /**
+       * Delete an catch by ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The catch id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response indicating success or failure
+       */
+      handler: async (request, h) => {
+        const catchId = request.params.catchId
+
+        try {
+          const catchesDestroyed = await Catch.destroy({
+            where: { id: catchId }
+          })
+
+          if (catchesDestroyed === 0) {
+            return handleNotFound(`Catch not found for ID: ${catchId}`, h)
+          }
+
+          return h.response().code(StatusCodes.NO_CONTENT)
+        } catch (error) {
+          return handleServerError('Error deleting catch', error, h)
+        }
+      },
+      description: 'Delete a catch by ID',
+      notes: 'Deletes a catch from the database by its ID',
+      tags: ['api', 'catches']
+    }
   }
 ]
