@@ -415,4 +415,115 @@ describe('small-catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('DELETE /api/smallCatches/{smallCatchId}', () => {
+    const CONTACT_IDENTIFIER_DELETE_SMALL_CATCH =
+      'contact-identifier-delete-small-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_DELETE_SMALL_CATCH
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_DELETE_SMALL_CATCH
+        )
+    )
+
+    it('should return a 204 and delete a small catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_DELETE_SMALL_CATCH
+      )
+      const createdSmallCatch = await createSmallCatch(server, activityId)
+      const smallCatchId = JSON.parse(createdSmallCatch.payload).id
+
+      // make sure small catch exists
+      const foundSmallCatch = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}`
+      })
+      expect(JSON.parse(foundSmallCatch.payload)).toStrictEqual({
+        id: expect.any(String),
+        month: 'FEBRUARY',
+        counts: expect.arrayContaining([
+          {
+            count: 3,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/1`)
+              }
+            }
+          },
+          {
+            count: 2,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/2`)
+              }
+            }
+          },
+          {
+            count: 1,
+            _links: {
+              method: {
+                href: expect.stringMatching(`/api/methods/3`)
+              }
+            }
+          }
+        ]),
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        released: 3,
+        reportingExclude: false,
+        noMonthRecorded: false,
+        _links: {
+          self: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchId}`)
+          },
+          smallCatch: {
+            href: expect.stringMatching(`/api/smallCatches/${smallCatchId}`)
+          },
+          activityEntity: {
+            href: expect.stringMatching(`/api/activities/${activityId}`)
+          },
+          activity: {
+            href: expect.stringMatching(
+              `/api/smallCatches/${smallCatchId}/activity`
+            )
+          }
+        }
+      })
+      expect(foundSmallCatch.statusCode).toBe(200)
+
+      // delete small catch
+      const deletedSmallCatch = await server.inject({
+        method: 'DELETE',
+        url: `/api/smallCatches/${smallCatchId}`
+      })
+      expect(deletedSmallCatch.statusCode).toBe(204)
+      expect(deletedSmallCatch.body).toBeUndefined()
+
+      // make sure small catch has been deleted
+      const foundSmallCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}`
+      })
+      expect(foundSmallCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 404 and empty body if the small catch could not be deleted', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/smallCatches/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })

@@ -1,3 +1,4 @@
+import { SmallCatch, SmallCatchCount } from '../../../entities/index.js'
 import {
   getMockResponseToolkit,
   getServerDetails
@@ -6,12 +7,28 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { SmallCatch } from '../../../entities/index.js'
 import routes from '../small-catches.js'
+import { sequelize } from '../../../services/database.service.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/database.service.js', () => ({
+  sequelize: {
+    transaction: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      destroy: jest.fn(),
+      associations: jest.fn()
+    })),
+    literal: jest.fn()
+  }
+}))
 
 const [
   {
@@ -22,6 +39,9 @@ const [
   },
   {
     options: { handler: getSmallCatchHandler }
+  },
+  {
+    options: { handler: deleteSmallCatchHandler }
   }
 ] = routes
 
@@ -333,6 +353,175 @@ describe('smallCatches.unit', () => {
       const h = getMockResponseToolkit()
 
       const result = await getSmallCatchHandler(getSmallCatchRequest('1'), h)
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('DELETE /smallCatches/{smallCatchId}', () => {
+    const getTransaction = () => ({ commit: jest.fn(), rollback: jest.fn() })
+
+    const getDeleteRequest = (smallCatchId) =>
+      getServerDetails({
+        params: {
+          smallCatchId
+        }
+      })
+
+    const setUpMocks = ({
+      transaction,
+      smallCatchCountToDelete = 1,
+      smallCatchToDelete = 1
+    } = {}) => {
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatchCount.destroy.mockResolvedValueOnce(smallCatchCountToDelete)
+      SmallCatch.destroy.mockResolvedValueOnce(smallCatchToDelete)
+    }
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 204 status code if the small catch is deleted successfully', async () => {
+      setUpMocks({ transaction: getTransaction() })
+
+      const result = await deleteSmallCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(204)
+    })
+
+    it('should return an empty response body when the small catch is deleted successfully', async () => {
+      setUpMocks({ transaction: getTransaction() })
+
+      const result = await deleteSmallCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toBeUndefined()
+    })
+
+    it('should delete all SmallCatchCount records', async () => {
+      const smallCatchId = '2'
+      const transaction = getTransaction()
+      setUpMocks({ transaction })
+
+      await deleteSmallCatchHandler(
+        getDeleteRequest(smallCatchId),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
+        where: { small_catch_id: smallCatchId },
+        transaction
+      })
+    })
+
+    it('should delete all SmallCatch records', async () => {
+      const smallCatchId = '2'
+      const transaction = getTransaction()
+      setUpMocks({ transaction })
+
+      await deleteSmallCatchHandler(
+        getDeleteRequest(smallCatchId),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatch.destroy).toHaveBeenCalledWith({
+        where: { id: smallCatchId },
+        transaction
+      })
+    })
+
+    it('should commit the transaction on successful deletion', async () => {
+      const transaction = getTransaction()
+      setUpMocks({ transaction })
+
+      await deleteSmallCatchHandler(
+        getDeleteRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(transaction.commit).toHaveBeenCalled()
+    })
+
+    it('should call handleNotFound if no small catch is found to delete', async () => {
+      setUpMocks({
+        transaction: getTransaction(),
+        smallCatchCountToDelete: 1,
+        smallCatchToDelete: 0
+      })
+      const h = getMockResponseToolkit()
+
+      const result = await deleteSmallCatchHandler(getDeleteRequest('0'), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Small catch not found for ID: 0',
+        h
+      )
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should rollback the transaction if no small catch is found to delete', async () => {
+      const transaction = getTransaction()
+      setUpMocks({
+        transaction,
+        smallCatchCountToDelete: 1,
+        smallCatchToDelete: 0
+      })
+      const h = getMockResponseToolkit()
+
+      await deleteSmallCatchHandler(getDeleteRequest('0'), h)
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should call handleServerError if an error occurs while deleting the small catch', async () => {
+      sequelize.transaction.mockResolvedValueOnce(getTransaction())
+      SmallCatchCount.destroy.mockResolvedValueOnce(0)
+      const error = new Error('Database error')
+      SmallCatch.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await deleteSmallCatchHandler(getDeleteRequest('2'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting small catch',
+        error,
+        h
+      )
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while deleting the small catch count', async () => {
+      sequelize.transaction.mockResolvedValueOnce(getTransaction())
+      const error = new Error('Database error')
+      SmallCatchCount.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await deleteSmallCatchHandler(getDeleteRequest('2'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting small catch',
+        error,
+        h
+      )
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should return an error response if an error occurs while deleting the small catch', async () => {
+      sequelize.transaction.mockResolvedValueOnce(getTransaction())
+      const error = new Error('Database error')
+      SmallCatchCount.destroy.mockResolvedValueOnce(0)
+      SmallCatch.destroy.mockRejectedValueOnce(error)
+
+      const result = await deleteSmallCatchHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })

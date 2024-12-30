@@ -141,6 +141,10 @@ describe('server.unit', () => {
         method: 'GET',
         path: '/smallCatches/{smallCatchId}'
       }),
+      expect.objectContaining({
+        method: 'DELETE',
+        path: '/smallCatches/{smallCatchId}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/species' }),
       expect.objectContaining({ method: 'POST', path: '/submissions' }),
       expect.objectContaining({
