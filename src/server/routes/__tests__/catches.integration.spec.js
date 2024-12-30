@@ -438,11 +438,11 @@ describe('catches.integration', () => {
       const catchId = JSON.parse(createdCatch.payload).id
 
       // make sure catch exists
-      const foundSpecies = await server.inject({
+      const foundCatch = await server.inject({
         method: 'GET',
         url: `/api/catches/${catchId}`
       })
-      expect(foundSpecies.statusCode).toBe(200)
+      expect(foundCatch.statusCode).toBe(200)
 
       // delete catch
       const deletedCatch = await server.inject({
