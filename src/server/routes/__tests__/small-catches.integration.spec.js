@@ -416,7 +416,7 @@ describe('small-catches.integration', () => {
     })
   })
 
-  describe.skip('DELETE /api/smallCatches/{smallCatchId}', () => {
+  describe('DELETE /api/smallCatches/{smallCatchId}', () => {
     const CONTACT_IDENTIFIER_DELETE_SMALL_CATCH =
       'contact-identifier-delete-small-catch'
 
