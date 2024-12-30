@@ -446,10 +446,10 @@ describe('small-catches.integration', () => {
         method: 'GET',
         url: `/api/smallCatches/${smallCatchId}`
       })
-      expect(JSON.parse(foundSmallCatch.payload)).toEqual({
+      expect(JSON.parse(foundSmallCatch.payload)).toStrictEqual({
         id: expect.any(String),
         month: 'FEBRUARY',
-        counts: [
+        counts: expect.arrayContaining([
           {
             count: 3,
             _links: {
@@ -474,7 +474,7 @@ describe('small-catches.integration', () => {
               }
             }
           }
-        ],
+        ]),
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         version: expect.any(String),
