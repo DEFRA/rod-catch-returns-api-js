@@ -15,6 +15,26 @@ const validateMethod = async (value, helper) => {
   return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
 }
 
+const validateDateCaught = async (value, helper) => {
+  const activityId = extractActivityId(helper.state.ancestors[0].activity)
+  const submission = await getSubmissionByActivityId(activityId)
+
+  const parsedDate = new Date(value)
+  const currentDate = new Date()
+
+  if (parsedDate > currentDate) {
+    return helper.message('CATCH_DATE_IN_FUTURE')
+  }
+
+  const yearCaught = parsedDate.getFullYear()
+
+  if (submission.season !== yearCaught) {
+    return helper.message('CATCH_YEAR_MISMATCH')
+  }
+
+  return value
+}
+
 const dateCaughtField = Joi.string()
   .required()
   .when('noDateRecorded', {
@@ -106,8 +126,6 @@ const massField = Joi.object({
   .description('The mass of the catch')
 
 const methodField = Joi.string()
-  .required()
-  .external(validateMethod)
   .pattern(/^methods\//)
   .description('The method id prefixed with methods/')
   .messages({
@@ -138,36 +156,44 @@ export const createCatchSchema = Joi.object({
     .description('The activity associated with this catch'),
   dateCaught: dateCaughtField
     .required()
+    .external(validateDateCaught)
+    .description('The date of the catch'),
+  onlyMonthRecorded: onlyMonthRecordedField,
+  noDateRecorded: noDateRecordedField,
+  species: speciesField,
+  mass: massField,
+  method: methodField.required().external(validateMethod),
+  released: releasedField,
+  reportingExclude: reportingExcludeField
+}).unknown()
+
+export const updateCatchSchema = Joi.object({
+  dateCaught: dateCaughtField
+    .optional()
     .external(async (value, helper) => {
-      const activityId = extractActivityId(helper.state.ancestors[0].activity)
-      const submission = await getSubmissionByActivityId(activityId)
-
-      const parsedDate = new Date(value)
-      const currentDate = new Date()
-
-      if (parsedDate > currentDate) {
-        return helper.message('CATCH_DATE_IN_FUTURE')
+      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+      if (value === undefined) {
+        return value
       }
 
-      const yearCaught = parsedDate.getFullYear()
-
-      if (submission.season !== yearCaught) {
-        return helper.message('CATCH_YEAR_MISMATCH')
-      }
-
-      return value
+      return validateDateCaught(value, helper)
     })
     .description('The date of the catch'),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField,
   mass: massField,
-  method: methodField.required(),
+  method: methodField.optional().external(async (value, helper) => {
+    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    if (value === undefined) {
+      return value
+    }
+
+    return validateMethod(value, helper)
+  }),
   released: releasedField,
   reportingExclude: reportingExcludeField
-}).unknown()
-
-export const updateCatchSchema = Joi.object()
+})
 
 export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
