@@ -1,8 +1,14 @@
-import { catchIdSchema, createCatchSchema } from '../catch.schema.js'
+import {
+  catchIdSchema,
+  createCatchSchema,
+  updateCatchSchema
+} from '../catch.schema.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
+import { getSubmissionByCatchId } from '../../services/submissions.service.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 
 jest.mock('../../services/activities.service.js')
+jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
 
 describe('catch.schema.unit', () => {
@@ -362,6 +368,197 @@ describe('catch.schema.unit', () => {
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"catchId" must be a number')
+    })
+  })
+
+  describe('updateCatchSchema', () => {
+    const getDefaultContext = () => ({
+      context: {
+        params: {
+          catchId: '12345'
+        }
+      }
+    })
+
+    const getValidPayload = (overrides = {}) => ({
+      dateCaught: '2024-08-02T00:00:00+01:00',
+      species: 'species/1',
+      mass: {
+        kg: 2,
+        oz: 71,
+        type: 'METRIC'
+      },
+      method: 'methods/1',
+      released: false,
+      onlyMonthRecorded: false,
+      noDateRecorded: false,
+      ...overrides
+    })
+
+    const setupMocks = ({ season = 2024, methodInternal = false } = {}) => {
+      getSubmissionByCatchId.mockResolvedValueOnce({ season })
+      isMethodInternal.mockResolvedValue(methodInternal)
+    }
+
+    describe('dateCaught', () => {
+      it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
+        setupMocks({ season: 2022 })
+        const payload = getValidPayload({
+          dateCaught: '2023-08-01T00:00:00+01:00'
+        })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_YEAR_MISMATCH')
+      })
+
+      it('should validate successfully if "dateCaught" matches the year in the submission', async () => {
+        setupMocks({ season: 2023 })
+        const payload = getValidPayload({
+          dateCaught: '2023-08-01T00:00:00+01:00'
+        })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should return CATCH_DATE_IN_FUTURE if dateCaught is in the future', async () => {
+        const futureDate = new Date()
+        futureDate.setFullYear(futureDate.getFullYear() + 1)
+
+        const payload = getValidPayload({
+          dateCaught: futureDate.toISOString()
+        })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_DATE_IN_FUTURE')
+      })
+    })
+
+    describe('species', () => {
+      it('should return an error if "species" does not match the required format', async () => {
+        const payload = getValidPayload({ species: 'invalid/1' })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_SPECIES_INVALID')
+      })
+
+      // TODO check validation for CATCH_DATE_REQUIRED using java api
+      it('should validate successfully if "species" is valid', async () => {
+        setupMocks()
+        const payload = { species: 'species/2' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+    })
+
+    describe('mass', () => {
+      it('should return CATCH_MASS_TYPE_INVALID if "mass.type" is invalid', async () => {
+        setupMocks()
+        const payload = getValidPayload({
+          mass: {
+            kg: 2,
+            oz: 1,
+            type: 'invalid'
+          }
+        })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_MASS_TYPE_INVALID')
+      })
+
+      it('should validate successfully if "mass" is valid', async () => {
+        setupMocks()
+        const payload = {
+          kg: 2,
+          oz: 1,
+          type: 'IMPERIAL'
+        }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+    })
+
+    describe('method', () => {
+      it('should return an error if "method" does not start with "methods/"', async () => {
+        const payload = getValidPayload({ method: 'invalid/123' })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_METHOD_INVALID')
+      })
+
+      it('should validate successfully if "method" is valid', async () => {
+        setupMocks()
+        const payload = { method: 'methods/1' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+    })
+
+    describe('released', () => {
+      it.each([true, false])(
+        'should successfully validate if "released" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = getValidPayload({ released: value })
+
+          await expect(
+            updateCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+    })
+
+    describe('onlyMonthRecorded', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "onlyMonthRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = getValidPayload({ onlyMonthRecorded: value })
+
+          await expect(
+            updateCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+    })
+
+    describe('noDateRecorded', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "noDateRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = getValidPayload({ noDateRecorded: value })
+
+          await expect(
+            updateCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+    })
+    describe('reportingExclude', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "reportingExclude" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = getValidPayload({ reportingExclude: value })
+
+          await expect(
+            updateCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
     })
   })
 })

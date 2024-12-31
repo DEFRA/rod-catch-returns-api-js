@@ -3,6 +3,7 @@ import Joi from 'joi'
 import { MEASURES } from '../utils/constants.js'
 import { convertKgtoOz } from '../utils/mass-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+import { getSubmissionByCatchId } from '../services/submissions.service.js'
 import { isMethodInternal } from '../services/methods.service.js'
 
 const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
@@ -15,10 +16,7 @@ const validateMethod = async (value, helper) => {
   return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
 }
 
-const validateDateCaught = async (value, helper) => {
-  const activityId = extractActivityId(helper.state.ancestors[0].activity)
-  const submission = await getSubmissionByActivityId(activityId)
-
+const validateDateCaught = async (value, helper, submission) => {
   const parsedDate = new Date(value)
   const currentDate = new Date()
 
@@ -27,7 +25,6 @@ const validateDateCaught = async (value, helper) => {
   }
 
   const yearCaught = parsedDate.getFullYear()
-
   if (submission.season !== yearCaught) {
     return helper.message('CATCH_YEAR_MISMATCH')
   }
@@ -72,8 +69,10 @@ const noDateRecordedField = Joi.boolean().description(
 
 const speciesField = Joi.string()
   .required()
+  .pattern(/^species\//)
   .messages({
-    'any.required': 'CATCH_SPECIES_REQUIRED'
+    'any.required': 'CATCH_SPECIES_REQUIRED',
+    'string.pattern.base': 'CATCH_SPECIES_INVALID'
   })
   .description('The species of catch (Salmon, Sea Trout)')
 
@@ -156,7 +155,13 @@ export const createCatchSchema = Joi.object({
     .description('The activity associated with this catch'),
   dateCaught: dateCaughtField
     .required()
-    .external(validateDateCaught)
+    .external(async (value, helper) => {
+      const activityId = extractActivityId(helper.state.ancestors[0].activity)
+
+      const submission = await getSubmissionByActivityId(activityId)
+
+      return validateDateCaught(value, helper, submission)
+    })
     .description('The date of the catch'),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
@@ -176,7 +181,12 @@ export const updateCatchSchema = Joi.object({
         return value
       }
 
-      return validateDateCaught(value, helper)
+      // Get catchId from the request context
+      const catchId = helper.prefs.context.params.catchId
+
+      const submission = await getSubmissionByCatchId(catchId)
+
+      return validateDateCaught(value, helper, submission)
     })
     .description('The date of the catch'),
   onlyMonthRecorded: onlyMonthRecordedField,
@@ -193,7 +203,7 @@ export const updateCatchSchema = Joi.object({
   }),
   released: releasedField,
   reportingExclude: reportingExcludeField
-})
+}).unknown()
 
 export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
