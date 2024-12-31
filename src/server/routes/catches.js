@@ -1,5 +1,9 @@
 import { Activity, Catch, Method, Species } from '../../entities/index.js'
-import { catchIdSchema, createCatchSchema } from '../../schemas/catch.schema.js'
+import {
+  catchIdSchema,
+  createCatchSchema,
+  updateCatchSchema
+} from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
   mapCatchToResponse,
@@ -287,6 +291,70 @@ export default [
       },
       description: 'Delete a catch by ID',
       notes: 'Deletes a catch from the database by its ID',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: '/catches/{catchId}',
+    options: {
+      /**
+       * Update a catch in the database using the catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        const { catchId } = request.params
+        // TODO check reportingExclude is included
+        const {
+          dateCaught,
+          species,
+          mass,
+          method,
+          released,
+          onlyMonthRecorded,
+          noDateRecorded
+        } = request.payload
+
+        try {
+          const foundCatch = await Catch.findByPk(catchId)
+
+          if (!foundCatch) {
+            return handleNotFound(`Catch not found for ${catchId}`, h)
+          }
+
+          const catchData = mapRequestToCatch({
+            dateCaught,
+            species,
+            mass,
+            method,
+            released,
+            onlyMonthRecorded,
+            noDateRecorded
+          })
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedActivity = await foundCatch.update(catchData)
+
+          const mappedActivity = mapActivityToResponse(
+            request,
+            updatedActivity.toJSON()
+          )
+
+          return h.response(mappedActivity).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error updating catch', error, h)
+        }
+      },
+      validate: {
+        payload: updateCatchSchema,
+        options: { entity: 'Catch' }
+      },
+      description: 'Update a catch',
+      notes: 'Update a catch',
       tags: ['api', 'catches']
     }
   }
