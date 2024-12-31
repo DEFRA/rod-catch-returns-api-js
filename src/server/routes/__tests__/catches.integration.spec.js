@@ -470,4 +470,50 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe.skip('PATCH /api/catches/{catchId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_CATCH = 'contact-identifier-update-catch'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
+    )
+
+    it('should successfully update an catch with a valid dateCaught', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId, {
+        dateCaught: '2023-06-02T00:00:00+01:00'
+      })
+      const catchId = JSON.parse(createdCatch.payload).id
+      expect(
+        JSON.parse(createdCatch.payload).daysFishedWithMandatoryRelease
+      ).toBe('2023-06-02T00:00:00+01:00')
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          dateCaught: '2023-05-01T00:00:00+01:00'
+        }
+      })
+      expect(updatedCatch.statusCode).toBe(200)
+
+      // check dateCaught in catch has been updated
+      const foundUpdatedCatch = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}`
+      })
+      expect(JSON.parse(foundUpdatedCatch.payload).dateCaught).toBe(
+        '2023-05-01T00:00:00+01:00'
+      )
+    })
+  })
 })
