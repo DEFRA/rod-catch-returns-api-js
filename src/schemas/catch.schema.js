@@ -150,6 +150,8 @@ export const createCatchSchema = Joi.object({
   )
 }).unknown()
 
+export const updateCatchSchema = Joi.object()
+
 export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
 })

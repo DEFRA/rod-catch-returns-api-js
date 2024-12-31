@@ -90,8 +90,7 @@ export const mapRequestToCatch = ({
 
   const { massKg, massOz } = calculateMass(mass)
 
-  return {
-    activity_id: activityId,
+  const mappedCatch = {
     dateCaught: extractedDateCaught,
     species_id: speciesId,
     massType: mass.type,
@@ -104,6 +103,13 @@ export const mapRequestToCatch = ({
     reportingExclude,
     version: new Date()
   }
+
+  // Conditionally add activity_id only if it's defined
+  if (activityId) {
+    mappedCatch.activity_id = activityId
+  }
+
+  return mappedCatch
 }
 
 /**
