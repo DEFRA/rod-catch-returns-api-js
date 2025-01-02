@@ -79,34 +79,23 @@ export const mapRequestToCatch = ({
   noDateRecorded,
   reportingExclude = false
 }) => {
-  const activityId = extractActivityId(activity)
-  const methodId = extractMethodId(method)
-  const speciesId = extractSpeciesId(species)
-
-  // A date comes like this 2024-08-02T00:00:00+01:00. The +01:00 indicates the date-time is in a time zone that is 1 hour ahead of UTC
+  // For dateCaught, a date comes like this 2024-08-02T00:00:00+01:00. The +01:00 indicates the date-time is in a time zone that is 1 hour ahead of UTC
   // Without the code below, Sequelize converts this date-time to UTC internally. In UTC, 2024-08-02T00:00:00+01:00 becomes 2024-08-01T23:00:00 and is stored as 2024-08-01 in the database
   // The Java API treats the date literally. If you provide 2024-08-02T00:00:00+01:00, the local time zone is respected, and the date remains 2024-08-02.
-  const extractedDateCaught = extractDateFromISO(dateCaught)
-
-  const { massKg, massOz } = calculateMass(mass)
-
   const mappedCatch = {
-    dateCaught: extractedDateCaught,
-    species_id: speciesId,
-    massType: mass.type,
-    massOz,
-    massKg,
-    method_id: methodId,
-    released,
-    onlyMonthRecorded,
-    noDateRecorded,
-    reportingExclude,
-    version: new Date()
-  }
-
-  // Conditionally add activity_id only if it's defined
-  if (activityId) {
-    mappedCatch.activity_id = activityId
+    version: new Date(), // Always included
+    ...(dateCaught && { dateCaught: extractDateFromISO(dateCaught) }),
+    ...(species && { species_id: extractSpeciesId(species) }),
+    ...(mass && {
+      massType: mass.type,
+      ...calculateMass(mass)
+    }),
+    ...(method && { method_id: extractMethodId(method) }),
+    ...(typeof released !== 'undefined' && { released }),
+    ...(typeof onlyMonthRecorded !== 'undefined' && { onlyMonthRecorded }),
+    ...(typeof noDateRecorded !== 'undefined' && { noDateRecorded }),
+    ...(typeof reportingExclude !== 'undefined' && { reportingExclude }),
+    ...(activity && { activity_id: extractActivityId(activity) })
   }
 
   return mappedCatch

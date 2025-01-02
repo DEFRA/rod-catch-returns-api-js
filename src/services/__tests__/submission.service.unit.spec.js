@@ -1,7 +1,7 @@
 import { getSubmission, isSubmissionExists } from '../submissions.service.js'
-import { Submission } from '../../entities/submission.entity.js'
+import { Submission } from '../../entities/index.js'
 
-jest.mock('../../entities/submission.entity.js')
+jest.mock('../../entities/index.js')
 
 describe('submission.service.unit', () => {
   describe('isSubmissionExists', () => {

@@ -3,11 +3,13 @@ import {
   createCatchSchema,
   updateCatchSchema
 } from '../catch.schema.js'
+import { getCatchById } from '../../services/catches.service.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { getSubmissionByCatchId } from '../../services/submissions.service.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 
 jest.mock('../../services/activities.service.js')
+jest.mock('../../services/catches.service.js')
 jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
 
@@ -395,9 +397,15 @@ describe('catch.schema.unit', () => {
       ...overrides
     })
 
-    const setupMocks = ({ season = 2024, methodInternal = false } = {}) => {
+    const setupMocks = ({
+      season = 2024,
+      methodInternal = false,
+      onlyMonthRecorded = false,
+      noDateRecorded = false
+    } = {}) => {
       getSubmissionByCatchId.mockResolvedValueOnce({ season })
-      isMethodInternal.mockResolvedValue(methodInternal)
+      isMethodInternal.mockResolvedValueOnce(methodInternal)
+      getCatchById.mockResolvedValueOnce({ onlyMonthRecorded, noDateRecorded })
     }
 
     describe('dateCaught', () => {
@@ -424,6 +432,7 @@ describe('catch.schema.unit', () => {
       })
 
       it('should return CATCH_DATE_IN_FUTURE if dateCaught is in the future', async () => {
+        setupMocks({ season: 2024 })
         const futureDate = new Date()
         futureDate.setFullYear(futureDate.getFullYear() + 1)
 
@@ -446,7 +455,6 @@ describe('catch.schema.unit', () => {
         ).rejects.toThrow('CATCH_SPECIES_INVALID')
       })
 
-      // TODO check validation for CATCH_DATE_REQUIRED using java api
       it('should validate successfully if "species" is valid', async () => {
         setupMocks()
         const payload = { species: 'species/2' }
