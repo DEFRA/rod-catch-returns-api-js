@@ -1,9 +1,15 @@
 import {
+  createActivitySchema,
+  updateActivitySchema
+} from '../activities.schema.js'
+import {
   getSubmission,
   isSubmissionExists
 } from '../../services/submissions.service.js'
-import { createActivitySchema } from '../activities.schema.js'
-import { isActivityExists } from '../../services/activities.service.js'
+import {
+  getSubmissionByActivityId,
+  isActivityExists
+} from '../../services/activities.service.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
 
 jest.mock('../../services/activities.service.js')
@@ -16,41 +22,42 @@ describe('activities.schema.unit', () => {
       jest.resetAllMocks()
     })
 
-    const getValidPayload = () => ({
-      submission: 'submissions/123',
-      daysFishedWithMandatoryRelease: 5,
-      daysFishedOther: 3,
-      river: 'rivers/456'
+    const getDefaultPayload = ({
+      submission = 'submissions/123',
+      daysFishedWithMandatoryRelease = 5,
+      daysFishedOther = 3,
+      river = 'rivers/456'
+    } = {}) => ({
+      submission,
+      daysFishedWithMandatoryRelease,
+      daysFishedOther,
+      river
     })
 
-    const getSuccessMocks = () => {
-      getSubmission.mockResolvedValue({ season: 2024 })
-      isSubmissionExists.mockResolvedValue(true)
-      isRiverInternal.mockResolvedValue(false)
-      isActivityExists.mockResolvedValue(false)
+    const setupMocks = ({
+      season = 2024,
+      submissionExists = true,
+      riverInternal = false,
+      activityExists = false
+    } = {}) => {
+      getSubmission.mockResolvedValue({ season })
+      isSubmissionExists.mockResolvedValue(submissionExists)
+      isRiverInternal.mockResolvedValue(riverInternal)
+      isActivityExists.mockResolvedValue(activityExists)
     }
 
     it('should validate successfully when all fields are provided and valid', async () => {
-      getSuccessMocks()
-      const payload = getValidPayload()
+      setupMocks()
+      const payload = getDefaultPayload()
 
       await expect(
         createActivitySchema.validateAsync(payload)
-      ).resolves.toStrictEqual({
-        daysFishedOther: 3,
-        daysFishedWithMandatoryRelease: 5,
-        river: 'rivers/456',
-        submission: 'submissions/123'
-      })
+      ).resolves.toStrictEqual(payload)
     })
 
     it('should return an error if the activity already exists for the same submission and river', async () => {
-      getSubmission.mockResolvedValue({ season: 2024 })
-      isSubmissionExists.mockResolvedValue(true)
-      isRiverInternal.mockResolvedValue(false)
-      isActivityExists.mockResolvedValue(true)
-
-      const payload = getValidPayload()
+      setupMocks({ activityExists: true })
+      const payload = getDefaultPayload()
 
       await expect(createActivitySchema.validateAsync(payload)).rejects.toThrow(
         'ACTIVITY_RIVER_DUPLICATE_FOUND'
@@ -59,8 +66,8 @@ describe('activities.schema.unit', () => {
 
     describe('submission', () => {
       it('should return an error if "submission" is missing', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), submission: undefined }
+        setupMocks()
+        const payload = { ...getDefaultPayload(), submission: undefined }
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -68,8 +75,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "submission" is an empty string', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), submission: '' }
+        setupMocks()
+        const payload = getDefaultPayload({ submission: '' })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -77,8 +84,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "submission" does not start with "submissions/"', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), submission: 'invalid/123' }
+        setupMocks()
+        const payload = getDefaultPayload({ submission: 'invalid/123' })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -87,7 +94,7 @@ describe('activities.schema.unit', () => {
 
       it('should return an error if submission does not exist', async () => {
         isSubmissionExists.mockResolvedValue(false)
-        const payload = getValidPayload()
+        const payload = getDefaultPayload()
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -97,8 +104,8 @@ describe('activities.schema.unit', () => {
 
     describe('river', () => {
       it('should return an error if "river" is missing', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), river: undefined }
+        setupMocks()
+        const payload = { ...getDefaultPayload(), river: undefined }
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -106,8 +113,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "river" is an empty string', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), river: '' }
+        setupMocks()
+        const payload = getDefaultPayload({ river: '' })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -115,8 +122,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "river" does not start with "rivers/"', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), river: 'invalid/456' }
+        setupMocks()
+        const payload = getDefaultPayload({ river: 'invalid/456' })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -124,42 +131,57 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if river is restricted', async () => {
-        getSubmission.mockResolvedValue({ season: 2024 })
-        isSubmissionExists.mockResolvedValue(true)
-        isRiverInternal.mockResolvedValue(true)
-        const payload = getValidPayload()
+        setupMocks({ riverInternal: true })
+        const payload = getDefaultPayload()
 
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_RIVER_FORBIDDEN')
       })
+
+      it('should return an error if the river could not be found', async () => {
+        getSubmission.mockResolvedValue({ season: 2024 })
+        isSubmissionExists.mockResolvedValue(true)
+        const error = new Error('RIVER_NOT_FOUND')
+        isRiverInternal.mockRejectedValueOnce(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('ACTIVITY_RIVER_NOT_FOUND')
+      })
+
+      it('should return an error if there is an error retrieving the river', async () => {
+        getSubmission.mockResolvedValue({ season: 2024 })
+        isSubmissionExists.mockResolvedValue(true)
+        const error = new Error('Database error')
+        isRiverInternal.mockRejectedValueOnce(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('Database error')
+      })
     })
 
     describe('daysFishedWithMandatoryRelease', () => {
       it('should validate successfully if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther is more than 0', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedOther: 2,
           daysFishedWithMandatoryRelease: 0
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).resolves.toStrictEqual({
-          daysFishedOther: 2,
-          daysFishedWithMandatoryRelease: 0,
-          river: 'rivers/456',
-          submission: 'submissions/123'
-        })
+        ).resolves.toStrictEqual(payload)
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is not a number', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 'five'
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -169,11 +191,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is negative', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: -1
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -183,36 +204,21 @@ describe('activities.schema.unit', () => {
       })
 
       it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a non-leap year', async () => {
-        getSubmission.mockResolvedValue({ season: 2023 }) // 2023 is not a leap year
-        isSubmissionExists.mockResolvedValue(true)
-        isRiverInternal.mockResolvedValue(false)
-        isActivityExists.mockResolvedValue(false)
-
-        const payload = {
-          ...getValidPayload(),
+        setupMocks({ season: 2023 }) // 2023 is not a leap year
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 167
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).resolves.toStrictEqual({
-          daysFishedOther: 3,
-          daysFishedWithMandatoryRelease: 167,
-          river: 'rivers/456',
-          submission: 'submissions/123'
-        })
+        ).resolves.toStrictEqual(payload)
       })
 
       it('should return an error if daysFishedWithMandatoryRelease exceeds 167 for a non-leap year', async () => {
-        getSubmission.mockResolvedValue({ season: 2023 }) // 2023 is not a leap year
-        isSubmissionExists.mockResolvedValue(true)
-        isRiverInternal.mockResolvedValue(false)
-        isActivityExists.mockResolvedValue(false)
-
-        const payload = {
-          ...getValidPayload(),
+        setupMocks({ season: 2023 }) // 2023 is not a leap year
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 168
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -222,34 +228,22 @@ describe('activities.schema.unit', () => {
       })
 
       it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
-        getSubmission.mockResolvedValue({ season: 2024 }) // 2024 is a leap year
-        isSubmissionExists.mockResolvedValue(true)
-        isRiverInternal.mockResolvedValue(false)
-        isActivityExists.mockResolvedValue(false)
-        const payload = {
-          ...getValidPayload(),
+        setupMocks({ season: 2024 }) // 2024 is a leap year
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 168
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).resolves.toStrictEqual({
-          daysFishedOther: 3,
-          daysFishedWithMandatoryRelease: 168,
-          river: 'rivers/456',
-          submission: 'submissions/123'
-        })
+        ).resolves.toStrictEqual(payload)
       })
 
       it('should return an error if daysFishedWithMandatoryRelease exceeds 168 for a leap year', async () => {
-        getSubmission.mockResolvedValue({ season: 2024 }) // 2024 is a leap year
-        isSubmissionExists.mockResolvedValue(true)
-        isRiverInternal.mockResolvedValue(false)
-        isActivityExists.mockResolvedValue(false)
-        const payload = {
-          ...getValidPayload(),
+        setupMocks({ season: 2024 }) // 2024 is a leap year
+
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 169
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -259,9 +253,9 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is missing', async () => {
-        getSuccessMocks()
+        setupMocks()
         const payload = {
-          ...getValidPayload(),
+          ...getDefaultPayload(),
           daysFishedWithMandatoryRelease: undefined
         }
 
@@ -273,11 +267,10 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is a non-integer number', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 1.5
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -287,26 +280,20 @@ describe('activities.schema.unit', () => {
 
     describe('daysFishedOther', () => {
       it('should validate successfully if "daysFishedOther" is 0 and "daysFishedWithMandatoryRelease is more than 0', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedOther: 0,
           daysFishedWithMandatoryRelease: 3
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).resolves.toStrictEqual({
-          daysFishedOther: 0,
-          daysFishedWithMandatoryRelease: 3,
-          river: 'rivers/456',
-          submission: 'submissions/123'
-        })
+        ).resolves.toStrictEqual(payload)
       })
 
       it('should return an error if "daysFishedOther" is not a number', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), daysFishedOther: 'three' }
+        setupMocks()
+        const payload = getDefaultPayload({ daysFishedOther: 'three' })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -314,8 +301,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedOther" is negative', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), daysFishedOther: -1 }
+        setupMocks()
+        const payload = getDefaultPayload({ daysFishedOther: -1 })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -323,8 +310,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedOther" is missing', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), daysFishedOther: undefined }
+        setupMocks()
+        const payload = { ...getDefaultPayload(), daysFishedOther: undefined }
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -332,8 +319,8 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedOther" is a non-integer number', async () => {
-        getSuccessMocks()
-        const payload = { ...getValidPayload(), daysFishedOther: 3.5 }
+        setupMocks()
+        const payload = getDefaultPayload({ daysFishedOther: 3.5 })
 
         await expect(
           createActivitySchema.validateAsync(payload)
@@ -341,16 +328,245 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0', async () => {
-        getSuccessMocks()
-        const payload = {
-          ...getValidPayload(),
+        setupMocks()
+        const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 0,
           daysFishedOther: 0
-        }
+        })
 
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
+      })
+    })
+  })
+
+  describe('activities.schema.unit', () => {
+    describe('updateActivitySchema', () => {
+      afterEach(() => {
+        jest.resetAllMocks()
+      })
+
+      const getDefaultPayload = ({
+        daysFishedWithMandatoryRelease = 5,
+        daysFishedOther = 3,
+        river = 'rivers/456'
+      } = {}) => ({
+        daysFishedWithMandatoryRelease,
+        daysFishedOther,
+        river
+      })
+
+      const getDefaultContext = () => ({
+        context: {
+          params: {
+            activityId: '12345'
+          }
+        }
+      })
+
+      const setupMocks = ({
+        season = 2024,
+        submissionExists = true,
+        riverInternal = false,
+        activityExists = false,
+        submission = { id: '1', season }
+      } = {}) => {
+        getSubmission.mockResolvedValue({ season })
+        isSubmissionExists.mockResolvedValue(submissionExists)
+        isRiverInternal.mockResolvedValue(riverInternal)
+        isActivityExists.mockResolvedValue(activityExists)
+        getSubmissionByActivityId.mockResolvedValue(submission)
+      }
+
+      it('should validate successfully when all fields are provided and valid', async () => {
+        setupMocks()
+        const payload = getDefaultPayload()
+
+        await expect(
+          updateActivitySchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      describe('river', () => {
+        it('should validate successfully if "river" is missing', async () => {
+          setupMocks()
+          const payload = { ...getDefaultPayload(), river: undefined }
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should return an error if "river" is an empty string', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({ river: '' })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_RIVER_REQUIRED')
+        })
+
+        it('should return an error if "river" does not start with "rivers/"', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({ river: 'invalid/456' })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_RIVER_PATTERN_INVALID')
+        })
+
+        it('should return an error if river is restricted', async () => {
+          setupMocks({ riverInternal: true })
+          const payload = getDefaultPayload()
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_RIVER_FORBIDDEN')
+        })
+
+        it('should return an error if an activity with the same river is found', async () => {
+          setupMocks({ activityExists: true })
+          const payload = getDefaultPayload()
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_RIVER_DUPLICATE_FOUND')
+        })
+      })
+
+      describe('daysFishedWithMandatoryRelease', () => {
+        it('should validate successfully if "daysFishedWithMandatoryRelease" is missing', async () => {
+          setupMocks()
+          const payload = {
+            ...getDefaultPayload(),
+            daysFishedWithMandatoryRelease: undefined
+          }
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a non-leap year', async () => {
+          setupMocks({ season: 2023 }) // 2023 is not a leap year
+          const payload = getDefaultPayload({
+            daysFishedWithMandatoryRelease: 167
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should return an error if daysFishedWithMandatoryRelease exceeds 167 for a non-leap year', async () => {
+          setupMocks({ season: 2023 }) // 2023 is not a leap year
+          const payload = getDefaultPayload({
+            daysFishedWithMandatoryRelease: 168
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow(
+            'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
+          )
+        })
+
+        it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
+          setupMocks({ season: 2024 }) // 2024 is a leap year
+          const payload = getDefaultPayload({
+            daysFishedWithMandatoryRelease: 168
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should return an error if daysFishedWithMandatoryRelease exceeds 168 for a leap year', async () => {
+          setupMocks({ season: 2024 }) // 2024 is a leap year
+
+          const payload = getDefaultPayload({
+            daysFishedWithMandatoryRelease: 169
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow(
+            'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
+          )
+        })
+
+        it('should return an error if if the activity could not be found', async () => {
+          setupMocks({ submission: null })
+          const payload = getDefaultPayload()
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_SUBMISSION_NOT_FOUND')
+        })
+      })
+
+      describe('daysFishedOther', () => {
+        it('should validate successfully if "daysFishedOther" is missing', async () => {
+          setupMocks()
+          const payload = { ...getDefaultPayload(), daysFishedOther: undefined }
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should validate successfully if "daysFishedOther" is 0 and "daysFishedWithMandatoryRelease is more than 0', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({
+            daysFishedOther: 0,
+            daysFishedWithMandatoryRelease: 3
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        })
+
+        it('should return an error if "daysFishedOther" is not a number', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({ daysFishedOther: 'three' })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER')
+        })
+
+        it('should return an error if "daysFishedOther" is negative', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({ daysFishedOther: -1 })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NEGATIVE')
+        })
+
+        it('should return an error if "daysFishedOther" is a non-integer number', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({ daysFishedOther: 3.5 })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER')
+        })
+
+        it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0', async () => {
+          setupMocks()
+          const payload = getDefaultPayload({
+            daysFishedWithMandatoryRelease: 0,
+            daysFishedOther: 0
+          })
+
+          await expect(
+            updateActivitySchema.validateAsync(payload, getDefaultContext())
+          ).rejects.toThrow('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
+        })
       })
     })
   })
