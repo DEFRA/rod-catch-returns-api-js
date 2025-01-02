@@ -46,17 +46,17 @@ const validateDateCaughtRequired = ({
   }
 }
 
-const dateCaughtField = Joi.string()
+const checkDefaultFlagConflict = (onlyMonthRecorded, noDateRecorded) => {
+  if (onlyMonthRecorded && noDateRecorded) {
+    throw new Error('CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED')
+  }
+}
 
-const onlyMonthRecordedField = Joi.boolean()
-  .when('noDateRecorded', {
-    is: true,
-    then: Joi.valid(false).messages({
-      // If noDateRecorded is true, onlyMonthRecorded is constrained to be false using Joi.valid(false).
-      'any.only': 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
-    })
-  })
-  .description('To allow FMT users to report on the default dates')
+const dateCaughtField = Joi.string().description('The date of the catch')
+
+const onlyMonthRecordedField = Joi.boolean().description(
+  'To allow FMT users to report on the default dates'
+)
 
 const noDateRecordedField = Joi.boolean().description(
   'To allow FMT users to report on the default month'
@@ -145,29 +145,28 @@ export const createCatchSchema = Joi.object({
       'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
     })
     .description('The activity associated with this catch'),
-  dateCaught: dateCaughtField
-    .external(async (value, helper) => {
-      const activityId = extractActivityId(helper.state.ancestors[0].activity)
+  dateCaught: dateCaughtField.external(async (value, helper) => {
+    const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
-      const submission = await getSubmissionByActivityId(activityId)
+    const submission = await getSubmissionByActivityId(activityId)
 
-      const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
-      const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
+    const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
+    const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
 
-      try {
-        validateDateCaughtRequired({
-          dateCaught: value,
-          noDateRecorded,
-          onlyMonthRecorded
-        })
-        validateDateCaughtYear(value, submission?.season)
-      } catch (error) {
-        logger.error(error)
-        return helper.message(error.message)
-      }
-      return value
-    })
-    .description('The date of the catch'),
+    try {
+      checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
+      validateDateCaughtRequired({
+        dateCaught: value,
+        noDateRecorded,
+        onlyMonthRecorded
+      })
+      validateDateCaughtYear(value, submission?.season)
+    } catch (error) {
+      logger.error(error)
+      return helper.message(error.message)
+    }
+    return value
+  }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField.required(),
@@ -178,42 +177,41 @@ export const createCatchSchema = Joi.object({
 }).unknown()
 
 export const updateCatchSchema = Joi.object({
-  dateCaught: dateCaughtField
-    .optional()
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
+  dateCaught: dateCaughtField.optional().external(async (value, helper) => {
+    // // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    // if (value === undefined) {
+    //   return value
+    // }
 
-      // Get catchId from the request context
-      const catchId = helper.prefs.context.params.catchId
+    // Get catchId from the request context
+    const catchId = helper.prefs.context.params.catchId
 
-      // get noDateRecorded and onlyMonthRecorded either from the request or from the database
-      const foundCatch = await getCatchById(catchId)
-      const noDateRecorded =
-        helper.state.ancestors[0]?.noDateRecorded ?? foundCatch.noDateRecorded
-      const onlyMonthRecorded =
-        helper.state.ancestors[0]?.onlyMonthRecorded ??
-        foundCatch.onlyMonthRecorded
+    // get noDateRecorded and onlyMonthRecorded either from the request or from the database
+    const foundCatch = await getCatchById(catchId)
+    const noDateRecorded =
+      helper.state.ancestors[0]?.noDateRecorded ?? foundCatch.noDateRecorded
+    const onlyMonthRecorded =
+      helper.state.ancestors[0]?.onlyMonthRecorded ??
+      foundCatch.onlyMonthRecorded
+    const dateCaught = value ?? foundCatch.dateCaught
 
-      const submission = await getSubmissionByCatchId(catchId)
+    const submission = await getSubmissionByCatchId(catchId)
 
-      try {
-        validateDateCaughtRequired({
-          dateCaught: value,
-          noDateRecorded,
-          onlyMonthRecorded
-        })
+    try {
+      checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
+      validateDateCaughtRequired({
+        dateCaught,
+        noDateRecorded,
+        onlyMonthRecorded
+      })
 
-        validateDateCaughtYear(value, submission.season)
-      } catch (error) {
-        return helper.message(error.message)
-      }
+      validateDateCaughtYear(dateCaught, submission.season)
+    } catch (error) {
+      return helper.message(error.message)
+    }
 
-      return value
-    })
-    .description('The date of the catch'),
+    return value
+  }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField.optional(),

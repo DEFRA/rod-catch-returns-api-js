@@ -513,5 +513,36 @@ describe('catches.integration', () => {
         '2023-05-01'
       )
     })
+
+    it('should throw an error if noDateRecorded is true and onlyMonthRecorded is false in the database, then onlyMonthRecorded is true', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId, {
+        noDateRecorded: true,
+        onlyMonthRecorded: false
+      })
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          onlyMonthRecorded: true
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
+            property: 'dateCaught'
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
   })
 })
