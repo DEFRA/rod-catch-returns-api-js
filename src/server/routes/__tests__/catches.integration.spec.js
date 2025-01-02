@@ -570,6 +570,42 @@ describe('catches.integration', () => {
       )
     })
 
+    it('should successfully update an catch with a valid method', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+      // check initial value of method
+      const createdMethod = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/method`
+      })
+      expect(JSON.parse(createdMethod.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/methods/1`)
+      )
+
+      // Update catch with new method
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          method: 'methods/2'
+        }
+      })
+      expect(updatedCatch.statusCode).toBe(200)
+
+      // check species has been updated
+      const updatedMethod = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/method`
+      })
+      expect(JSON.parse(updatedMethod.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/methods/2`)
+      )
+    })
+
     it('should throw an error if noDateRecorded is true and onlyMonthRecorded is false in the database, then onlyMonthRecorded is true', async () => {
       // create submission, activity and catch
       const activityId = await setupSubmissionAndActivity(
