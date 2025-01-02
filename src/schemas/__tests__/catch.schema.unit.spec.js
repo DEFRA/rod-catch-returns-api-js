@@ -548,6 +548,17 @@ describe('catch.schema.unit', () => {
           ).resolves.toStrictEqual(payload)
         }
       )
+
+      it('should return an error if "onlyMonthRecorded" and "noDateRecorded" is true', async () => {
+        const payload = getValidPayload({
+          noDateRecorded: true,
+          onlyMonthRecorded: true
+        })
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED')
+      })
     })
 
     describe('noDateRecorded', () => {
