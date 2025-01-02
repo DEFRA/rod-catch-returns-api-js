@@ -138,6 +138,30 @@ describe('activities.schema.unit', () => {
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_RIVER_FORBIDDEN')
       })
+
+      it('should return an error if the river could not be found', async () => {
+        getSubmission.mockResolvedValue({ season: 2024 })
+        isSubmissionExists.mockResolvedValue(true)
+        const error = new Error('RIVER_NOT_FOUND')
+        isRiverInternal.mockRejectedValueOnce(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('ACTIVITY_RIVER_NOT_FOUND')
+      })
+
+      it('should return an error if there is an error retrieving the river', async () => {
+        getSubmission.mockResolvedValue({ season: 2024 })
+        isSubmissionExists.mockResolvedValue(true)
+        const error = new Error('Database error')
+        isRiverInternal.mockRejectedValueOnce(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow('Database error')
+      })
     })
 
     describe('daysFishedWithMandatoryRelease', () => {
