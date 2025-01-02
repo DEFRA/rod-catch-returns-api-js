@@ -2,9 +2,11 @@ import { extractActivityId, extractMethodId } from '../utils/entity-utils.js'
 import Joi from 'joi'
 import { MEASURES } from '../utils/constants.js'
 import { convertKgtoOz } from '../utils/mass-utils.js'
+import { getCatchById } from '../services/catches.service.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { getSubmissionByCatchId } from '../services/submissions.service.js'
 import { isMethodInternal } from '../services/methods.service.js'
+import logger from '../utils/logger-utils.js'
 
 const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
 const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG) // 1763.698097oz
@@ -16,42 +18,35 @@ const validateMethod = async (value, helper) => {
   return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
 }
 
-const validateDateCaught = async (value, helper, submission) => {
-  const parsedDate = new Date(value)
+const validateDateCaughtYear = (dateCaught, season) => {
+  const parsedDate = new Date(dateCaught)
   const currentDate = new Date()
 
   if (parsedDate > currentDate) {
-    return helper.message('CATCH_DATE_IN_FUTURE')
+    throw new Error('CATCH_DATE_IN_FUTURE')
   }
 
   const yearCaught = parsedDate.getFullYear()
-  if (submission.season !== yearCaught) {
-    return helper.message('CATCH_YEAR_MISMATCH')
+  if (season !== yearCaught) {
+    throw new Error('CATCH_YEAR_MISMATCH')
   }
+}
 
-  return value
+const validateDateCaughtRequired = ({
+  dateCaught,
+  noDateRecorded,
+  onlyMonthRecorded
+}) => {
+  if (!dateCaught) {
+    if (noDateRecorded || onlyMonthRecorded) {
+      throw new Error('CATCH_DEFAULT_DATE_REQUIRED')
+    } else {
+      throw new Error('CATCH_DATE_REQUIRED')
+    }
+  }
 }
 
 const dateCaughtField = Joi.string()
-  .required()
-  .when('noDateRecorded', {
-    is: true,
-    then: Joi.required().messages({
-      'any.required': 'CATCH_DEFAULT_DATE_REQUIRED',
-      'string.base': 'CATCH_DEFAULT_DATE_REQUIRED'
-    }),
-    otherwise: Joi.when('onlyMonthRecorded', {
-      is: true,
-      then: Joi.required().messages({
-        'any.required': 'CATCH_DEFAULT_DATE_REQUIRED',
-        'string.base': 'CATCH_DEFAULT_DATE_REQUIRED'
-      }),
-      otherwise: Joi.string().required().messages({
-        'any.required': 'CATCH_DATE_REQUIRED',
-        'string.base': 'CATCH_DATE_REQUIRED'
-      })
-    })
-  })
 
 const onlyMonthRecordedField = Joi.boolean()
   .when('noDateRecorded', {
@@ -68,7 +63,6 @@ const noDateRecordedField = Joi.boolean().description(
 )
 
 const speciesField = Joi.string()
-  .required()
   .pattern(/^species\//)
   .messages({
     'any.required': 'CATCH_SPECIES_REQUIRED',
@@ -118,7 +112,6 @@ const massField = Joi.object({
     })
     .description('The type of measurement provided by the end user')
 })
-  .required()
   .messages({
     'any.required': 'CATCH_MASS_REQUIRED'
   })
@@ -133,7 +126,6 @@ const methodField = Joi.string()
   })
 
 const releasedField = Joi.boolean()
-  .required()
   .description('Was the catch released?')
   .messages({
     'any.required': 'CATCH_RELEASED_REQUIRED',
@@ -154,21 +146,34 @@ export const createCatchSchema = Joi.object({
     })
     .description('The activity associated with this catch'),
   dateCaught: dateCaughtField
-    .required()
     .external(async (value, helper) => {
       const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
       const submission = await getSubmissionByActivityId(activityId)
 
-      return validateDateCaught(value, helper, submission)
+      const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
+      const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
+
+      try {
+        validateDateCaughtRequired({
+          dateCaught: value,
+          noDateRecorded,
+          onlyMonthRecorded
+        })
+        validateDateCaughtYear(value, submission?.season)
+      } catch (error) {
+        logger.error(error)
+        return helper.message(error.message)
+      }
+      return value
     })
     .description('The date of the catch'),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField,
-  mass: massField,
+  species: speciesField.required(),
+  mass: massField.required(),
   method: methodField.required().external(validateMethod),
-  released: releasedField,
+  released: releasedField.required(),
   reportingExclude: reportingExcludeField
 }).unknown()
 
@@ -184,15 +189,35 @@ export const updateCatchSchema = Joi.object({
       // Get catchId from the request context
       const catchId = helper.prefs.context.params.catchId
 
+      // get noDateRecorded and onlyMonthRecorded either from the request or from the database
+      const foundCatch = await getCatchById(catchId)
+      const noDateRecorded =
+        helper.state.ancestors[0]?.noDateRecorded ?? foundCatch.noDateRecorded
+      const onlyMonthRecorded =
+        helper.state.ancestors[0]?.onlyMonthRecorded ??
+        foundCatch.onlyMonthRecorded
+
       const submission = await getSubmissionByCatchId(catchId)
 
-      return validateDateCaught(value, helper, submission)
+      try {
+        validateDateCaughtRequired({
+          dateCaught: value,
+          noDateRecorded,
+          onlyMonthRecorded
+        })
+
+        validateDateCaughtYear(value, submission.season)
+      } catch (error) {
+        return helper.message(error.message)
+      }
+
+      return value
     })
     .description('The date of the catch'),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField,
-  mass: massField,
+  species: speciesField.optional(),
+  mass: massField.optional(),
   method: methodField.optional().external(async (value, helper) => {
     // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
     if (value === undefined) {
@@ -201,7 +226,7 @@ export const updateCatchSchema = Joi.object({
 
     return validateMethod(value, helper)
   }),
-  released: releasedField,
+  released: releasedField.optional(),
   reportingExclude: reportingExcludeField
 }).unknown()
 

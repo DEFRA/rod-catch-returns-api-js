@@ -471,7 +471,7 @@ describe('catches.integration', () => {
     })
   })
 
-  describe.skip('PATCH /api/catches/{catchId}', () => {
+  describe('PATCH /api/catches/{catchId}', () => {
     const CONTACT_IDENTIFIER_UPDATE_CATCH = 'contact-identifier-update-catch'
     beforeEach(
       async () =>
@@ -492,9 +492,7 @@ describe('catches.integration', () => {
         dateCaught: '2023-06-02T00:00:00+01:00'
       })
       const catchId = JSON.parse(createdCatch.payload).id
-      expect(
-        JSON.parse(createdCatch.payload).daysFishedWithMandatoryRelease
-      ).toBe('2023-06-02T00:00:00+01:00')
+      expect(JSON.parse(createdCatch.payload).dateCaught).toBe('2023-06-02')
 
       // Update catch
       const updatedCatch = await server.inject({
@@ -512,7 +510,7 @@ describe('catches.integration', () => {
         url: `/api/catches/${catchId}`
       })
       expect(JSON.parse(foundUpdatedCatch.payload).dateCaught).toBe(
-        '2023-05-01T00:00:00+01:00'
+        '2023-05-01'
       )
     })
   })

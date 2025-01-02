@@ -1,4 +1,4 @@
-import { Activity, Catch, Submission } from '../entities/submission.entity.js'
+import { Activity, Catch, Submission } from '../entities/index.js'
 
 /**
  * Checks if a submission exists in the database by its ID.
