@@ -392,7 +392,7 @@ describe('catch.schema.unit', () => {
       },
       method: 'methods/1',
       released: false,
-      onlyMonthRecorded: false,
+      onlyMonthRecorded: true,
       noDateRecorded: false,
       ...overrides
     })
@@ -400,12 +400,17 @@ describe('catch.schema.unit', () => {
     const setupMocks = ({
       season = 2024,
       methodInternal = false,
-      onlyMonthRecorded = false,
-      noDateRecorded = false
+      onlyMonthRecorded = true,
+      noDateRecorded = false,
+      dateCaught = '2024-08-02T00:00:00+01:00'
     } = {}) => {
       getSubmissionByCatchId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValueOnce(methodInternal)
-      getCatchById.mockResolvedValueOnce({ onlyMonthRecorded, noDateRecorded })
+      getCatchById.mockResolvedValueOnce({
+        onlyMonthRecorded,
+        noDateRecorded,
+        dateCaught
+      })
     }
 
     describe('dateCaught', () => {
@@ -533,7 +538,10 @@ describe('catch.schema.unit', () => {
         'should successfully validate if "onlyMonthRecorded" is %s',
         async (value) => {
           setupMocks()
-          const payload = getValidPayload({ onlyMonthRecorded: value })
+          const payload = getValidPayload({
+            onlyMonthRecorded: value,
+            noDateRecorded: false
+          })
 
           await expect(
             updateCatchSchema.validateAsync(payload, getDefaultContext())
@@ -547,7 +555,10 @@ describe('catch.schema.unit', () => {
         'should successfully validate if "noDateRecorded" is %s',
         async (value) => {
           setupMocks()
-          const payload = getValidPayload({ noDateRecorded: value })
+          const payload = getValidPayload({
+            noDateRecorded: value,
+            onlyMonthRecorded: false
+          })
 
           await expect(
             updateCatchSchema.validateAsync(payload, getDefaultContext())

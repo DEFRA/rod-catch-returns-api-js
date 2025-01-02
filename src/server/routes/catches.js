@@ -337,14 +337,11 @@ export default [
           })
 
           // if a value is undefined, it is not updated by Sequelize
-          const updatedActivity = await foundCatch.update(catchData)
+          const updatedCatch = await foundCatch.update(catchData)
 
-          const mappedActivity = mapActivityToResponse(
-            request,
-            updatedActivity.toJSON()
-          )
+          const mappedCatch = mapCatchToResponse(request, updatedCatch.toJSON())
 
-          return h.response(mappedActivity).code(StatusCodes.OK)
+          return h.response(mappedCatch).code(StatusCodes.OK)
         } catch (error) {
           return handleServerError('Error updating catch', error, h)
         }

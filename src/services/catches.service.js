@@ -1,4 +1,4 @@
-import { Catch } from '../entities'
+import { Catch } from '../entities/index.js'
 
 /**
  * Get a catch by its ID
