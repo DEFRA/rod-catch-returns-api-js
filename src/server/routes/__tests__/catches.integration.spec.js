@@ -483,34 +483,90 @@ describe('catches.integration', () => {
         await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
     )
 
-    it('should successfully update an catch with a valid dateCaught', async () => {
+    const fieldsToTest = [
+      {
+        field: 'dateCaught',
+        value: '2023-05-01T00:00:00+01:00',
+        expected: '2023-05-01'
+      },
+      {
+        field: 'mass',
+        value: { kg: 10, oz: 353, type: 'METRIC' },
+        expected: { kg: 10, oz: 352.739619, type: 'METRIC' }
+      },
+      { field: 'released', value: false, expected: false },
+      { field: 'onlyMonthRecorded', value: true, expected: true },
+      { field: 'noDateRecorded', value: true, expected: true }
+    ]
+
+    test.each(fieldsToTest)(
+      'should successfully update a catch with a valid $field',
+      async ({ field, value, expected }) => {
+        // Create submission, activity, and catch
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_UPDATE_CATCH
+        )
+        const createdCatch = await createCatch(server, activityId)
+        const catchId = JSON.parse(createdCatch.payload).id
+
+        // Update catch field
+        const updatedCatch = await server.inject({
+          method: 'PATCH',
+          url: `/api/catches/${catchId}`,
+          payload: {
+            [field]: value
+          }
+        })
+        expect(updatedCatch.statusCode).toBe(200)
+
+        // Verify field has been updated
+        const foundUpdatedCatch = await server.inject({
+          method: 'GET',
+          url: `/api/catches/${catchId}`
+        })
+        const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
+        if (field === 'mass') {
+          expect(updatedPayload.mass).toEqual(expected)
+        } else {
+          expect(updatedPayload[field]).toBe(expected)
+        }
+      }
+    )
+
+    it('should successfully update an catch with a valid species', async () => {
       // create submission, activity and catch
       const activityId = await setupSubmissionAndActivity(
         CONTACT_IDENTIFIER_UPDATE_CATCH
       )
-      const createdCatch = await createCatch(server, activityId, {
-        dateCaught: '2023-06-02T00:00:00+01:00'
-      })
+      const createdCatch = await createCatch(server, activityId)
       const catchId = JSON.parse(createdCatch.payload).id
-      expect(JSON.parse(createdCatch.payload).dateCaught).toBe('2023-06-02')
 
-      // Update catch
+      // check initial value of species
+      const createdSpecies = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/species`
+      })
+      expect(JSON.parse(createdSpecies.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/species/1`)
+      )
+
+      // Update catch with new species
       const updatedCatch = await server.inject({
         method: 'PATCH',
         url: `/api/catches/${catchId}`,
         payload: {
-          dateCaught: '2023-05-01T00:00:00+01:00'
+          species: 'species/2'
         }
       })
       expect(updatedCatch.statusCode).toBe(200)
 
-      // check dateCaught in catch has been updated
-      const foundUpdatedCatch = await server.inject({
+      // check species has been updated
+      const updatedSpecies = await server.inject({
         method: 'GET',
-        url: `/api/catches/${catchId}`
+        url: `/api/catches/${catchId}/species`
       })
-      expect(JSON.parse(foundUpdatedCatch.payload).dateCaught).toBe(
-        '2023-05-01'
+      expect(JSON.parse(updatedSpecies.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/species/2`)
       )
     })
 
@@ -539,6 +595,66 @@ describe('catches.integration', () => {
             entity: 'Catch',
             message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
             property: 'dateCaught'
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if noDateRecorded is false and onlyMonthRecorded is true in the database, then noDateRecorded is true', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId, {
+        noDateRecorded: false,
+        onlyMonthRecorded: true
+      })
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          noDateRecorded: true
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
+            property: 'dateCaught'
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if mass is an empty object', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          mass: {}
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_MASS_TYPE_REQUIRED',
+            property: 'mass',
+            value: {}
           }
         ]
       })
