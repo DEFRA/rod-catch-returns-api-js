@@ -46,10 +46,14 @@ export const getSubmissionByCatchId = async (catchId) => {
     })
 
     if (!catchWithActivityAndSubmission) {
-      throw new Error(`No submission found for catch ID ${catchId}`)
+      throw new Error(`No Catch found for catch ID ${catchId}`)
     }
 
-    return catchWithActivityAndSubmission.Activity?.Submission || null
+    if (!catchWithActivityAndSubmission.Activity) {
+      throw new Error(`No Activity found for catch ID ${catchId}`)
+    }
+
+    return catchWithActivityAndSubmission.Activity.Submission
   } catch (error) {
     throw new Error(
       `Failed to fetch submission for catch ID ${catchId}: ${error}`
