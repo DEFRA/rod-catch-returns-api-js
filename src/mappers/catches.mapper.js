@@ -77,7 +77,7 @@ export const mapRequestToCatch = ({
   released,
   onlyMonthRecorded,
   noDateRecorded,
-  reportingExclude = false
+  reportingExclude
 }) => {
   // For dateCaught, a date comes like this 2024-08-02T00:00:00+01:00. The +01:00 indicates the date-time is in a time zone that is 1 hour ahead of UTC
   // Without the code below, Sequelize converts this date-time to UTC internally. In UTC, 2024-08-02T00:00:00+01:00 becomes 2024-08-01T23:00:00 and is stored as 2024-08-01 in the database

@@ -28,6 +28,7 @@ describe('catch.schema.unit', () => {
       released: false,
       onlyMonthRecorded: false,
       noDateRecorded: false,
+      reportingExclude: false,
       ...overrides
     })
 
@@ -334,7 +335,7 @@ describe('catch.schema.unit', () => {
     })
 
     describe('reportingExclude', () => {
-      it.each([undefined, true, false])(
+      it.each([true, false])(
         'should successfully validate if "reportingExclude" is %s',
         async (value) => {
           setupMocks()
@@ -345,6 +346,29 @@ describe('catch.schema.unit', () => {
           ).resolves.toStrictEqual(payload)
         }
       )
+
+      it('should default to false if undefined', async () => {
+        setupMocks()
+        const payload = getValidPayload({ reportingExclude: undefined })
+
+        await expect(
+          createCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual({
+          activity: 'activities/41001',
+          dateCaught: '2024-08-02T00:00:00+01:00',
+          mass: {
+            kg: 2,
+            oz: 71,
+            type: 'METRIC'
+          },
+          method: 'methods/1',
+          noDateRecorded: false,
+          onlyMonthRecorded: false,
+          released: false,
+          reportingExclude: false,
+          species: 'species/1'
+        })
+      })
     })
   })
 

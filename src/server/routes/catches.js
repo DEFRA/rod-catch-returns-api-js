@@ -308,7 +308,6 @@ export default [
        */
       handler: async (request, h) => {
         const { catchId } = request.params
-        // TODO check reportingExclude is included
         const {
           dateCaught,
           species,
@@ -316,7 +315,8 @@ export default [
           method,
           released,
           onlyMonthRecorded,
-          noDateRecorded
+          noDateRecorded,
+          reportingExclude
         } = request.payload
 
         try {
@@ -333,7 +333,8 @@ export default [
             method,
             released,
             onlyMonthRecorded,
-            noDateRecorded
+            noDateRecorded,
+            reportingExclude
           })
 
           // if a value is undefined, it is not updated by Sequelize
