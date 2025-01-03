@@ -90,6 +90,38 @@ describe('activity.mapper.unit', () => {
 
       expect(result.dateCaught).toBe('2024-03-21')
     })
+
+    it.each([
+      ['activity', 'activities/402', 'activity_id', '402'],
+      ['species', 'species/2', 'species_id', '2'],
+      ['method', 'methods/1', 'method_id', '1']
+    ])(
+      'should extract %s ID correctly',
+      (key, value, expectedKey, expectedId) => {
+        const mockCatchRequest = {
+          ...getMockCatchRequest(),
+          [key]: value
+        }
+        const result = mapRequestToCatch(mockCatchRequest)
+
+        expect(result).toHaveProperty(expectedKey, expectedId)
+      }
+    )
+
+    it.each([
+      'dateCaught',
+      'species',
+      'mass',
+      'method',
+      'released',
+      'onlyMonthRecorded',
+      'noDateRecorded'
+    ])('should handle missing %s field gracefully', (field) => {
+      const mockCatchRequest = { ...getMockCatchRequest(), [field]: undefined }
+      const result = mapRequestToCatch(mockCatchRequest)
+
+      expect(result).not.toHaveProperty(field)
+    })
   })
 
   describe('mapCatchToResponse', () => {

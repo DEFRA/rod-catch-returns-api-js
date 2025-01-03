@@ -1,4 +1,4 @@
-import { Submission } from '../entities/submission.entity.js'
+import { Activity, Catch, Submission } from '../entities/index.js'
 
 /**
  * Checks if a submission exists in the database by its ID.
@@ -23,4 +23,40 @@ export const getSubmission = async (submissionId) => {
       id: submissionId
     }
   })
+}
+
+/**
+ * Fetches the associated Submission by the given catch ID.
+ *
+ * This function traverses the relationships between the `Catch`, `Activity`,
+ * and `Submission` models to find the `Submission` corresponding to the given `Catch` ID.
+ *
+ * @param {number} catch - The ID of the catch for which to fetch the submission.
+ * @returns {Promise<Submission>} - A promise that resolves to the Submission associated with the given catch ID.
+ * @throws {Error} - Throws an error if no submission is found or if the query fails.
+ */
+export const getSubmissionByCatchId = async (catchId) => {
+  try {
+    const catchWithActivityAndSubmission = await Catch.findOne({
+      where: { id: catchId },
+      include: {
+        model: Activity,
+        include: Submission
+      }
+    })
+
+    if (!catchWithActivityAndSubmission) {
+      throw new Error(`No Catch found for catch ID ${catchId}`)
+    }
+
+    if (!catchWithActivityAndSubmission.Activity) {
+      throw new Error(`No Activity found for catch ID ${catchId}`)
+    }
+
+    return catchWithActivityAndSubmission.Activity.Submission
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch submission for catch ID ${catchId}: ${error}`
+    )
+  }
 }

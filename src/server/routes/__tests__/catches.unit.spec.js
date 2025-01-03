@@ -31,6 +31,9 @@ const [
   },
   {
     options: { handler: deleteCatchHandler }
+  },
+  {
+    options: { handler: patchCatchHandler }
   }
 ] = routes
 
@@ -582,6 +585,176 @@ describe('catches.unit', () => {
       const result = await deleteCatchHandler(
         getDeleteRequest('2'),
         getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('PATCH /catches/{catchId}', () => {
+    const getCatchRequest = (payload) => ({
+      ...getServerDetails(),
+      params: { catchId: '1' },
+      payload
+    })
+
+    const getFullCatchPayload = () => ({
+      dateCaught: '2024-06-24T00:00:00+01:00',
+      species: 'species/1',
+      mass: {
+        kg: 9.61,
+        oz: 339,
+        type: 'IMPERIAL'
+      },
+      method: 'methods/1',
+      released: true,
+      onlyMonthRecorded: false,
+      noDateRecorded: false,
+      reportingExclude: false
+    })
+
+    const getFoundCatch = () => ({
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: '4',
+          dateCaught: '2024-08-02T00:00:00.000Z',
+          massKg: '2.000000',
+          massOz: '70.547924',
+          massType: 'METRIC',
+          released: false,
+          onlyMonthRecorded: true,
+          noDateRecorded: false,
+          reportingExclude: true,
+          createdAt: '2024-11-06T14:45:55.782Z',
+          updatedAt: '2025-01-03T09:24:00.032Z',
+          version: '2025-01-03T09:24:00.032Z',
+          ActivityId: '404',
+          activity_id: '404',
+          method_id: '1',
+          species_id: '1'
+        })
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the catch is updated successfully', async () => {
+      const foundCatch = getFoundCatch()
+      Catch.findByPk.mockResolvedValueOnce(foundCatch)
+
+      const result = await patchCatchHandler(
+        getCatchRequest(getFullCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return the updated catch if the call to update the catch is successful', async () => {
+      const foundCatch = getFoundCatch()
+      Catch.findByPk.mockResolvedValueOnce(foundCatch)
+
+      const result = await patchCatchHandler(
+        getCatchRequest(getFullCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it.each([
+      [
+        'dateCaught',
+        { dateCaught: '2024-08-02T00:00:00.000Z' },
+        { dateCaught: '2024-08-02' }
+      ],
+      ['species', { species: 'species/1' }, { species_id: '1' }],
+      [
+        'mass',
+        {
+          mass: {
+            kg: 9.61,
+            oz: 339,
+            type: 'IMPERIAL'
+          }
+        },
+        { massKg: 9.610488, massOz: 339, massType: 'IMPERIAL' }
+      ],
+      ['method', { method: 'methods/1' }, { method_id: '1' }],
+      ['released', { released: true }, { released: true }],
+      [
+        'onlyMonthRecorded',
+        { onlyMonthRecorded: true },
+        { onlyMonthRecorded: true }
+      ],
+      ['noDateRecorded', { noDateRecorded: true }, { noDateRecorded: true }],
+      [
+        'reportingExclude',
+        { reportingExclude: true },
+        { reportingExclude: true }
+      ]
+    ])(
+      'should call update with "%s"',
+      async (_field, payload, expectedUpdate) => {
+        const foundCatch = getFoundCatch()
+        Catch.findByPk.mockResolvedValueOnce(foundCatch)
+
+        await patchCatchHandler(
+          getCatchRequest(payload),
+          getMockResponseToolkit()
+        )
+
+        expect(foundCatch.update).toHaveBeenCalledWith({
+          ...expectedUpdate,
+          version: expect.any(Date)
+        })
+      }
+    )
+
+    it('should return a 404 status code if the catch does not exist', async () => {
+      Catch.findByPk.mockResolvedValueOnce(null)
+
+      const result = await patchCatchHandler(
+        getCatchRequest({
+          species: 'species/1'
+        }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while updating the catch', async () => {
+      const error = new Error('Database error')
+      Catch.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await patchCatchHandler(
+        getCatchRequest({
+          species: 'species/1'
+        }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating catch',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while updating the catch', async () => {
+      const error = new Error('Database error')
+      Catch.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await patchCatchHandler(
+        getCatchRequest({
+          species: 'species/1'
+        }),
+        h
       )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
