@@ -173,16 +173,12 @@ export const createCatchSchema = Joi.object({
   mass: massField.required(),
   method: methodField.required().external(validateMethod),
   released: releasedField.required(),
-  reportingExclude: reportingExcludeField
+  reportingExclude: reportingExcludeField.default(false)
 }).unknown()
 
 export const updateCatchSchema = Joi.object({
   dateCaught: dateCaughtField.optional().external(async (value, helper) => {
-    // // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    // if (value === undefined) {
-    //   return value
-    // }
-
+    // We do not want to skip validation as this validates multiple fields
     // Get catchId from the request context
     const catchId = helper.prefs.context.params.catchId
 
