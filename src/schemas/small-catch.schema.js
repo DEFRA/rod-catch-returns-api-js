@@ -105,6 +105,8 @@ export const createSmallCatchSchema = Joi.object({
   noMonthRecorded: Joi.boolean()
 }).unknown()
 
+export const updateSmallCatchSchema = Joi.object({})
+
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
 })

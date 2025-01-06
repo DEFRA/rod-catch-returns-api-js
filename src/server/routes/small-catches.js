@@ -1,7 +1,8 @@
 import { Activity, SmallCatch, SmallCatchCount } from '../../entities/index.js'
 import {
   createSmallCatchSchema,
-  smallCatchIdSchema
+  smallCatchIdSchema,
+  updateSmallCatchSchema
 } from '../../schemas/small-catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
@@ -202,6 +203,63 @@ export default [
       },
       description: 'Delete a small catch by ID',
       notes: 'Deletes a small catch from the database by its ID',
+      tags: ['api', 'smallCatches']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: '/smallCatches/{smallCatchId}',
+    options: {
+      /**
+       * Update a small catch in the database using the small catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.smallCatchId - The ID of the small catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link SmallCatch}
+       */
+      handler: async (request, h) => {
+        const { smallCatchId } = request.params
+        const { month, released, counts, noMonthRecorded, reportingExclude } =
+          request.payload
+
+        try {
+          const foundSmallCatch = await SmallCatch.findByPk(smallCatchId)
+
+          if (!foundSmallCatch) {
+            return handleNotFound(
+              `Small Catch not found for ${smallCatchId}`,
+              h
+            )
+          }
+
+          const smallCatchData = mapRequestToSmallCatch({
+            month,
+            released,
+            counts,
+            noMonthRecorded,
+            reportingExclude
+          })
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedSmallCatch = await foundSmallCatch.update(smallCatchData)
+
+          const mappedSmallCatch = mapSmallCatchToResponse(
+            request,
+            updatedSmallCatch.toJSON()
+          )
+
+          return h.response(mappedSmallCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error updating small catch', error, h)
+        }
+      },
+      validate: {
+        payload: updateSmallCatchSchema,
+        options: { entity: 'SmallCatch' }
+      },
+      description: 'Update a small catch',
+      notes: 'Update a small catch',
       tags: ['api', 'smallCatches']
     }
   }

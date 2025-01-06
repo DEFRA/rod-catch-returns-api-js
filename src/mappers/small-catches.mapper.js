@@ -13,21 +13,23 @@ export const mapRequestToSmallCatch = ({
   noMonthRecorded,
   reportingExclude
 }) => {
-  const activityId = extractActivityId(activity)
-  const monthInt = getMonthNumberFromName(month)
-
-  return {
-    month: monthInt,
-    released,
-    activity_id: activityId,
-    noMonthRecorded,
-    reportingExclude,
-    counts: counts.map((count) => ({
-      count: count.count,
-      method_id: extractMethodId(count.method)
-    })),
-    version: new Date()
+  // TODO add more tests for this
+  const mappedCatch = {
+    version: new Date(), // Always included
+    ...(month && { month: getMonthNumberFromName(month) }),
+    ...(counts && {
+      counts: counts.map((count) => ({
+        count: count.count,
+        method_id: extractMethodId(count.method)
+      }))
+    }),
+    ...(typeof released !== 'undefined' && { released }),
+    ...(typeof noMonthRecorded !== 'undefined' && { noMonthRecorded }),
+    ...(typeof reportingExclude !== 'undefined' && { reportingExclude }),
+    ...(activity && { activity_id: extractActivityId(activity) })
   }
+
+  return mappedCatch
 }
 
 /**
