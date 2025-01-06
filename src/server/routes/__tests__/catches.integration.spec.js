@@ -414,4 +414,60 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('DELETE /api/catches/{catchId}', () => {
+    const CONTACT_IDENTIFIER_DELETE_CATCH = 'contact-identifier-delete-catch'
+
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_CATCH)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_CATCH)
+    )
+
+    it('should return a 204 and delete a catch', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_DELETE_CATCH
+      )
+
+      const createdCatch = await createCatch(server, activityId)
+
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // make sure catch exists
+      const foundCatch = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}`
+      })
+      expect(foundCatch.statusCode).toBe(200)
+
+      // delete catch
+      const deletedCatch = await server.inject({
+        method: 'DELETE',
+        url: `/api/catches/${catchId}`
+      })
+      expect(deletedCatch.statusCode).toBe(204)
+      expect(deletedCatch.body).toBeUndefined()
+
+      // make sure catch has been deleted
+      const foundCatchAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}`
+      })
+      expect(foundCatchAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 404 and empty body if the catch could not be deleted', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/catches/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+  })
 })
