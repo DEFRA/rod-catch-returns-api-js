@@ -1,4 +1,4 @@
-import { Activity, SmallCatch } from '../../entities/index.js'
+import { Activity, SmallCatch, SmallCatchCount } from '../../entities/index.js'
 import {
   createSmallCatchSchema,
   smallCatchIdSchema
@@ -10,6 +10,7 @@ import {
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { sequelize } from '../../services/database.service.js'
 
 export default [
   {
@@ -151,6 +152,56 @@ export default [
       },
       description: 'Retrieve a small catch by its ID',
       notes: 'Retrieve a small catch from the database by its ID',
+      tags: ['api', 'smallCatches']
+    }
+  },
+  {
+    method: 'DELETE',
+    path: '/smallCatches/{smallCatchId}',
+    options: {
+      /**
+       * Delete an small catch by ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.smallCatchId - The small catch id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response indicating success or failure
+       */
+      handler: async (request, h) => {
+        const smallCatchId = request.params.smallCatchId
+
+        // Begin transaction for atomic operation
+        const transaction = await sequelize.transaction()
+
+        try {
+          await SmallCatchCount.destroy({
+            where: { small_catch_id: smallCatchId },
+            transaction
+          })
+
+          const smallCatchesDestroyed = await SmallCatch.destroy({
+            where: { id: smallCatchId },
+            transaction
+          })
+
+          if (smallCatchesDestroyed === 0) {
+            await transaction.rollback()
+            return handleNotFound(
+              `Small catch not found for ID: ${smallCatchId}`,
+              h
+            )
+          }
+
+          // Commit transaction
+          await transaction.commit()
+          return h.response().code(StatusCodes.NO_CONTENT)
+        } catch (error) {
+          await transaction.rollback()
+          return handleServerError('Error deleting small catch', error, h)
+        }
+      },
+      description: 'Delete a small catch by ID',
+      notes: 'Deletes a small catch from the database by its ID',
       tags: ['api', 'smallCatches']
     }
   }
