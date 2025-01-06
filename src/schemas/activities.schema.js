@@ -179,9 +179,8 @@ export const updateActivitySchema = Joi.object({
         return value
       }
       // Get activityId from the request context
-      const activityId = extractActivityId(
-        helper.prefs.context.params.activityId
-      )
+      const activityId = helper.prefs.context.params.activityId
+
       const riverId = extractRiverId(value)
       const submission = await getSubmissionByActivityId(activityId)
 
