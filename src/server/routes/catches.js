@@ -14,6 +14,8 @@ import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
 
+const BASE_CATCHES_URL = '/catches/{catchId}'
+
 export default [
   {
     method: 'POST',
@@ -67,7 +69,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/activity',
+    path: `${BASE_CATCHES_URL}/activity`,
     options: {
       /**
        * Retrieve the activity associated with a catch using the catch ID from the database
@@ -123,7 +125,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/species',
+    path: `${BASE_CATCHES_URL}/species`,
     options: {
       /**
        * Retrieve the species associated with a catch using the catch ID from the database
@@ -175,7 +177,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/method',
+    path: `${BASE_CATCHES_URL}/method`,
     options: {
       /**
        * Retrieve the fishing method associated with a catch using the catch ID from the database
@@ -227,7 +229,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}',
+    path: BASE_CATCHES_URL,
     options: {
       /**
        * Retrieve a catch by its ID
@@ -262,7 +264,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/catches/{catchId}',
+    path: BASE_CATCHES_URL,
     options: {
       /**
        * Delete an catch by ID
@@ -296,7 +298,7 @@ export default [
   },
   {
     method: 'PATCH',
-    path: '/catches/{catchId}',
+    path: BASE_CATCHES_URL,
     options: {
       /**
        * Update a catch in the database using the catch ID
