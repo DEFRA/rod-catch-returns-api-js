@@ -7,8 +7,42 @@ import Joi from 'joi'
 import { extractActivityId } from '../utils/entity-utils.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+import logger from '../utils/logger-utils.js'
 
-const monthField = Joi.string()
+const validateUniqueActivityAndMonth = async (
+  monthName,
+  activityId,
+  ignoreMonth
+) => {
+  const month = getMonthNumberFromName(monthName)
+  const duplicateExists = await isDuplicateSmallCatch(
+    activityId,
+    month,
+    ignoreMonth
+  )
+  if (duplicateExists) {
+    throw new Error('SMALL_CATCH_DUPLICATE_FOUND')
+  }
+}
+
+const validateMonthInFuture = (monthName, season) => {
+  const currentYearAndMonth = set(new Date(), {
+    date: 1,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0
+  }) // Reset to the start of the first day of the current month
+
+  const inputMonth = getMonthNumberFromName(monthName) // Month is not one-based in our app
+  const inputDate = new Date(season, inputMonth - 1) // Month is zero-based in js Date
+
+  if (isAfter(inputDate, currentYearAndMonth)) {
+    throw new Error('SMALL_CATCH_MONTH_IN_FUTURE')
+  }
+}
+
+const monthField = Joi.string().description('The month this record relates to')
 
 export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
@@ -29,32 +63,15 @@ export const createSmallCatchSchema = Joi.object({
     })
     .external(async (value, helper) => {
       const activityId = extractActivityId(helper.state.ancestors[0].activity)
-
-      // check duplicates
-      const month = getMonthNumberFromName(value)
-      const duplicateExists = await isDuplicateSmallCatch(activityId, month)
-      if (duplicateExists) {
-        return helper.message('SMALL_CATCH_DUPLICATE_FOUND')
-      }
-
-      // check month in future
       const submission = await getSubmissionByActivityId(activityId)
 
-      const currentYearAndMonth = set(new Date(), {
-        date: 1,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        milliseconds: 0
-      }) // Reset to the start of the first day of the current month
-
-      const inputMonth = getMonthNumberFromName(value) // Month is not one-based in our app
-      const inputDate = new Date(submission.season, inputMonth - 1) // Month is zero-based in js Date
-
-      if (isAfter(inputDate, currentYearAndMonth)) {
-        return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
+      try {
+        await validateUniqueActivityAndMonth(value, activityId)
+        validateMonthInFuture(value, submission.season)
+      } catch (error) {
+        logger.error(error)
+        return helper.message(error.message)
       }
-
       return value
     }),
   counts: Joi.array()
@@ -117,36 +134,19 @@ export const updateSmallCatchSchema = Joi.object({
     }
     // Get catchId from the request context
     const smallCatchId = helper.prefs.context.params.smallCatchId
-
     const smallCatch = await getSmallCatchById(smallCatchId)
-
-    // check duplicates
-    const month = getMonthNumberFromName(value)
-    const duplicateExists = await isDuplicateSmallCatch(
-      smallCatch.activityId,
-      month,
-      smallCatch.month
-    )
-    if (duplicateExists) {
-      return helper.message('SMALL_CATCH_DUPLICATE_FOUND')
-    }
-
-    // check month in future
     const submission = await getSubmissionByActivityId(smallCatch.activityId)
 
-    const currentYearAndMonth = set(new Date(), {
-      date: 1,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0
-    }) // Reset to the start of the first day of the current month
-
-    const inputMonth = getMonthNumberFromName(value) // Month is not one-based in our app
-    const inputDate = new Date(submission.season, inputMonth - 1) // Month is zero-based in js Date
-
-    if (isAfter(inputDate, currentYearAndMonth)) {
-      return helper.message('SMALL_CATCH_MONTH_IN_FUTURE')
+    try {
+      await validateUniqueActivityAndMonth(
+        value,
+        smallCatch.activityId,
+        smallCatch.month
+      )
+      validateMonthInFuture(value, submission.season)
+    } catch (error) {
+      logger.error(error)
+      return helper.message(error.message)
     }
 
     return value
