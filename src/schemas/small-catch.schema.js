@@ -44,6 +44,36 @@ const validateMonthInFuture = (monthName, season) => {
 
 const monthField = Joi.string().description('The month this record relates to')
 
+const countsField = Joi.array()
+  .items(
+    Joi.object({
+      method: Joi.string().required().messages({
+        'any.required': 'SMALL_CATCH_COUNTS_METHOD_REQUIRED'
+      }),
+      count: Joi.number().integer().min(0).required().messages({
+        'any.required': 'SMALL_CATCH_COUNTS_COUNT_REQUIRED',
+        'number.base': 'SMALL_CATCH_COUNTS_COUNT_NUMBER',
+        'number.integer': 'SMALL_CATCH_COUNTS_COUNT_INTEGER',
+        'number.min': 'SMALL_CATCH_COUNTS_NOT_GREATER_THAN_ZERO'
+      })
+    })
+  )
+  .min(1)
+  .messages({
+    'any.required': 'SMALL_CATCH_COUNTS_REQUIRED',
+    'array.base': 'SMALL_CATCH_COUNTS_REQUIRED',
+    'array.min': 'SMALL_CATCH_COUNTS_REQUIRED'
+  })
+  .description('Small catches counts')
+  .custom((value, helper) => {
+    const methods = value.map((item) => item.method)
+    const hasDuplicates = new Set(methods).size !== methods.length
+    if (hasDuplicates) {
+      return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
+    }
+    return value
+  })
+
 export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
     'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED'
@@ -74,35 +104,7 @@ export const createSmallCatchSchema = Joi.object({
       }
       return value
     }),
-  counts: Joi.array()
-    .items(
-      Joi.object({
-        method: Joi.string().required().messages({
-          'any.required': 'SMALL_CATCH_COUNTS_METHOD_REQUIRED'
-        }),
-        count: Joi.number().integer().min(0).required().messages({
-          'any.required': 'SMALL_CATCH_COUNTS_COUNT_REQUIRED',
-          'number.base': 'SMALL_CATCH_COUNTS_COUNT_NUMBER',
-          'number.integer': 'SMALL_CATCH_COUNTS_COUNT_INTEGER',
-          'number.min': 'SMALL_CATCH_COUNTS_NOT_GREATER_THAN_ZERO'
-        })
-      })
-    )
-    .required()
-    .min(1)
-    .messages({
-      'any.required': 'SMALL_CATCH_COUNTS_REQUIRED',
-      'array.base': 'SMALL_CATCH_COUNTS_REQUIRED',
-      'array.min': 'SMALL_CATCH_COUNTS_REQUIRED'
-    })
-    .custom((value, helper) => {
-      const methods = value.map((item) => item.method)
-      const hasDuplicates = new Set(methods).size !== methods.length
-      if (hasDuplicates) {
-        return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
-      }
-      return value
-    }),
+  counts: countsField.required(),
   released: Joi.number()
     .integer()
     .min(0)
@@ -150,7 +152,8 @@ export const updateSmallCatchSchema = Joi.object({
     }
 
     return value
-  })
+  }),
+  counts: countsField.optional()
 })
 
 export const smallCatchIdSchema = Joi.object({
