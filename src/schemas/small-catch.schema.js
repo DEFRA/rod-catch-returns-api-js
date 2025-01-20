@@ -86,13 +86,17 @@ const releasedField = Joi.number().integer().min(0).messages({
   'number.min': 'SMALL_CATCH_RELEASED_NEGATIVE'
 })
 
-const noMonthRecordedField = Joi.boolean().description(
-  'To allow FMT users to report on the default date'
-)
+const noMonthRecordedField = Joi.boolean()
+  .messages({
+    'boolean.base': 'NO_MONTH_RECORDED_INVALID'
+  })
+  .description('To allow FMT users to report on the default date')
 
-const reportingExcludeField = Joi.boolean().description(
-  'Is this entry excluded from reporting'
-)
+const reportingExcludeField = Joi.boolean()
+  .messages({
+    'boolean.base': 'REPORTING_EXCLUDE_INVALID'
+  })
+  .description('Is this entry excluded from reporting')
 
 export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
