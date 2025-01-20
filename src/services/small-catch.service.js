@@ -1,5 +1,5 @@
+import { SmallCatch, SmallCatchCount } from '../entities/index.js'
 import { Op } from 'sequelize'
-import { SmallCatch } from '../entities/index.js'
 
 /**
  * Checks if a small catch record with the specified activity ID and month already exists.
@@ -31,10 +31,16 @@ export const isDuplicateSmallCatch = async (activityId, month, ignoreMonth) => {
  * Get a small catch by its ID
  *
  * @param {number|string} smallCatchId - The ID of the small catch
- * @returns {Promise<Catch>} - A promise the returns the first instance found, or null if none can be found.
+ * @returns {Promise<SmallCatch>} - A promise the returns the first instance found, or null if none can be found.
  */
 export const getSmallCatchById = async (smallCatchId) => {
   return SmallCatch.findOne({
     where: { id: smallCatchId }
+  })
+}
+
+export const getTotalSmallCatchCountsBySmallCatchId = async (smallCatchId) => {
+  return SmallCatchCount.count({
+    where: { small_catch_id: smallCatchId }
   })
 }

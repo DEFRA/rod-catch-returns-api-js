@@ -1,5 +1,6 @@
 import {
   getSmallCatchById,
+  getTotalSmallCatchCountsBySmallCatchId,
   isDuplicateSmallCatch
 } from '../services/small-catch.service.js'
 import { isAfter, set } from 'date-fns'
@@ -42,6 +43,18 @@ const validateMonthInFuture = (monthName, season) => {
   }
 }
 
+const validateCounts = (value, helper) => {
+  const methods = value.map((item) => item.method)
+  const hasDuplicates = new Set(methods).size !== methods.length
+  if (hasDuplicates) {
+    return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
+  }
+  return value
+}
+
+const sumCounts = (countsArray) =>
+  countsArray.reduce((sum, item) => sum + item.count, 0)
+
 const monthField = Joi.string().description('The month this record relates to')
 
 const countsField = Joi.array()
@@ -65,14 +78,21 @@ const countsField = Joi.array()
     'array.min': 'SMALL_CATCH_COUNTS_REQUIRED'
   })
   .description('Small catches counts')
-  .custom((value, helper) => {
-    const methods = value.map((item) => item.method)
-    const hasDuplicates = new Set(methods).size !== methods.length
-    if (hasDuplicates) {
-      return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
-    }
-    return value
-  })
+
+const releasedField = Joi.number().integer().min(0).messages({
+  'any.required': 'SMALL_CATCH_RELEASED_REQUIRED',
+  'number.base': 'SMALL_CATCH_RELEASED_NUMBER',
+  'number.integer': 'SMALL_CATCH_RELEASED_INTEGER',
+  'number.min': 'SMALL_CATCH_RELEASED_NEGATIVE'
+})
+
+const noMonthRecordedField = Joi.boolean().description(
+  'To allow FMT users to report on the default date'
+)
+
+const reportingExcludeField = Joi.boolean().description(
+  'Is this entry excluded from reporting'
+)
 
 export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
@@ -104,28 +124,21 @@ export const createSmallCatchSchema = Joi.object({
       }
       return value
     }),
-  counts: countsField.required(),
-  released: Joi.number()
-    .integer()
-    .min(0)
-    .required()
-    .messages({
-      'any.required': 'SMALL_CATCH_RELEASED_REQUIRED',
-      'number.base': 'SMALL_CATCH_RELEASED_NUMBER',
-      'number.integer': 'SMALL_CATCH_RELEASED_INTEGER',
-      'number.min': 'SMALL_CATCH_RELEASED_NEGATIVE'
-    })
-    .custom((value, helper) => {
-      const countsArray = helper.state.ancestors[0].counts
-      const totalCaught = countsArray.reduce((sum, item) => sum + item.count, 0)
+  counts: countsField.required().custom((value, helper) => {
+    return validateCounts(value, helper)
+  }),
+  released: releasedField.required().custom((value, helper) => {
+    const countsArray = helper.state.ancestors[0].counts
+    const totalCaught = sumCounts(countsArray)
 
-      if (value > totalCaught) {
-        return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-      }
+    if (value > totalCaught) {
+      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+    }
 
-      return value
-    }),
-  noMonthRecorded: Joi.boolean()
+    return value
+  }),
+  noMonthRecorded: noMonthRecordedField,
+  reportingExclude: reportingExcludeField
 }).unknown()
 
 export const updateSmallCatchSchema = Joi.object({
@@ -153,7 +166,34 @@ export const updateSmallCatchSchema = Joi.object({
 
     return value
   }),
-  counts: countsField.optional()
+  counts: countsField.optional().custom((value, helper) => {
+    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    if (value === undefined) {
+      return value
+    }
+    return validateCounts(value, helper)
+  }),
+  released: releasedField.optional().external(async (value, helper) => {
+    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    if (value === undefined) {
+      return value
+    }
+    const smallCatchId = helper.prefs.context.params.smallCatchId
+    const foundTotalCaught =
+      await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
+
+    const countsArray = helper.state.ancestors[0]?.counts
+
+    const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
+
+    if (value > totalCaught) {
+      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+    }
+
+    return value
+  }),
+  noMonthRecorded: noMonthRecordedField,
+  reportingExclude: reportingExcludeField
 })
 
 export const smallCatchIdSchema = Joi.object({
