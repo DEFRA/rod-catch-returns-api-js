@@ -483,23 +483,16 @@ describe('catches.integration', () => {
         await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
     )
 
-    const fieldsToTest = [
+    test.each([
       {
         field: 'dateCaught',
         value: '2023-05-01T00:00:00+01:00',
         expected: '2023-05-01'
       },
-      {
-        field: 'mass',
-        value: { kg: 10, oz: 353, type: 'METRIC' },
-        expected: { kg: 10, oz: 352.739619, type: 'METRIC' }
-      },
       { field: 'released', value: false, expected: false },
       { field: 'onlyMonthRecorded', value: true, expected: true },
       { field: 'noDateRecorded', value: true, expected: true }
-    ]
-
-    test.each(fieldsToTest)(
+    ])(
       'should successfully update a catch with a valid $field',
       async ({ field, value, expected }) => {
         // Create submission, activity, and catch
@@ -525,11 +518,46 @@ describe('catches.integration', () => {
           url: `/api/catches/${catchId}`
         })
         const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
-        if (field === 'mass') {
-          expect(updatedPayload.mass).toEqual(expected)
-        } else {
-          expect(updatedPayload[field]).toBe(expected)
-        }
+        expect(updatedPayload[field]).toBe(expected)
+      }
+    )
+
+    test.each([
+      {
+        value: { kg: 10, oz: 353, type: 'METRIC' },
+        expected: { kg: 10, oz: 352.739619, type: 'METRIC' }
+      },
+      {
+        value: { kg: 10, oz: 353, type: 'IMPERIAL' },
+        expected: { kg: 10.007382, oz: 353, type: 'IMPERIAL' }
+      }
+    ])(
+      'should successfully update a catch with a valid mass in $value.type format',
+      async ({ value, expected }) => {
+        // Create submission, activity, and catch
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_UPDATE_CATCH
+        )
+        const createdCatch = await createCatch(server, activityId)
+        const catchId = JSON.parse(createdCatch.payload).id
+
+        // Update catch field with new mass
+        const updatedCatch = await server.inject({
+          method: 'PATCH',
+          url: `/api/catches/${catchId}`,
+          payload: {
+            mass: value
+          }
+        })
+        expect(updatedCatch.statusCode).toBe(200)
+
+        // Verify field has been updated
+        const foundUpdatedCatch = await server.inject({
+          method: 'GET',
+          url: `/api/catches/${catchId}`
+        })
+        const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
+        expect(updatedPayload.mass).toEqual(expected)
       }
     )
 

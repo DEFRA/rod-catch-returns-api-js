@@ -627,6 +627,14 @@ describe('catch.schema.unit', () => {
     })
 
     describe('released', () => {
+      it('should return an error if "released" is invalid', async () => {
+        const payload = getValidPayload({ released: 'test' })
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_RELEASED_REQUIRED'
+        )
+      })
+
       it.each([undefined, true, false])(
         'should successfully validate if "released" is %s',
         async (value) => {
@@ -641,6 +649,14 @@ describe('catch.schema.unit', () => {
     })
 
     describe('onlyMonthRecorded', () => {
+      it('should return an error if "onlyMonthRecorded" is invalid', async () => {
+        const payload = getValidPayload({ onlyMonthRecorded: 'test' })
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_ONLY_MONTH_RECORDED_REQUIRED'
+        )
+      })
+
       it.each([undefined, true, false])(
         'should successfully validate if "onlyMonthRecorded" is %s',
         async (value) => {
@@ -669,6 +685,14 @@ describe('catch.schema.unit', () => {
     })
 
     describe('noDateRecorded', () => {
+      it('should return an error if "noDateRecorded" is invalid', async () => {
+        const payload = getValidPayload({ noDateRecorded: 'test' })
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_NO_DATE_RECORDED_REQUIRED'
+        )
+      })
+
       it.each([undefined, true, false])(
         'should successfully validate if "noDateRecorded" is %s',
         async (value) => {

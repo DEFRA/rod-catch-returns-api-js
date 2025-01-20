@@ -54,13 +54,19 @@ const checkDefaultFlagConflict = (onlyMonthRecorded, noDateRecorded) => {
 
 const dateCaughtField = Joi.string().description('The date of the catch')
 
-const onlyMonthRecordedField = Joi.boolean().description(
-  'To allow FMT users to report on the default dates'
-)
+const onlyMonthRecordedField = Joi.boolean()
+  .messages({
+    'any.required': 'CATCH_ONLY_MONTH_RECORDED_REQUIRED',
+    'boolean.base': 'CATCH_ONLY_MONTH_RECORDED_REQUIRED'
+  })
+  .description('To allow FMT users to report on the default dates')
 
-const noDateRecordedField = Joi.boolean().description(
-  'To allow FMT users to report on the default month'
-)
+const noDateRecordedField = Joi.boolean()
+  .messages({
+    'any.required': 'CATCH_NO_DATE_RECORDED_REQUIRED',
+    'boolean.base': 'CATCH_NO_DATE_RECORDED_REQUIRED'
+  })
+  .description('To allow FMT users to report on the default month')
 
 const speciesField = Joi.string()
   .pattern(/^species\//)
@@ -71,32 +77,24 @@ const speciesField = Joi.string()
   .description('The species of catch (Salmon, Sea Trout)')
 
 const massField = Joi.object({
-  kg: Joi.number()
-    .min(MIN_FISH_MASS)
-    .max(MAX_FISH_MASS_KG)
-    .when('type', {
-      is: MEASURES.METRIC,
-      then: Joi.required().messages({
-        'any.required': 'CATCH_MASS_KG_REQUIRED'
-      })
-    })
+  kg: Joi.when('type', {
+    is: MEASURES.METRIC,
+    then: Joi.number().required().min(MIN_FISH_MASS).max(MAX_FISH_MASS_KG)
+  })
     .messages({
+      'any.required': 'CATCH_MASS_KG_REQUIRED',
       'number.base': 'CATCH_MASS_KG_REQUIRED',
       'number.positive': 'CATCH_MASS_KG_POSITIVE',
       'number.min': 'CATCH_MASS_BELOW_MINIMUM',
       'number.max': 'CATCH_MASS_MAX_EXCEEDED'
     })
     .description('The mass of the catch in metric kg'),
-  oz: Joi.number()
-    .min(MIN_FISH_MASS)
-    .max(MAX_FISH_MASS_OZ)
-    .when('type', {
-      is: MEASURES.IMPERIAL,
-      then: Joi.required().messages({
-        'any.required': 'CATCH_MASS_OZ_REQUIRED'
-      })
-    })
+  oz: Joi.when('type', {
+    is: MEASURES.IMPERIAL,
+    then: Joi.number().required().min(MIN_FISH_MASS).max(MAX_FISH_MASS_OZ)
+  })
     .messages({
+      'any.required': 'CATCH_MASS_OZ_REQUIRED',
       'number.base': 'CATCH_MASS_OZ_REQUIRED',
       'number.positive': 'CATCH_MASS_OZ_POSITIVE',
       'number.min': 'CATCH_MASS_BELOW_MINIMUM',

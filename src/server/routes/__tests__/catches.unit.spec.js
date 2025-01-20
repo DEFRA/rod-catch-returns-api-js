@@ -664,40 +664,19 @@ describe('catches.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it.each([
-      [
-        'dateCaught',
-        { dateCaught: '2024-08-02T00:00:00.000Z' },
-        { dateCaught: '2024-08-02' }
-      ],
-      ['species', { species: 'species/1' }, { species_id: '1' }],
-      [
-        'mass',
-        {
-          mass: {
-            kg: 9.61,
-            oz: 339,
-            type: 'IMPERIAL'
-          }
-        },
-        { massKg: 9.610488, massOz: 339, massType: 'IMPERIAL' }
-      ],
-      ['method', { method: 'methods/1' }, { method_id: '1' }],
-      ['released', { released: true }, { released: true }],
-      [
-        'onlyMonthRecorded',
-        { onlyMonthRecorded: true },
-        { onlyMonthRecorded: true }
-      ],
-      ['noDateRecorded', { noDateRecorded: true }, { noDateRecorded: true }],
-      [
-        'reportingExclude',
-        { reportingExclude: true },
-        { reportingExclude: true }
-      ]
-    ])(
-      'should call update with "%s"',
-      async (_field, payload, expectedUpdate) => {
+    it.each`
+      field                  | payload                                              | expectedUpdate
+      ${'dateCaught'}        | ${{ dateCaught: '2024-08-02T00:00:00.000Z' }}        | ${{ dateCaught: '2024-08-02' }}
+      ${'species'}           | ${{ species: 'species/1' }}                          | ${{ species_id: '1' }}
+      ${'mass'}              | ${{ mass: { kg: 9.61, oz: 339, type: 'IMPERIAL' } }} | ${{ massKg: 9.610488, massOz: 339, massType: 'IMPERIAL' }}
+      ${'method'}            | ${{ method: 'methods/1' }}                           | ${{ method_id: '1' }}
+      ${'released'}          | ${{ released: true }}                                | ${{ released: true }}
+      ${'onlyMonthRecorded'} | ${{ onlyMonthRecorded: true }}                       | ${{ onlyMonthRecorded: true }}
+      ${'noDateRecorded'}    | ${{ noDateRecorded: true }}                          | ${{ noDateRecorded: true }}
+      ${'reportingExclude'}  | ${{ reportingExclude: true }}                        | ${{ reportingExclude: true }}
+    `(
+      'should call update with "$field"',
+      async ({ _field, payload, expectedUpdate }) => {
         const foundCatch = getFoundCatch()
         Catch.findByPk.mockResolvedValueOnce(foundCatch)
 
