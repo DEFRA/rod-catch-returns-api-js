@@ -178,20 +178,20 @@ export const updateSmallCatchSchema = Joi.object({
     return validateCounts(value, helper)
   }),
   released: releasedField.optional().external(async (value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-
+    // We do not want to skip validation as this validates multiple fields
     const smallCatchId = helper.prefs.context.params.smallCatchId
     const foundTotalCaught =
       await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
 
+    // We make two calls to getSmallCatchById in this schema, there must be a better way to only fetch it once and store it
+    const foundSmallCatch = await getSmallCatchById(smallCatchId)
+
+    const releasedValue = value ?? foundSmallCatch.released
     const countsArray = helper.state.ancestors[0]?.counts
 
     const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
 
-    if (totalCaught === undefined || value > totalCaught) {
+    if (totalCaught === undefined || releasedValue > totalCaught) {
       return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
     }
 
