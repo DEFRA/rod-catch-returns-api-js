@@ -1,13 +1,23 @@
-import { createSmallCatchSchema } from '../small-catch.schema.js'
+import {
+  createSmallCatchSchema,
+  updateSmallCatchSchema
+} from '../small-catch.schema.js'
+import {
+  getSmallCatchById,
+  isDuplicateSmallCatch
+} from '../../services/small-catch.service.js'
 import { getMonthNameFromNumber } from '../../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
-import { isDuplicateSmallCatch } from '../../services/small-catch.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../utils/entity-utils.js')
 jest.mock('../../services/small-catch.service.js')
 
 describe('smallCatch.schema.unit', () => {
+  const mockCurrentDate = new Date()
+  const currentYear = mockCurrentDate.getFullYear()
+  const currentMonth = mockCurrentDate.getMonth() + 1
+
   describe('createSmallCatchSchema', () => {
     afterEach(() => {
       jest.resetAllMocks()
@@ -24,10 +34,6 @@ describe('smallCatch.schema.unit', () => {
       noMonthRecorded: false,
       ...overrides
     })
-
-    const mockCurrentDate = new Date()
-    const currentYear = mockCurrentDate.getFullYear()
-    const currentMonth = mockCurrentDate.getMonth() + 1
 
     const setupMocks = ({ season = 2024 } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
@@ -325,6 +331,63 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('REPORTING_EXCLUDE_INVALID')
+      })
+    })
+  })
+
+  describe('updateSmallCatchSchema', () => {
+    afterEach(() => {
+      jest.resetAllMocks()
+    })
+
+    const setupMocks = ({
+      season = 2024,
+      activityId = '123',
+      month = 1
+    } = {}) => {
+      getSubmissionByActivityId.mockResolvedValueOnce({ season })
+      getSmallCatchById.mockResolvedValueOnce({ activityId, month })
+    }
+
+    const getDefaultContext = () => ({
+      context: {
+        params: {
+          smallCatchId: '12345'
+        }
+      }
+    })
+
+    describe('month', () => {
+      it('should return SMALL_CATCH_MONTH_IN_FUTURE error if the submission season is in the future', async () => {
+        const futureYear = currentYear + 1
+        setupMocks({ season: futureYear })
+        const payload = { month: 'JANUARY' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
+      })
+
+      it('should return SMALL_CATCH_DUPLICATE_FOUND error if a duplicate activity and month combination exists', async () => {
+        setupMocks({ season: currentYear })
+        isDuplicateSmallCatch.mockResolvedValue(true)
+
+        const payload = { month: 'JANUARY' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
+      })
+    })
+
+    describe('released', () => {
+      it('should return an error if "released" is a decimal number', async () => {
+        setupMocks({ season: currentYear })
+        const payload = { released: 5.5 }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_INTEGER')
       })
     })
   })
