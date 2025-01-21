@@ -470,4 +470,259 @@ describe('catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('PATCH /api/catches/{catchId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_CATCH = 'contact-identifier-update-catch'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_UPDATE_CATCH)
+    )
+
+    test.each([
+      {
+        field: 'dateCaught',
+        value: '2023-05-01T00:00:00+01:00',
+        expected: '2023-05-01'
+      },
+      { field: 'released', value: false, expected: false },
+      { field: 'onlyMonthRecorded', value: true, expected: true },
+      { field: 'noDateRecorded', value: true, expected: true }
+    ])(
+      'should successfully update a catch with a valid $field',
+      async ({ field, value, expected }) => {
+        // Create submission, activity, and catch
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_UPDATE_CATCH
+        )
+        const createdCatch = await createCatch(server, activityId)
+        const catchId = JSON.parse(createdCatch.payload).id
+
+        // Update catch field
+        const updatedCatch = await server.inject({
+          method: 'PATCH',
+          url: `/api/catches/${catchId}`,
+          payload: {
+            [field]: value
+          }
+        })
+        expect(updatedCatch.statusCode).toBe(200)
+
+        // Verify field has been updated
+        const foundUpdatedCatch = await server.inject({
+          method: 'GET',
+          url: `/api/catches/${catchId}`
+        })
+        const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
+        expect(updatedPayload[field]).toBe(expected)
+      }
+    )
+
+    test.each([
+      {
+        value: { kg: 10, oz: 353, type: 'METRIC' },
+        expected: { kg: 10, oz: 352.739619, type: 'METRIC' }
+      },
+      {
+        value: { kg: 10, oz: 353, type: 'IMPERIAL' },
+        expected: { kg: 10.007382, oz: 353, type: 'IMPERIAL' }
+      }
+    ])(
+      'should successfully update a catch with a valid mass in $value.type format',
+      async ({ value, expected }) => {
+        // Create submission, activity, and catch
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_UPDATE_CATCH
+        )
+        const createdCatch = await createCatch(server, activityId)
+        const catchId = JSON.parse(createdCatch.payload).id
+
+        // Update catch field with new mass
+        const updatedCatch = await server.inject({
+          method: 'PATCH',
+          url: `/api/catches/${catchId}`,
+          payload: {
+            mass: value
+          }
+        })
+        expect(updatedCatch.statusCode).toBe(200)
+
+        // Verify field has been updated
+        const foundUpdatedCatch = await server.inject({
+          method: 'GET',
+          url: `/api/catches/${catchId}`
+        })
+        const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
+        expect(updatedPayload.mass).toEqual(expected)
+      }
+    )
+
+    it('should successfully update an catch with a valid species', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // check initial value of species
+      const createdSpecies = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/species`
+      })
+      expect(JSON.parse(createdSpecies.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/species/1`)
+      )
+
+      // Update catch with new species
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          species: 'species/2'
+        }
+      })
+      expect(updatedCatch.statusCode).toBe(200)
+
+      // check species has been updated
+      const updatedSpecies = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/species`
+      })
+      expect(JSON.parse(updatedSpecies.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/species/2`)
+      )
+    })
+
+    it('should successfully update an catch with a valid method', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+      // check initial value of method
+      const createdMethod = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/method`
+      })
+      expect(JSON.parse(createdMethod.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/methods/1`)
+      )
+
+      // Update catch with new method
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          method: 'methods/2'
+        }
+      })
+      expect(updatedCatch.statusCode).toBe(200)
+
+      // check species has been updated
+      const updatedMethod = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/method`
+      })
+      expect(JSON.parse(updatedMethod.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/methods/2`)
+      )
+    })
+
+    it('should throw an error if noDateRecorded is true and onlyMonthRecorded is false in the database, then onlyMonthRecorded is true', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId, {
+        noDateRecorded: true,
+        onlyMonthRecorded: false
+      })
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          onlyMonthRecorded: true
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
+            property: 'dateCaught'
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if noDateRecorded is false and onlyMonthRecorded is true in the database, then noDateRecorded is true', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId, {
+        noDateRecorded: false,
+        onlyMonthRecorded: true
+      })
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          noDateRecorded: true
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
+            property: 'dateCaught'
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if mass is an empty object', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          mass: {}
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_MASS_TYPE_REQUIRED',
+            property: 'mass',
+            value: {}
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+  })
 })

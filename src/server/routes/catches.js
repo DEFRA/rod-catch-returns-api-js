@@ -1,5 +1,9 @@
 import { Activity, Catch, Method, Species } from '../../entities/index.js'
-import { catchIdSchema, createCatchSchema } from '../../schemas/catch.schema.js'
+import {
+  catchIdSchema,
+  createCatchSchema,
+  updateCatchSchema
+} from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
   mapCatchToResponse,
@@ -9,6 +13,8 @@ import { StatusCodes } from 'http-status-codes'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
+
+const BASE_CATCHES_URL = '/catches/{catchId}'
 
 export default [
   {
@@ -63,7 +69,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/activity',
+    path: `${BASE_CATCHES_URL}/activity`,
     options: {
       /**
        * Retrieve the activity associated with a catch using the catch ID from the database
@@ -119,7 +125,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/species',
+    path: `${BASE_CATCHES_URL}/species`,
     options: {
       /**
        * Retrieve the species associated with a catch using the catch ID from the database
@@ -171,7 +177,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}/method',
+    path: `${BASE_CATCHES_URL}/method`,
     options: {
       /**
        * Retrieve the fishing method associated with a catch using the catch ID from the database
@@ -223,7 +229,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/catches/{catchId}',
+    path: BASE_CATCHES_URL,
     options: {
       /**
        * Retrieve a catch by its ID
@@ -258,7 +264,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/catches/{catchId}',
+    path: BASE_CATCHES_URL,
     options: {
       /**
        * Delete an catch by ID
@@ -287,6 +293,68 @@ export default [
       },
       description: 'Delete a catch by ID',
       notes: 'Deletes a catch from the database by its ID',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: BASE_CATCHES_URL,
+    options: {
+      /**
+       * Update a catch in the database using the catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        const { catchId } = request.params
+        const {
+          dateCaught,
+          species,
+          mass,
+          method,
+          released,
+          onlyMonthRecorded,
+          noDateRecorded,
+          reportingExclude
+        } = request.payload
+
+        try {
+          const foundCatch = await Catch.findByPk(catchId)
+
+          if (!foundCatch) {
+            return handleNotFound(`Catch not found for ${catchId}`, h)
+          }
+
+          const catchData = mapRequestToCatch({
+            dateCaught,
+            species,
+            mass,
+            method,
+            released,
+            onlyMonthRecorded,
+            noDateRecorded,
+            reportingExclude
+          })
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedCatch = await foundCatch.update(catchData)
+
+          const mappedCatch = mapCatchToResponse(request, updatedCatch.toJSON())
+
+          return h.response(mappedCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error updating catch', error, h)
+        }
+      },
+      validate: {
+        payload: updateCatchSchema,
+        options: { entity: 'Catch' }
+      },
+      description: 'Update a catch',
+      notes: 'Update a catch',
       tags: ['api', 'catches']
     }
   }
