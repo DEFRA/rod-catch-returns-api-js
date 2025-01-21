@@ -88,13 +88,13 @@ const releasedField = Joi.number().integer().min(0).messages({
 
 const noMonthRecordedField = Joi.boolean()
   .messages({
-    'boolean.base': 'NO_MONTH_RECORDED_INVALID'
+    'boolean.base': 'SMALL_CATCH_NO_MONTH_RECORDED_INVALID'
   })
   .description('To allow FMT users to report on the default date')
 
 const reportingExcludeField = Joi.boolean()
   .messages({
-    'boolean.base': 'REPORTING_EXCLUDE_INVALID'
+    'boolean.base': 'SMALL_CATCH_REPORTING_EXCLUDE_INVALID'
   })
   .description('Is this entry excluded from reporting')
 

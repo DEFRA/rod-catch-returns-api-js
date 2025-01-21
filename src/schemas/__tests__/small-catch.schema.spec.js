@@ -331,7 +331,29 @@ describe('smallCatch.schema.unit', () => {
 
         await expect(
           createSmallCatchSchema.validateAsync(payload)
-        ).rejects.toThrow('REPORTING_EXCLUDE_INVALID')
+        ).rejects.toThrow('SMALL_CATCH_REPORTING_EXCLUDE_INVALID')
+      })
+    })
+
+    describe('noMonthRecorded', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "noMonthRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          const payload = getValidPayload({ noMonthRecorded: value })
+
+          await expect(
+            createSmallCatchSchema.validateAsync(payload)
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+
+      it('should return an error if "noMonthRecorded" is invalid', async () => {
+        const payload = getValidPayload({ noMonthRecorded: 'test' })
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_NO_MONTH_RECORDED_INVALID')
       })
     })
   })
@@ -608,6 +630,56 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+      })
+    })
+
+    describe('reportingExclude', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "reportingExclude" is %s',
+        async (value) => {
+          setupMocks()
+          getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+          const payload = { reportingExclude: value }
+
+          await expect(
+            updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+
+      it('should return an error if "reportingExclude" is invalid', async () => {
+        setupMocks()
+        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        const payload = { reportingExclude: 'test' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_REPORTING_EXCLUDE_INVALID')
+      })
+    })
+
+    describe('noMonthRecorded', () => {
+      it.each([undefined, true, false])(
+        'should successfully validate if "noMonthRecorded" is %s',
+        async (value) => {
+          setupMocks()
+          getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+          const payload = { noMonthRecorded: value }
+
+          await expect(
+            updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+          ).resolves.toStrictEqual(payload)
+        }
+      )
+
+      it('should return an error if "noMonthRecorded" is invalid', async () => {
+        setupMocks()
+        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        const payload = { noMonthRecorded: 'test' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_NO_MONTH_RECORDED_INVALID')
       })
     })
   })
