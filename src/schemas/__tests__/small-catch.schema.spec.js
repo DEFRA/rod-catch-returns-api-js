@@ -4,6 +4,7 @@ import {
 } from '../small-catch.schema.js'
 import {
   getSmallCatchById,
+  getTotalSmallCatchCountsBySmallCatchId,
   isDuplicateSmallCatch
 } from '../../services/small-catch.service.js'
 import { getMonthNameFromNumber } from '../../utils/date-utils.js'
@@ -215,6 +216,20 @@ describe('smallCatch.schema.unit', () => {
           noMonthRecorded: false
         })
       })
+
+      it('should return an error if released exceeds the sum of counts', async () => {
+        const payload = getValidPayload({
+          counts: [
+            { method: 'methods/1', count: 3 },
+            { method: 'methods/2', count: 2 }
+          ],
+          released: 6 // Exceeds total caught (3 + 2 = 5)
+        })
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+      })
     })
 
     describe('counts', () => {
@@ -296,20 +311,6 @@ describe('smallCatch.schema.unit', () => {
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
       })
-
-      it('should return an error if released exceeds the sum of counts', async () => {
-        const payload = getValidPayload({
-          counts: [
-            { method: 'methods/1', count: 3 },
-            { method: 'methods/2', count: 2 }
-          ],
-          released: 6 // Exceeds total caught (3 + 2 = 5)
-        })
-
-        await expect(
-          createSmallCatchSchema.validateAsync(payload)
-        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-      })
     })
 
     describe('reportingExclude', () => {
@@ -340,6 +341,17 @@ describe('smallCatch.schema.unit', () => {
       jest.resetAllMocks()
     })
 
+    const getValidPayload = (overrides = {}) => ({
+      released: 1,
+      month: 'JANUARY',
+      counts: [
+        { method: 'methods/1', count: 1 },
+        { method: 'methods/2', count: 2 }
+      ],
+      noMonthRecorded: false,
+      ...overrides
+    })
+
     const setupMocks = ({
       season = 2024,
       activityId = '123',
@@ -358,6 +370,24 @@ describe('smallCatch.schema.unit', () => {
     })
 
     describe('month', () => {
+      it('should validate successfully if "month" is missing', async () => {
+        setupMocks()
+        const payload = getValidPayload({ month: undefined })
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should validate successfully if "month" is valid', async () => {
+        setupMocks()
+        const payload = { month: 'JANUARY' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
       it('should return SMALL_CATCH_MONTH_IN_FUTURE error if the submission season is in the future', async () => {
         const futureYear = currentYear + 1
         setupMocks({ season: futureYear })
@@ -381,13 +411,101 @@ describe('smallCatch.schema.unit', () => {
     })
 
     describe('released', () => {
+      it('should validate successfully if "released" is missing', async () => {
+        setupMocks()
+        const payload = getValidPayload({ released: undefined })
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should validate successfully if "released" is valid', async () => {
+        setupMocks()
+        const payload = {
+          released: 2,
+          counts: [{ method: 'methods/1', count: 2 }]
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
       it('should return an error if "released" is a decimal number', async () => {
-        setupMocks({ season: currentYear })
+        setupMocks()
         const payload = { released: 5.5 }
 
         await expect(
-          updateSmallCatchSchema.validateAsync(payload)
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_RELEASED_INTEGER')
+      })
+
+      it('should return an error if "released" is a string', async () => {
+        const payload = { released: 'five' }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_NUMBER')
+      })
+
+      it('should return an error if "released" is negative', async () => {
+        const payload = { released: -5 }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_NEGATIVE')
+      })
+
+      it('should validate successfully if "released" is 0', async () => {
+        setupMocks()
+        const payload = {
+          released: 0,
+          counts: [{ method: 'methods/1', count: 2 }]
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should return an error if released exceeds the sum of counts in the request', async () => {
+        setupMocks()
+        const payload = {
+          counts: [
+            { method: 'methods/1', count: 3 },
+            { method: 'methods/2', count: 2 }
+          ],
+          released: 6 // Exceeds total caught (3 + 2 = 5)
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+      })
+
+      it('should return an error if released exceeds the sum of counts from the database', async () => {
+        setupMocks()
+        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(5)
+        const payload = {
+          released: 6
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+      })
+
+      it('should return an error the sum of the counts from the database returns undefined', async () => {
+        setupMocks()
+        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(undefined)
+        const payload = {
+          released: 6
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
       })
     })
   })

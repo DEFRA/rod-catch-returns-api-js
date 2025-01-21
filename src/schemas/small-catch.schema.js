@@ -182,6 +182,7 @@ export const updateSmallCatchSchema = Joi.object({
     if (value === undefined) {
       return value
     }
+
     const smallCatchId = helper.prefs.context.params.smallCatchId
     const foundTotalCaught =
       await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
@@ -190,7 +191,7 @@ export const updateSmallCatchSchema = Joi.object({
 
     const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
 
-    if (value > totalCaught) {
+    if (totalCaught === undefined || value > totalCaught) {
       return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
     }
 
