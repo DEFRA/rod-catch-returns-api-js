@@ -6,6 +6,7 @@ import {
 } from '../../schemas/small-catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
+  mapCounts,
   mapRequestToSmallCatch,
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
@@ -223,8 +224,13 @@ export default [
         const { month, released, counts, noMonthRecorded, reportingExclude } =
           request.payload
 
+        const transaction = await sequelize.transaction()
+
         try {
-          const foundSmallCatch = await SmallCatch.findByPk(smallCatchId)
+          const foundSmallCatch = await SmallCatch.findOne({
+            where: { id: smallCatchId },
+            include: [{ association: SmallCatch.associations.counts }]
+          })
 
           if (!foundSmallCatch) {
             return handleNotFound(
@@ -236,21 +242,42 @@ export default [
           const smallCatchData = mapRequestToSmallCatch({
             month,
             released,
-            counts,
             noMonthRecorded,
             reportingExclude
           })
 
           // if a value is undefined, it is not updated by Sequelize
-          const updatedSmallCatch = await foundSmallCatch.update(smallCatchData)
-
-          const mappedSmallCatch = mapSmallCatchToResponse(
-            request,
-            updatedSmallCatch.toJSON()
+          const updatedSmallCatch = await foundSmallCatch.update(
+            smallCatchData,
+            { transaction }
           )
+          // counts does not get updated because it's an association, that has to be done separately
+          // performing updates and deletions involving nested objects is currently not possible.
+          // For that, you will have to perform each separate action explicitly.
+          // https://sequelize.org/docs/v6/advanced-association-concepts/creating-with-associations/
+
+          if (counts && Array.isArray(counts)) {
+            // Delete existing counts for the SmallCatch
+            await SmallCatchCount.destroy({
+              where: { small_catch_id: smallCatchId },
+              transaction
+            })
+
+            // Insert the new counts
+            const countRecords = mapCounts(counts, smallCatchId)
+            await SmallCatchCount.bulkCreate(countRecords, { transaction })
+          }
+
+          await transaction.commit()
+
+          const mappedSmallCatch = mapSmallCatchToResponse(request, {
+            ...updatedSmallCatch.toJSON(),
+            counts
+          })
 
           return h.response(mappedSmallCatch).code(StatusCodes.OK)
         } catch (error) {
+          await transaction.rollback()
           return handleServerError('Error updating small catch', error, h)
         }
       },

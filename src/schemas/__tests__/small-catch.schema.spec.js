@@ -11,7 +11,6 @@ import { getMonthNameFromNumber } from '../../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 
 jest.mock('../../services/activities.service.js')
-jest.mock('../../utils/entity-utils.js')
 jest.mock('../../services/small-catch.service.js')
 
 describe('smallCatch.schema.unit', () => {
@@ -381,7 +380,11 @@ describe('smallCatch.schema.unit', () => {
       released = 1
     } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
-      getSmallCatchById.mockResolvedValue({ activityId, month, released })
+      getSmallCatchById.mockResolvedValue({
+        activity_id: activityId,
+        month,
+        released
+      })
     }
 
     const getDefaultContext = () => ({
@@ -395,6 +398,7 @@ describe('smallCatch.schema.unit', () => {
     describe('month', () => {
       it('should validate successfully if "month" is missing', async () => {
         setupMocks()
+
         const payload = getValidPayload({ month: undefined })
 
         await expect(

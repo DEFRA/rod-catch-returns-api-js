@@ -1,5 +1,6 @@
 import { SmallCatch, SmallCatchCount } from '../entities/index.js'
 import { Op } from 'sequelize'
+import { sumCounts } from '../utils/entity-utils.js'
 
 /**
  * Checks if a small catch record with the specified activity ID and month already exists.
@@ -40,7 +41,9 @@ export const getSmallCatchById = async (smallCatchId) => {
 }
 
 export const getTotalSmallCatchCountsBySmallCatchId = async (smallCatchId) => {
-  return SmallCatchCount.count({
+  const smallCatchCounts = await SmallCatchCount.findAll({
     where: { small_catch_id: smallCatchId }
   })
+
+  return sumCounts(smallCatchCounts)
 }

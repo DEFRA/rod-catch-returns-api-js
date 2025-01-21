@@ -5,6 +5,14 @@ import {
 } from '../utils/date-utils.js'
 import { getBaseUrl } from '../utils/url-utils.js'
 
+// todo add tests
+export const mapCounts = (countsArray, smallCatchId) =>
+  countsArray.map((count) => ({
+    count: count.count,
+    method_id: extractMethodId(count.method),
+    ...(smallCatchId && { small_catch_id: smallCatchId })
+  }))
+
 export const mapRequestToSmallCatch = ({
   activity,
   month,
@@ -18,10 +26,7 @@ export const mapRequestToSmallCatch = ({
     version: new Date(), // Always included
     ...(month && { month: getMonthNumberFromName(month) }),
     ...(counts && {
-      counts: counts.map((count) => ({
-        count: count.count,
-        method_id: extractMethodId(count.method)
-      }))
+      counts: mapCounts(counts)
     }),
     ...(typeof released !== 'undefined' && { released }),
     ...(typeof noMonthRecorded !== 'undefined' && { noMonthRecorded }),

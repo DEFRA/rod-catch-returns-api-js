@@ -53,3 +53,7 @@ export const extractMethodId = (method) => method.replace('methods/', '')
  * @returns {string} - The extracted ID.
  */
 export const extractSpeciesId = (species) => species.replace('species/', '')
+
+// TODO add tests
+export const sumCounts = (countsArray) =>
+  countsArray.reduce((sum, item) => sum + item.count, 0)

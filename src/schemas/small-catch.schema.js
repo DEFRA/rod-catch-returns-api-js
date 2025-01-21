@@ -1,3 +1,4 @@
+import { extractActivityId, sumCounts } from '../utils/entity-utils.js'
 import {
   getSmallCatchById,
   getTotalSmallCatchCountsBySmallCatchId,
@@ -5,7 +6,6 @@ import {
 } from '../services/small-catch.service.js'
 import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
-import { extractActivityId } from '../utils/entity-utils.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import logger from '../utils/logger-utils.js'
@@ -51,9 +51,6 @@ const validateCounts = (value, helper) => {
   }
   return value
 }
-
-const sumCounts = (countsArray) =>
-  countsArray.reduce((sum, item) => sum + item.count, 0)
 
 const monthField = Joi.string().description('The month this record relates to')
 
@@ -154,12 +151,12 @@ export const updateSmallCatchSchema = Joi.object({
     // Get catchId from the request context
     const smallCatchId = helper.prefs.context.params.smallCatchId
     const smallCatch = await getSmallCatchById(smallCatchId)
-    const submission = await getSubmissionByActivityId(smallCatch.activityId)
+    const submission = await getSubmissionByActivityId(smallCatch.activity_id)
 
     try {
       await validateUniqueActivityAndMonth(
         value,
-        smallCatch.activityId,
+        smallCatch.activity_id,
         smallCatch.month
       )
       validateMonthInFuture(value, submission.season)
