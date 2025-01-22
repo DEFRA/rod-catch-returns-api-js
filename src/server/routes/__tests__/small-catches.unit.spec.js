@@ -18,6 +18,7 @@ jest.mock('../../../services/database.service.js', () => ({
     transaction: jest.fn(),
     define: jest.fn(() => ({
       associate: jest.fn(),
+      bulkCreate: jest.fn(),
       hasMany: jest.fn(),
       belongsTo: jest.fn(),
       findAll: jest.fn(),
@@ -42,6 +43,9 @@ const [
   },
   {
     options: { handler: deleteSmallCatchHandler }
+  },
+  {
+    options: { handler: patchSmallCatchHandler }
   }
 ] = routes
 
@@ -526,4 +530,216 @@ describe('smallCatches.unit', () => {
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
+
+  describe('PATCH /smallCatches/{smallCatchId}', () => {
+    const getTransaction = () => ({ commit: jest.fn(), rollback: jest.fn() })
+
+    const getSmallCatchRequest = (payload) => ({
+      ...getServerDetails(),
+      params: { smallCatchId: '1' },
+      payload
+    })
+
+    const setUpMocks = ({
+      transaction,
+      foundSmallCatch,
+      countsToDestroy = 1
+    } = {}) => {
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockResolvedValueOnce(foundSmallCatch)
+      SmallCatchCount.destroy.mockResolvedValueOnce(countsToDestroy)
+      SmallCatchCount.bulkCreate.mockResolvedValueOnce(0)
+    }
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    const getFullSmallCatchPayload = () => ({
+      month: 'DECEMBER',
+      released: '2',
+      counts: [
+        {
+          method: 'methods/1',
+          count: '2'
+        },
+        {
+          method: 'methods/2',
+          count: '2'
+        }
+      ],
+      noMonthRecorded: true
+    })
+
+    const getFoundSmallCatch = () => ({
+      update: jest.fn().mockResolvedValueOnce({
+        toJSON: jest.fn().mockReturnValueOnce({
+          id: '33551',
+          month: 12,
+          released: 2,
+          reportingExclude: false,
+          noMonthRecorded: true,
+          createdAt: '2024-12-11T10:07:11.726Z',
+          updatedAt: '2025-01-22T10:55:20.512Z',
+          version: '2025-01-22T10:55:20.511Z',
+          ActivityId: '133750',
+          activity_id: '133750',
+          counts: [
+            {
+              small_catch_id: '33551',
+              method_id: '1',
+              count: 2,
+              SmallCatchId: '33551'
+            },
+            {
+              small_catch_id: '33551',
+              method_id: '2',
+              count: 2,
+              SmallCatchId: '33551'
+            }
+          ]
+        })
+      })
+    })
+
+    it('should return a 200 status code if the small catch is updated successfully', async () => {
+      const transaction = getTransaction()
+      const foundSmallCatch = getFoundSmallCatch()
+      setUpMocks({ transaction, foundSmallCatch })
+
+      const result = await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return the updated small catch in the response', async () => {
+      const transaction = getTransaction()
+      const foundSmallCatch = getFoundSmallCatch()
+      setUpMocks({ transaction, foundSmallCatch })
+
+      const result = await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should delete existing counts if new counts are provided', async () => {
+      const transaction = getTransaction()
+      const foundSmallCatch = getFoundSmallCatch()
+      setUpMocks({ transaction, foundSmallCatch })
+
+      await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
+        where: { small_catch_id: '1' },
+        transaction
+      })
+    })
+
+    it('should create new small catch counts if new counts are provided', async () => {
+      const transaction = getTransaction()
+      const foundSmallCatch = getFoundSmallCatch()
+      setUpMocks({ transaction, foundSmallCatch })
+
+      await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatchCount.bulkCreate).toHaveBeenCalledWith(
+        [
+          { count: '2', method_id: '1', small_catch_id: '1' },
+          { count: '2', method_id: '2', small_catch_id: '1' }
+        ],
+        { transaction }
+      )
+    })
+
+    it('should call handleNotFound if the small catch does not exist', async () => {
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockResolvedValueOnce(undefined)
+
+      const result = await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should rollback the transaction if deleting small catch count fails', async () => {
+      const error = new Error('yesDatabase error')
+      const transaction = getTransaction()
+      const foundSmallCatch = getFoundSmallCatch()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockResolvedValueOnce(foundSmallCatch)
+      SmallCatchCount.destroy.mockRejectedValueOnce(error)
+
+      await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should call handleServerError if an error occurs while updating the small catch', async () => {
+      const error = new Error('Database error')
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockRejectedValueOnce({
+        update: jest.fn().mockRejectedValueOnce(error)
+      })
+
+      const result = await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should rollback the transaction if an error occurs while updating the small catch', async () => {
+      const error = new Error('Database error')
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockRejectedValueOnce({
+        update: jest.fn().mockRejectedValueOnce(error)
+      })
+
+      await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should rollback the transaction if an error occurs while creating the new small catch counts', async () => {
+      const error = new Error('Database error')
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findOne.mockResolvedValueOnce(getFoundSmallCatch())
+      SmallCatchCount.destroy.mockResolvedValueOnce(0)
+      SmallCatchCount.bulkCreate.mockRejectedValueOnce(error)
+
+      await patchSmallCatchHandler(
+        getSmallCatchRequest(getFullSmallCatchPayload()),
+        getMockResponseToolkit()
+      )
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+  })
+
+  // TODO add table test
 })

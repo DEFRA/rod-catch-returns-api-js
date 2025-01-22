@@ -256,7 +256,9 @@ export default [
           // For that, you will have to perform each separate action explicitly.
           // https://sequelize.org/docs/v6/advanced-association-concepts/creating-with-associations/
 
+          let countRecords = foundSmallCatch.counts
           if (counts && Array.isArray(counts)) {
+            countRecords = mapCounts(counts, smallCatchId)
             // Delete existing counts for the SmallCatch
             await SmallCatchCount.destroy({
               where: { small_catch_id: smallCatchId },
@@ -264,15 +266,15 @@ export default [
             })
 
             // Insert the new counts
-            const countRecords = mapCounts(counts, smallCatchId)
             await SmallCatchCount.bulkCreate(countRecords, { transaction })
           }
 
           await transaction.commit()
 
+          // TODO maybe change this
           const mappedSmallCatch = mapSmallCatchToResponse(request, {
             ...updatedSmallCatch.toJSON(),
-            counts
+            countRecords
           })
 
           return h.response(mappedSmallCatch).code(StatusCodes.OK)
