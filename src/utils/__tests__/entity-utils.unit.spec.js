@@ -4,7 +4,8 @@ import {
   extractRiverId,
   extractSpeciesId,
   extractSubmissionId,
-  initialiseAssociations
+  initialiseAssociations,
+  sumCounts
 } from '../entity-utils.js'
 
 describe('entity-utils.unit', () => {
@@ -173,6 +174,32 @@ describe('entity-utils.unit', () => {
       const species = ''
       const result = extractSpeciesId(species)
       expect(result).toBe('')
+    })
+  })
+
+  describe('sumCounts', () => {
+    it('should return the sum of counts in the array', () => {
+      const countsArray = [{ count: 2 }, { count: 3 }, { count: 5 }]
+      const result = sumCounts(countsArray)
+      expect(result).toBe(10)
+    })
+
+    it('should return 0 for an empty array', () => {
+      const countsArray = []
+      const result = sumCounts(countsArray)
+      expect(result).toBe(0)
+    })
+
+    it('should return the count if the array has a single object', () => {
+      const countsArray = [{ count: 7 }]
+      const result = sumCounts(countsArray)
+      expect(result).toBe(7)
+    })
+
+    it('should return 0 if all counts are 0', () => {
+      const countsArray = [{ count: 0 }, { count: 0 }, { count: 0 }]
+      const result = sumCounts(countsArray)
+      expect(result).toBe(0)
     })
   })
 })
