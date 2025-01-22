@@ -255,7 +255,6 @@ export default [
           // performing updates and deletions involving nested objects is currently not possible.
           // For that, you will have to perform each separate action explicitly.
           // https://sequelize.org/docs/v6/advanced-association-concepts/creating-with-associations/
-
           let countRecords = foundSmallCatch.counts
           if (counts && Array.isArray(counts)) {
             countRecords = mapCounts(counts, smallCatchId)
@@ -271,7 +270,6 @@ export default [
 
           await transaction.commit()
 
-          // TODO maybe change this
           const mappedSmallCatch = mapSmallCatchToResponse(request, {
             ...updatedSmallCatch.toJSON(),
             countRecords
