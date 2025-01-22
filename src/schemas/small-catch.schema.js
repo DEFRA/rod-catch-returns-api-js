@@ -168,10 +168,6 @@ export const updateSmallCatchSchema = Joi.object({
     return value
   }),
   counts: countsField.optional().custom((value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
     return validateCounts(value, helper)
   }),
   released: releasedField.optional().external(async (value, helper) => {
