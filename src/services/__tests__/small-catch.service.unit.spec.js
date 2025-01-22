@@ -1,6 +1,10 @@
+import { SmallCatch, SmallCatchCount } from '../../entities/index.js'
+import {
+  getSmallCatchById,
+  getTotalSmallCatchCountsBySmallCatchId,
+  isDuplicateSmallCatch
+} from '../small-catch.service.js'
 import { Op } from 'sequelize'
-import { SmallCatch } from '../../entities/index.js'
-import { isDuplicateSmallCatch } from '../small-catch.service.js'
 
 jest.mock('../../entities/index.js')
 
@@ -83,6 +87,77 @@ describe('small-catch.service.unit', () => {
           }
         }
       })
+    })
+  })
+
+  describe('getSmallCatchById', () => {
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return the small catch if found', async () => {
+      const mockSmallCatch = {
+        id: '123',
+        activity_id: '1',
+        month: 1,
+        released: true
+      }
+      SmallCatch.findOne.mockResolvedValue(mockSmallCatch)
+
+      const result = await getSmallCatchById('123')
+
+      expect(result).toEqual(mockSmallCatch)
+    })
+
+    it('should return null if no small catch is found', async () => {
+      SmallCatch.findOne.mockResolvedValue(null)
+
+      const result = await getSmallCatchById('123')
+
+      expect(result).toBeNull()
+    })
+
+    it('should throw an error if SmallCatch.findOne fails', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findOne.mockRejectedValue(error)
+
+      await expect(getSmallCatchById('123')).rejects.toThrow('Database error')
+    })
+  })
+
+  describe('getTotalSmallCatchCountsBySmallCatchId', () => {
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return the total count when small catch counts exist', async () => {
+      const smallCatchId = 1
+      const mockCounts = [{ count: 5 }, { count: 10 }, { count: 15 }]
+      SmallCatchCount.findAll.mockResolvedValue(mockCounts)
+
+      const result = await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
+
+      expect(result).toBe(30)
+    })
+
+    it('should return 0 when no small catch counts exist', async () => {
+      const smallCatchId = 1
+      SmallCatchCount.findAll.mockResolvedValue([])
+
+      const result = await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
+
+      expect(result).toBe(0)
+    })
+
+    it('should throw an error if SmallCatchCount.findAll fails', async () => {
+      const smallCatchId = 1
+      const error = new Error('Database error')
+
+      SmallCatchCount.findAll.mockRejectedValue(error)
+
+      await expect(
+        getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
+      ).rejects.toThrow('Database error')
     })
   })
 })

@@ -14,6 +14,8 @@ import { StatusCodes } from 'http-status-codes'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
+const BASE_SMALL_CATCHES_URL = '/smallCatches/{smallCatchId}'
+
 export default [
   {
     method: 'POST',
@@ -61,7 +63,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/smallCatches/{smallCatchId}/activity',
+    path: `${BASE_SMALL_CATCHES_URL}/activity`,
     options: {
       /**
        * Retrieve the activity associated with a small catch using the smallc catch ID from the database
@@ -117,7 +119,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/smallCatches/{smallCatchId}',
+    path: BASE_SMALL_CATCHES_URL,
     options: {
       /**
        * Retrieve a small catch by its ID
@@ -159,7 +161,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/smallCatches/{smallCatchId}',
+    path: BASE_SMALL_CATCHES_URL,
     options: {
       /**
        * Delete an small catch by ID
@@ -209,7 +211,7 @@ export default [
   },
   {
     method: 'PATCH',
-    path: '/smallCatches/{smallCatchId}',
+    path: BASE_SMALL_CATCHES_URL,
     options: {
       /**
        * Update a small catch in the database using the small catch ID
