@@ -13,20 +13,6 @@ import { getBaseUrl } from '../utils/url-utils.js'
  * @param {string} [smallCatchId] - The optional small catch ID to be included in each mapped object.
  * @returns {Array<{ count: number, method_id: string, small_catch_id?: string }>} A new array of objects containing `count`, `method_id`,
  * and optionally `small_catch_id`.
- *
- * @example
- * const countsArray = [
- *   { count: 3, method: 'method/1' },
- *   { count: 2, method: 'method/2' },
- *   { count: 1, method: 'method/3' }
- * ];
- * const smallCatchId = '123';
- * const result = mapCounts(countsArray, smallCatchId);
- * // [
- * //   { count: 3, method_id: '1', small_catch_id: '123' },
- * //   { count: 2, method_id: '2', small_catch_id: '123' },
- * //   { count: 1, method_id: '3', small_catch_id: '123' }
- * // ]
  */
 export const mapCounts = (countsArray, smallCatchId) =>
   countsArray.map((count) => ({
@@ -54,32 +40,6 @@ export const mapCounts = (countsArray, smallCatchId) =>
  * @property {boolean} [noMonthRecorded] - Whether the month was not recorded, if provided.
  * @property {boolean} [reportingExclude] - Whether the catch is excluded from reporting, if provided.
  * @property {string} [activity_id] - The extracted activity ID, if provided.
- *
- * @example
- * const request = {
- *   activity: 'activity/123',
- *   month: 'January',
- *   released: true,
- *   counts: [
- *     { count: 3, method: 'method/1' },
- *     { count: 2, method: 'method/2' }
- *   ],
- *   noMonthRecorded: false,
- *   reportingExclude: true
- * };
- * const result = mapRequestToSmallCatch(request);
- * // {
- * //   version: 2025-01-22T12:34:56.789Z,
- * //   month: 1,
- * //   counts: [
- * //     { count: 3, method_id: '1' },
- * //     { count: 2, method_id: '2' }
- * //   ],
- * //   released: true,
- * //   noMonthRecorded: false,
- * //   reportingExclude: true,
- * //   activity_id: '123'
- * // }
  */
 export const mapRequestToSmallCatch = ({
   activity,
