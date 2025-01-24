@@ -526,4 +526,120 @@ describe('small-catches.integration', () => {
       expect(result.payload).toBe('')
     })
   })
+
+  describe('PATCH /api/smallCatches/{smallCatchId}', () => {
+    const CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH =
+      'contact-identifier-update-small-catch'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH
+        )
+    )
+
+    test.each([
+      {
+        field: 'month',
+        value: 'MARCH',
+        expected: 'MARCH'
+      },
+      {
+        field: 'released',
+        value: '6',
+        expected: 6
+      },
+      {
+        field: 'noMonthRecorded',
+        value: true,
+        expected: true
+      },
+      {
+        field: 'reportingExclude',
+        value: true,
+        expected: true
+      }
+    ])(
+      'should successfully update a small catch with a valid $field',
+      async ({ field, value, expected }) => {
+        // Create submission, activity, and small catch
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH
+        )
+        const createdCatch = await createSmallCatch(server, activityId)
+        const catchId = JSON.parse(createdCatch.payload).id
+
+        // Update catch field
+        const updatedSmallCatch = await server.inject({
+          method: 'PATCH',
+          url: `/api/smallCatches/${catchId}`,
+          payload: {
+            [field]: value
+          }
+        })
+        expect(updatedSmallCatch.statusCode).toBe(200)
+
+        // Verify field has been updated
+        const foundUpdatedSmallCatch = await server.inject({
+          method: 'GET',
+          url: `/api/smallCatches/${catchId}`
+        })
+        const updatedPayload = JSON.parse(foundUpdatedSmallCatch.payload)
+        expect(updatedPayload[field]).toBe(expected)
+      }
+    )
+
+    it('should successfully update a small catch with a valid counts', async () => {
+      // Create submission, activity, and small catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH
+      )
+      const createdCatch = await createSmallCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch field
+      const updatedSmallCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/smallCatches/${catchId}`,
+        payload: {
+          counts: [
+            { method: 'methods/1', count: 4 },
+            { method: 'methods/2', count: 1 }
+          ]
+        }
+      })
+      expect(updatedSmallCatch.statusCode).toBe(200)
+
+      // Verify field has been updated
+      const foundUpdatedSmallCatch = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${catchId}`
+      })
+      const updatedPayload = JSON.parse(foundUpdatedSmallCatch.payload)
+      expect(updatedPayload.counts).toStrictEqual([
+        {
+          count: 4,
+          _links: {
+            method: {
+              href: expect.stringMatching(`/api/methods/1`)
+            }
+          }
+        },
+        {
+          count: 1,
+          _links: {
+            method: {
+              href: expect.stringMatching(`/api/methods/2`)
+            }
+          }
+        }
+      ])
+    })
+  })
 })

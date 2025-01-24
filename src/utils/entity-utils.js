@@ -53,3 +53,12 @@ export const extractMethodId = (method) => method.replace('methods/', '')
  * @returns {string} - The extracted ID.
  */
 export const extractSpeciesId = (species) => species.replace('species/', '')
+
+/**
+ * Sums the `count` properties of objects in an array.
+ *
+ * @param {Array<{ count: number }>} countsArray - An array of objects, each containing a `count` property.
+ * @returns {number} The total sum of all `count` values in the array.
+ */
+export const sumCounts = (countsArray) =>
+  countsArray.reduce((sum, item) => sum + item.count, 0)

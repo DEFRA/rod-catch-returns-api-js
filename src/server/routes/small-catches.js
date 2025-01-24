@@ -1,16 +1,20 @@
 import { Activity, SmallCatch, SmallCatchCount } from '../../entities/index.js'
 import {
   createSmallCatchSchema,
-  smallCatchIdSchema
+  smallCatchIdSchema,
+  updateSmallCatchSchema
 } from '../../schemas/small-catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
+  mapCounts,
   mapRequestToSmallCatch,
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
 import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { sequelize } from '../../services/database.service.js'
+
+const BASE_SMALL_CATCHES_URL = '/smallCatches/{smallCatchId}'
 
 export default [
   {
@@ -59,7 +63,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/smallCatches/{smallCatchId}/activity',
+    path: `${BASE_SMALL_CATCHES_URL}/activity`,
     options: {
       /**
        * Retrieve the activity associated with a small catch using the smallc catch ID from the database
@@ -115,7 +119,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/smallCatches/{smallCatchId}',
+    path: BASE_SMALL_CATCHES_URL,
     options: {
       /**
        * Retrieve a small catch by its ID
@@ -157,7 +161,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/smallCatches/{smallCatchId}',
+    path: BASE_SMALL_CATCHES_URL,
     options: {
       /**
        * Delete an small catch by ID
@@ -202,6 +206,89 @@ export default [
       },
       description: 'Delete a small catch by ID',
       notes: 'Deletes a small catch from the database by its ID',
+      tags: ['api', 'smallCatches']
+    }
+  },
+  {
+    method: 'PATCH',
+    path: BASE_SMALL_CATCHES_URL,
+    options: {
+      /**
+       * Update a small catch in the database using the small catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.smallCatchId - The ID of the small catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link SmallCatch}
+       */
+      handler: async (request, h) => {
+        const { smallCatchId } = request.params
+        const { month, released, counts, noMonthRecorded, reportingExclude } =
+          request.payload
+
+        const transaction = await sequelize.transaction()
+
+        try {
+          const foundSmallCatch = await SmallCatch.findOne({
+            where: { id: smallCatchId },
+            include: [{ association: SmallCatch.associations.counts }]
+          })
+
+          if (!foundSmallCatch) {
+            return handleNotFound(
+              `Small Catch not found for ${smallCatchId}`,
+              h
+            )
+          }
+
+          const smallCatchData = mapRequestToSmallCatch({
+            month,
+            released,
+            noMonthRecorded,
+            reportingExclude
+          })
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedSmallCatch = await foundSmallCatch.update(
+            smallCatchData,
+            { transaction }
+          )
+          // counts does not get updated because it's an association, that has to be done separately
+          // performing updates and deletions involving nested objects is currently not possible.
+          // For that, you will have to perform each separate action explicitly.
+          // https://sequelize.org/docs/v6/advanced-association-concepts/creating-with-associations/
+          let countRecords = foundSmallCatch.counts
+          if (counts && Array.isArray(counts)) {
+            countRecords = mapCounts(counts, smallCatchId)
+            // Delete existing counts for the SmallCatch
+            await SmallCatchCount.destroy({
+              where: { small_catch_id: smallCatchId },
+              transaction
+            })
+
+            // Insert the new counts
+            await SmallCatchCount.bulkCreate(countRecords, { transaction })
+          }
+
+          await transaction.commit()
+
+          const mappedSmallCatch = mapSmallCatchToResponse(request, {
+            ...updatedSmallCatch.toJSON(),
+            countRecords
+          })
+
+          return h.response(mappedSmallCatch).code(StatusCodes.OK)
+        } catch (error) {
+          await transaction.rollback()
+          return handleServerError('Error updating small catch', error, h)
+        }
+      },
+      validate: {
+        payload: updateSmallCatchSchema,
+        options: { entity: 'SmallCatch' }
+      },
+      description: 'Update a small catch',
+      notes: 'Update a small catch',
       tags: ['api', 'smallCatches']
     }
   }
