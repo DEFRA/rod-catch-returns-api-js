@@ -19,7 +19,23 @@ const validateDaysFished = (daysFishedOther, helper) => {
   const daysFishedWithMandatoryRelease =
     helper.state.ancestors[0].daysFishedWithMandatoryRelease
 
-  if (daysFishedOther < 1 && daysFishedWithMandatoryRelease < 1) {
+  const isFMTOrAdmin = ['RcrAdminUser', 'RcrFMTUser'].includes(
+    helper.prefs.context.headers.role
+  )
+
+  if (
+    !isFMTOrAdmin &&
+    daysFishedOther < 1 &&
+    daysFishedWithMandatoryRelease < 1
+  ) {
+    return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
+  }
+
+  if (
+    isFMTOrAdmin &&
+    daysFishedOther < 0 &&
+    daysFishedWithMandatoryRelease < 0
+  ) {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
 
