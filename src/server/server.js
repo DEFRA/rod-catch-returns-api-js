@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
+import CatboxRedis from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
@@ -7,6 +8,7 @@ import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
+import { initialise } from '../services/oidc-service.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
@@ -33,7 +35,25 @@ export default async () => {
           abortEarly: false // Return all validation errors
         }
       }
-    }
+    },
+    cache: [
+      {
+        provider: {
+          constructor: CatboxRedis,
+          options: {
+            partition: 'rcr-js-api-cache',
+            host: process.env.REDIS_HOSTNAME,
+            port: process.env.REDIS_PORT,
+            db: 0
+          }
+        }
+      }
+    ]
+  })
+
+  server.app.cache = server.cache({
+    segment: 'admin-session',
+    expiresIn: 60 * 60 * 1000
   })
 
   try {
@@ -51,6 +71,8 @@ export default async () => {
   server.realm.modifiers.route.prefix = '/api'
 
   server.route(apiPrefixRoutes)
+
+  await initialise(server)
 
   await server.start()
   logger.info(

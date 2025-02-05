@@ -6,3 +6,5 @@ node_modules/
 
 # Coverage directory for tests
 coverage
+
+.vscode
