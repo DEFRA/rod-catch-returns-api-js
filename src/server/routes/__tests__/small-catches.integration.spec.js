@@ -209,6 +209,52 @@ describe('small-catches.integration', () => {
       expect(smallCatch.statusCode).toBe(400)
     })
 
+    it('should throw an error when creating small catch with a method that is internal', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+
+      const smallCatch = await createSmallCatch(server, activityId, {
+        released: 1,
+        counts: [
+          {
+            method: 'methods/1',
+            count: '3'
+          },
+          {
+            method: 'methods/4', // methods/4 is internal
+            count: '2'
+          }
+        ]
+      })
+
+      expect(JSON.parse(smallCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'SmallCatch',
+            message: 'SMALL_CATCH_COUNTS_METHOD_FORBIDDEN',
+            property: 'counts',
+            value: [
+              {
+                method: 'methods/1',
+                count: '3'
+              },
+              {
+                method: 'methods/4',
+                count: '2'
+              }
+            ]
+          }
+        ]
+      })
+      expect(smallCatch.statusCode).toBe(400)
+    })
+
     it('should throw an error if small catch month is in the future', async () => {
       jest
         .useFakeTimers({ advanceTimers: true })
@@ -640,6 +686,47 @@ describe('small-catches.integration', () => {
           }
         }
       ])
+    })
+
+    it('should throw an error when updating small catch with a method that is internal', async () => {
+      // Create submission, activity, and small catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH
+      )
+      const createdCatch = await createSmallCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch field
+      const updatedSmallCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/smallCatches/${catchId}`,
+        payload: {
+          counts: [
+            { method: 'methods/4', count: 3 },
+            { method: 'methods/2', count: 1 }
+          ]
+        }
+      })
+      expect(JSON.parse(updatedSmallCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'SmallCatch',
+            message: 'SMALL_CATCH_COUNTS_METHOD_FORBIDDEN',
+            property: 'counts',
+            value: [
+              {
+                method: 'methods/4',
+                count: 3
+              },
+              {
+                method: 'methods/2',
+                count: 1
+              }
+            ]
+          }
+        ]
+      })
+      expect(updatedSmallCatch.statusCode).toBe(400)
     })
   })
 })
