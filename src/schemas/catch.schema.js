@@ -1,4 +1,8 @@
-import { extractActivityId, extractMethodId } from '../utils/entity-utils.js'
+import {
+  extractActivityId,
+  extractMethodId,
+  extractSpeciesId
+} from '../utils/entity-utils.js'
 import Joi from 'joi'
 import { MEASURES } from '../utils/constants.js'
 import { convertKgtoOz } from '../utils/mass-utils.js'
@@ -6,6 +10,7 @@ import { getCatchById } from '../services/catches.service.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { getSubmissionByCatchId } from '../services/submissions.service.js'
 import { isMethodInternal } from '../services/methods.service.js'
+import { isSpeciesExists } from '../services/species.service.js'
 import logger from '../utils/logger-utils.js'
 
 const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
@@ -16,6 +21,12 @@ const validateMethod = async (value, helper) => {
   const methodId = extractMethodId(value)
   const methodInternal = await isMethodInternal(methodId)
   return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
+}
+
+const validateSpecies = async (value, helper) => {
+  const speciesId = extractSpeciesId(value)
+  const speciesExists = await isSpeciesExists(speciesId)
+  return speciesExists ? value : helper.message('CATCH_SPECIES_REQUIRED')
 }
 
 const validateDateCaughtYear = (dateCaught, season) => {
@@ -167,7 +178,7 @@ export const createCatchSchema = Joi.object({
   }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField.required(),
+  species: speciesField.required().external(validateSpecies),
   mass: massField.required(),
   method: methodField.required().external(validateMethod),
   released: releasedField.required(),
@@ -208,7 +219,14 @@ export const updateCatchSchema = Joi.object({
   }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField.optional(),
+  species: speciesField.optional().external(async (value, helper) => {
+    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    if (value === undefined) {
+      return value
+    }
+
+    return validateSpecies(value, helper)
+  }),
   mass: massField.optional(),
   method: methodField.optional().external(async (value, helper) => {
     // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)

@@ -136,6 +136,28 @@ describe('catches.integration', () => {
       })
       expect(createdCatch.statusCode).toBe(400)
     })
+
+    it('should throw an error if the "species" does not exist', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_CATCH
+      )
+
+      const createdCatch = await createCatch(server, activityId, {
+        species: 'species/10' // this method name is Unknown and is internal
+      })
+
+      expect(JSON.parse(createdCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_SPECIES_REQUIRED',
+            property: 'species',
+            value: 'species/10'
+          }
+        ]
+      })
+      expect(createdCatch.statusCode).toBe(400)
+    })
   })
 
   describe('GET /api/catches/{catchId}/activity', () => {
@@ -719,6 +741,44 @@ describe('catches.integration', () => {
             message: 'CATCH_MASS_TYPE_REQUIRED',
             property: 'mass',
             value: {}
+          }
+        ]
+      })
+      expect(updatedCatch.statusCode).toBe(400)
+    })
+
+    it('should throw an error if species does not exist', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // check initial value of species
+      const createdSpecies = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}/species`
+      })
+      expect(JSON.parse(createdSpecies.payload)._links.self.href).toEqual(
+        expect.stringMatching(`/api/species/1`)
+      )
+
+      // Update catch with new species
+      const updatedCatch = await server.inject({
+        method: 'PATCH',
+        url: `/api/catches/${catchId}`,
+        payload: {
+          species: 'species/10'
+        }
+      })
+      expect(JSON.parse(updatedCatch.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Catch',
+            message: 'CATCH_SPECIES_REQUIRED',
+            property: 'species',
+            value: 'species/10'
           }
         ]
       })
