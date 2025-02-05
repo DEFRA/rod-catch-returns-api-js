@@ -143,7 +143,7 @@ describe('catches.integration', () => {
       )
 
       const createdCatch = await createCatch(server, activityId, {
-        species: 'species/10' // this method name is Unknown and is internal
+        species: 'species/10' // this species does not exist
       })
 
       expect(JSON.parse(createdCatch.payload)).toEqual({
