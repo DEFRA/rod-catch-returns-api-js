@@ -696,7 +696,7 @@ describe('small-catches.integration', () => {
       const createdCatch = await createSmallCatch(server, activityId)
       const catchId = JSON.parse(createdCatch.payload).id
 
-      // Update catch field
+      // Update field
       const updatedSmallCatch = await server.inject({
         method: 'PATCH',
         url: `/api/smallCatches/${catchId}`,
