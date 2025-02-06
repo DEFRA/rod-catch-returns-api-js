@@ -11,6 +11,7 @@ import { failAction } from '../utils/error-utils.js'
 import { initialise } from '../services/oidc-service.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
+import { sessionMiddleware } from '../services/session.service.js'
 
 export default async () => {
   const envValidationResult = envSchema.validate(process.env, {
@@ -50,6 +51,8 @@ export default async () => {
       }
     ]
   })
+
+  server.ext('onPreAuth', sessionMiddleware)
 
   server.app.cache = server.cache({
     segment: 'admin-session',

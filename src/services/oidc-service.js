@@ -1,7 +1,9 @@
 import * as OpenIdClient from 'openid-client'
+import { ROLES } from '../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
 import { getSystemUser } from './system-users.service.js'
 import logger from '../utils/logger-utils.js'
+import { v4 as uuidv4 } from 'uuid'
 
 const { generators, Issuer } = OpenIdClient
 
@@ -93,11 +95,11 @@ export const signIn = async (request, h) => {
 
     let role = null
     if (userDetails.roles.some((r) => r.name === 'System Administrator')) {
-      role = 'RcrAdminUser'
+      role = ROLES.ADMIN
     } else if (
       userDetails.roles.some((r) => r.name === 'RCR CRM Integration User')
     ) {
-      role = 'RcrFMTUser'
+      role = ROLES.FMT
     }
 
     const authorization = {
@@ -105,10 +107,11 @@ export const signIn = async (request, h) => {
       role
     }
 
-    await request.server.app.cache.set(1, { authorization })
+    const uuid = uuidv4()
+    await request.server.app.cache.set(uuid, { authorization })
 
-    logger.debug('User is authenticated: ' + JSON.stringify(authorization))
-    return h.response({ token: oid, expiresAt: expMs }).code(200)
+    logger.info('User is authenticated: ' + JSON.stringify(authorization))
+    return h.response({ token: uuid, expiresAt: expMs }).code(200)
   } else {
     const { error, error_description: errorDescription } = request.payload
     console.error('OIDC redirect with error: ', error, errorDescription)

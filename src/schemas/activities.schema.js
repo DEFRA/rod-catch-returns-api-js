@@ -12,14 +12,30 @@ import {
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
-
+import { ROLES } from '../utils/constants.js'
 import { isRiverInternal } from '../services/rivers.service.js'
 
 const validateDaysFished = (daysFishedOther, helper) => {
+  const isFMTOrAdmin = [ROLES.FMT, ROLES.ADMIN].includes(
+    helper?.prefs?.context?.app?.request?.session?.authorization?.role
+  )
+
   const daysFishedWithMandatoryRelease =
     helper.state.ancestors[0].daysFishedWithMandatoryRelease
 
-  if (daysFishedOther < 1 && daysFishedWithMandatoryRelease < 1) {
+  if (
+    !isFMTOrAdmin &&
+    daysFishedOther < 1 &&
+    daysFishedWithMandatoryRelease < 1
+  ) {
+    return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
+  }
+
+  if (
+    isFMTOrAdmin &&
+    daysFishedOther < 0 &&
+    daysFishedWithMandatoryRelease < 0
+  ) {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
 
