@@ -80,7 +80,7 @@ describe('grilse-weight-gates.unit', () => {
       )
     })
 
-    it('should return an if an error occurs while fetching grilse weight gates', async () => {
+    it('should return an error response if an error occurs while fetching grilse weight gates', async () => {
       const error = new Error('Database error')
       GrilseWeightGate.findAll.mockRejectedValueOnce(error)
 
