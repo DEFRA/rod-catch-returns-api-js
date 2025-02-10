@@ -1,13 +1,15 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../services/database.service.js'
 
-export const Catchment = sequelize.define(
-  'Catchment',
+export const GrilseWeightGate = sequelize.define(
+  'GrilseWeightGate',
   {
     id: {
       type: DataTypes.BIGINT,
       primaryKey: true,
-      defaultValue: sequelize.literal("nextval('rcr_catchment_id_seq')")
+      defaultValue: sequelize.literal(
+        "nextval('rcr_grilse_weight_gate_id_seq')"
+      )
     },
     name: {
       type: DataTypes.STRING
@@ -19,27 +21,21 @@ export const Catchment = sequelize.define(
     updatedAt: {
       type: DataTypes.DATE,
       field: 'last_modified'
+    },
+    version: {
+      type: DataTypes.DATE
     }
   },
   {
     sequelize,
-    modelName: 'Catchment',
-    tableName: 'rcr_catchment',
+    modelName: 'GrilseWeightGate',
+    tableName: 'rcr_grilse_weight_gate',
     underscored: true
   }
 )
 
-Catchment.associate = (models) => {
-  Catchment.hasMany(models.River, {
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
-  })
-  Catchment.belongsTo(models.Region, {
-    foreignKey: {
-      name: 'region_id'
-    }
-  })
-  Catchment.belongsTo(models.GrilseWeightGate, {
+GrilseWeightGate.associate = (models) => {
+  GrilseWeightGate.hasMany(models.Catchment, {
     foreignKey: {
       name: 'gate_id'
     }

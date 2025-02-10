@@ -88,7 +88,7 @@ describe('methods.unit', () => {
       )
     })
 
-    it('should return an if an error occurs while fetching methods', async () => {
+    it('should return an error response if an error occurs while fetching methods', async () => {
       const error = new Error('Database error')
       Method.findAll.mockRejectedValueOnce(error)
 
