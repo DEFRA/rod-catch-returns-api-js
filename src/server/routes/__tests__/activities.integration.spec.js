@@ -840,7 +840,7 @@ describe('activities.integration', () => {
     })
   })
 
-  describe.skip('GET /api/activities/{activityId}/submission', () => {
+  describe('GET /api/activities/{activityId}/submission', () => {
     const CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION =
       'contact-identifier-get-activity-submission'
     beforeEach(
@@ -872,7 +872,6 @@ describe('activities.integration', () => {
         url: `/api/activities/${activityId}/submission`
       })
 
-      expect(result.statusCode).toBe(200)
       expect(JSON.parse(result.payload)).toEqual({
         id: expect.any(String),
         contactId: CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION,
@@ -895,6 +894,7 @@ describe('activities.integration', () => {
           }
         }
       })
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return a 404 and empty body if the activity could not be found', async () => {
@@ -903,8 +903,8 @@ describe('activities.integration', () => {
         url: '/api/activities/0/submission'
       })
 
-      expect(result.statusCode).toBe(404)
       expect(result.payload).toBe('')
+      expect(result.statusCode).toBe(404)
     })
   })
 })
