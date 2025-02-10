@@ -1,4 +1,8 @@
-import { extractActivityId, sumCounts } from '../utils/entity-utils.js'
+import {
+  extractActivityId,
+  extractMethodId,
+  sumCounts
+} from '../utils/entity-utils.js'
 import {
   getSmallCatchById,
   getTotalSmallCatchCountsBySmallCatchId,
@@ -8,6 +12,7 @@ import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
 
 const validateUniqueActivityAndMonth = async (
@@ -43,12 +48,20 @@ const validateMonthInFuture = (monthName, season) => {
   }
 }
 
-const validateCounts = (value, helper) => {
+const validateCounts = async (value, helper) => {
   const methods = value.map((item) => item.method)
   const hasDuplicates = new Set(methods).size !== methods.length
   if (hasDuplicates) {
     return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
   }
+
+  const methodIds = methods.map((method) => extractMethodId(method))
+
+  const methodInternal = await isMethodsInternal(methodIds)
+  if (methodInternal) {
+    return helper.message('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
+  }
+
   return value
 }
 
@@ -125,7 +138,7 @@ export const createSmallCatchSchema = Joi.object({
       }
       return value
     }),
-  counts: countsField.required().custom((value, helper) => {
+  counts: countsField.required().external((value, helper) => {
     return validateCounts(value, helper)
   }),
   released: releasedField.required().custom((value, helper) => {
@@ -167,7 +180,11 @@ export const updateSmallCatchSchema = Joi.object({
 
     return value
   }),
-  counts: countsField.optional().custom((value, helper) => {
+  counts: countsField.optional().external((value, helper) => {
+    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+    if (value === undefined) {
+      return value
+    }
     return validateCounts(value, helper)
   }),
   released: releasedField.optional().external(async (value, helper) => {
