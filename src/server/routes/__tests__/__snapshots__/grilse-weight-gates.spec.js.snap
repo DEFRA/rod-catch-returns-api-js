@@ -1,0 +1,44 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`grilse-weight-gates.unit GET /methods should return all grilse weight gates if the call to fetch all grilse weight gates is successful 1`] = `
+{
+  "_embedded": {
+    "grilseWeightGates": [
+      {
+        "_links": {
+          "catchments": {
+            "href": "http://localhost:3000/api/grilseWeightGates/1/catchments",
+          },
+          "grilseWeightGate": {
+            "href": "http://localhost:3000/api/grilseWeightGates/1",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/grilseWeightGates/1",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000+0000",
+        "id": "1",
+        "name": "Dee",
+        "updatedAt": "2018-11-07T10:00:00.000+0000",
+      },
+      {
+        "_links": {
+          "catchments": {
+            "href": "http://localhost:3000/api/grilseWeightGates/2/catchments",
+          },
+          "grilseWeightGate": {
+            "href": "http://localhost:3000/api/grilseWeightGates/2",
+          },
+          "self": {
+            "href": "http://localhost:3000/api/grilseWeightGates/2",
+          },
+        },
+        "createdAt": "2018-11-07T10:00:00.000+0000",
+        "id": "2",
+        "name": "Tamar",
+        "updatedAt": "2018-11-07T10:00:00.000+0000",
+      },
+    ],
+  },
+}
+`;

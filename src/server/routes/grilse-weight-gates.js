@@ -1,6 +1,6 @@
 import { GrilseWeightGate } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
+import { handleServerError } from '../../utils/server-utils.js'
 import { mapGrilseWeightGateToResponse } from '../../mappers/grilse-weight-gates.mapper.js'
 
 export default [
@@ -32,10 +32,11 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching grilseWeightGates:', error)
-          return h
-            .response({ error: 'Unable to fetch grilseWeightGates' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError(
+            'Error fetching grilse weight gates',
+            error,
+            h
+          )
         }
       },
       description: 'Retrieve all the grilse weight gates in the database',
