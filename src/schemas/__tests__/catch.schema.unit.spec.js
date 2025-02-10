@@ -7,11 +7,13 @@ import { getCatchById } from '../../services/catches.service.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { getSubmissionByCatchId } from '../../services/submissions.service.js'
 import { isMethodInternal } from '../../services/methods.service.js'
+import { isSpeciesExists } from '../../services/species.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/catches.service.js')
 jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
+jest.mock('../../services/species.service.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -32,10 +34,19 @@ describe('catch.schema.unit', () => {
       ...overrides
     })
 
-    const setupMocks = ({ season = 2024, methodInternal = false } = {}) => {
+    const setupMocks = ({
+      season = 2024,
+      methodInternal = false,
+      speciesExists = true
+    } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValue(methodInternal)
+      isSpeciesExists.mockResolvedValueOnce(speciesExists)
     }
+
+    afterEach(() => {
+      jest.resetAllMocks()
+    })
 
     describe('activity', () => {
       it('should return an error if "activity" is missing', async () => {
@@ -170,6 +181,15 @@ describe('catch.schema.unit', () => {
     describe('species', () => {
       it('should return CATCH_SPECIES_REQUIRED if "species" is undefined', async () => {
         const payload = getValidPayload({ species: undefined })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_SPECIES_REQUIRED'
+        )
+      })
+
+      it('should return CATCH_SPECIES_REQUIRED if "species" does not exists', async () => {
+        setupMocks({ speciesExists: false })
+        const payload = getValidPayload({ species: 'species/10' })
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_SPECIES_REQUIRED'
@@ -426,7 +446,8 @@ describe('catch.schema.unit', () => {
       methodInternal = false,
       onlyMonthRecorded = true,
       noDateRecorded = false,
-      dateCaught = '2024-08-02T00:00:00+01:00'
+      dateCaught = '2024-08-02T00:00:00+01:00',
+      speciesExists = true
     } = {}) => {
       getSubmissionByCatchId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValueOnce(methodInternal)
@@ -435,7 +456,12 @@ describe('catch.schema.unit', () => {
         noDateRecorded,
         dateCaught
       })
+      isSpeciesExists.mockResolvedValueOnce(speciesExists)
     }
+
+    afterEach(() => {
+      jest.resetAllMocks()
+    })
 
     describe('dateCaught', () => {
       it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
@@ -482,6 +508,15 @@ describe('catch.schema.unit', () => {
         await expect(
           updateCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('CATCH_SPECIES_INVALID')
+      })
+
+      it('should return an error if the "species" does not exist', async () => {
+        setupMocks({ speciesExists: false })
+        const payload = { species: 'species/10' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_SPECIES_REQUIRED')
       })
 
       it('should validate successfully if "species" is valid', async () => {
