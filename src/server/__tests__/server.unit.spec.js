@@ -139,6 +139,10 @@ describe('server.unit', () => {
         path: '/catches/{catchId}'
       }),
       expect.objectContaining({ method: 'GET', path: '/catchments' }),
+      expect.objectContaining({
+        method: 'POST',
+        path: '/reporting/reference/grilse-probabilities/{season}/{gate}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/grilseWeightGates' }),
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
       expect.objectContaining({ method: 'GET', path: '/methods' }),

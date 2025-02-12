@@ -1,3 +1,4 @@
+import { GrilseProbability } from '../../../entities/index.js'
 import fs from 'fs'
 import initialiseServer from '../../server.js'
 import path from 'path'
@@ -5,6 +6,8 @@ import path from 'path'
 describe('grilse-probabilities.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
+  const season = 2024
+  const gate = 1
 
   beforeAll(async () => {
     server = await initialiseServer()
@@ -14,14 +17,31 @@ describe('grilse-probabilities.integration', () => {
     await server.stop()
   })
 
-  describe('POST /reporting/reference/grilse-probabilities/{season}/{gate}', () => {
+  const deleteGrilseProbabilitiesForSeasonAndGate = () => {
+    return GrilseProbability.destroy({
+      where: {
+        season,
+        gate_id: gate
+      }
+    })
+  }
+
+  describe('POST /api/reporting/reference/grilse-probabilities/{season}/{gate}', () => {
+    beforeEach(async () => {
+      await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
+    })
+
     it('should return 201 if the csv file is uploaded successfully', async () => {
-      const filePath = path.join(__dirname, '__fixtures__', 'sample-data.csv')
+      const filePath = path.join(
+        __dirname,
+        '__fixtures__',
+        'valid-grilse-data-69-datapoints.csv'
+      )
       const fileBuffer = fs.readFileSync(filePath)
 
       const result = await server.inject({
         method: 'POST',
-        url: '/reporting/reference/grilse-probabilities/2024/1',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
         headers: {
           'Content-Type': 'text/csv'
         },
@@ -29,6 +49,68 @@ describe('grilse-probabilities.integration', () => {
       })
 
       expect(result.statusCode).toBe(201)
+    })
+
+    it('should return an error if the data already exists in the database and ovewrite is false', async () => {
+      const filePath = path.join(
+        __dirname,
+        '__fixtures__',
+        'valid-grilse-data-69-datapoints.csv'
+      )
+      const fileBuffer = fs.readFileSync(filePath)
+
+      const resultSuccess = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+      expect(resultSuccess.statusCode).toBe(201)
+
+      const resultError = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+      expect(resultError.statusCode).toBe(409)
+      expect(JSON.parse(resultError.payload)).toStrictEqual({
+        message:
+          'Existing data found for the given season and gate but overwrite parameter not set'
+      })
+    })
+
+    it('should return 201 if the data has already been uploaded and overwrite is true', async () => {
+      const filePath = path.join(
+        __dirname,
+        '__fixtures__',
+        'valid-grilse-data-69-datapoints.csv'
+      )
+      const fileBuffer = fs.readFileSync(filePath)
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+      expect(result.statusCode).toBe(201)
+
+      const resultOverwrite = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=true',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+      expect(resultOverwrite.statusCode).toBe(201)
     })
   })
 })

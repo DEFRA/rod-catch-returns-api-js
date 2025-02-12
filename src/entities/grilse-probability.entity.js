@@ -46,8 +46,6 @@ export const GrilseProbability = sequelize.define(
 
 GrilseProbability.associate = (models) => {
   GrilseProbability.belongsTo(models.GrilseWeightGate, {
-    foreignKey: {
-      name: 'gate_id' // The grilse weight gate that the probability relates to
-    }
+    foreignKey: 'gate_id'
   })
 }

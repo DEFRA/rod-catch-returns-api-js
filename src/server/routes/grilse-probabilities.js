@@ -1,3 +1,7 @@
+import {
+  deleteGrilseProbabilitiesForSeasonAndGate,
+  isGrilseProbabilityExistsForSeasonAndGate
+} from '../../services/grilse-probabilities.service.js'
 import { GrilseProbability } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { getMonthNumberFromName } from '../../utils/date-utils.js'
@@ -15,6 +19,7 @@ export default [
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        *     @param {string} request.params.season - The year which the grilse probabilities file relates to
        *     @param {string} request.params.gate - The gate which the grilse probabilities file relates to
+       *     @param {boolean} request.query.overwrite - A boolean to say whether the grilse probabilities for the specified season and gate should be overridden
        *     @param {string} request.payload - The csv file
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing an empty body
@@ -22,7 +27,25 @@ export default [
       handler: async (request, h) => {
         try {
           const { season, gate } = request.params
+          const overwrite = request.query.overwrite === 'true'
           const csvData = request.payload.toString()
+
+          const exists = await isGrilseProbabilityExistsForSeasonAndGate(
+            season,
+            gate
+          )
+
+          if (exists) {
+            if (!overwrite) {
+              return h
+                .response({
+                  message:
+                    'Existing data found for the given season and gate but overwrite parameter not set'
+                })
+                .code(StatusCodes.CONFLICT)
+            }
+            await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
+          }
 
           const records = await new Promise((resolve, reject) => {
             parse(
@@ -39,7 +62,7 @@ export default [
            * Array to store valid GrilseProbability records before bulk inserting.
            * Each entry represents a probability associated with a specific month, mass, and gate.
            *
-           * @type {Array<{ season: number, gate_id: number, month: number, massInPounds: number, probability: number }>}
+           * @type {Array<{ season: number, gate_id: number, month: number, massInPounds: number, probability: number, version: Date }>}
            */
           const grilseProbabilities = []
           for (const record of records) {
@@ -54,7 +77,8 @@ export default [
                   gate_id: Number(gate),
                   month: getMonthNumberFromName(monthName),
                   massInPounds,
-                  probability: probabilityValue
+                  probability: probabilityValue,
+                  version: new Date()
                 })
               }
             })
@@ -62,10 +86,10 @@ export default [
 
           // Bulk insert records if there are valid probabilities
           if (grilseProbabilities.length > 0) {
-            // await GrilseProbability.bulkCreate(grilseProbabilities)
+            await GrilseProbability.bulkCreate(grilseProbabilities)
           }
 
-          return h.response([]).code(StatusCodes.OK)
+          return h.response([]).code(StatusCodes.CREATED)
         } catch (error) {
           return handleServerError(
             'Error uploading grilse probabilities file',
