@@ -40,4 +40,5 @@ GrilseWeightGate.associate = (models) => {
       name: 'gate_id'
     }
   })
+  GrilseWeightGate.hasMany(models.GrilseProbability)
 }
