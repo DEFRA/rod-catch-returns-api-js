@@ -112,7 +112,7 @@ describe('grilse-probabilities.unit', () => {
       expect(GrilseProbability.bulkCreate).toHaveBeenCalled()
     })
 
-    it('should return an empty response and not create any records if there are no valid probabilities', async () => {
+    it('should return a 201 and not create any records if there are no valid probabilities', async () => {
       isGrilseProbabilityExistsForSeasonAndGate.mockResolvedValueOnce(false)
       parseGrilseProbabilitiesCsv.mockResolvedValueOnce([
         { Weight: '10', January: '-0.2' }
@@ -125,7 +125,6 @@ describe('grilse-probabilities.unit', () => {
       )
 
       expect(result.statusCode).toBe(201)
-      expect(result.payload).toEqual([])
       expect(GrilseProbability.bulkCreate).not.toHaveBeenCalled()
     })
 
@@ -144,6 +143,21 @@ describe('grilse-probabilities.unit', () => {
         expect.anything()
       )
       expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should return a 400 error if the payload is neither a Buffer nor a string', async () => {
+      const request = {
+        params: { season: '2023', gate: '1' },
+        query: { overwrite: 'true' },
+        payload: { invalid: 'object' } // Object payload
+      }
+
+      const result = await uploadGrilseProbabilitiesHandler(
+        getServerDetails(request),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(400)
     })
   })
 })

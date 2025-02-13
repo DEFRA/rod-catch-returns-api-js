@@ -28,7 +28,21 @@ export default [
         try {
           const { season, gate } = request.params
           const overwrite = request.query.overwrite === 'true'
-          const csvData = request.payload.toString()
+
+          if (
+            typeof request.payload === 'object' &&
+            !Buffer.isBuffer(request.payload)
+          ) {
+            return h
+              .response({
+                message: 'Invalid file format: expected a Buffer or string'
+              })
+              .code(StatusCodes.BAD_REQUEST)
+          }
+
+          const csvData = Buffer.isBuffer(request.payload)
+            ? request.payload.toString('utf-8')
+            : request.payload
 
           const exists = await isGrilseProbabilityExistsForSeasonAndGate(
             season,
@@ -60,8 +74,9 @@ export default [
             await GrilseProbability.bulkCreate(grilseProbabilities)
           }
 
-          return h.response([]).code(StatusCodes.CREATED)
+          return h.response().code(StatusCodes.CREATED)
         } catch (error) {
+          console.log(error)
           return handleServerError(
             'Error uploading grilse probabilities file',
             error,
