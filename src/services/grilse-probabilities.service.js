@@ -51,8 +51,11 @@ export const deleteGrilseProbabilitiesForSeasonAndGate = (season, gate) => {
 export const parseGrilseProbabilitiesCsv = async (csvData) => {
   const records = await new Promise((resolve, reject) => {
     parse(csvData, { columns: true, skip_empty_lines: true }, (err, output) => {
-      if (err) reject(err)
-      else resolve(output)
+      if (err) {
+        reject(err)
+      } else {
+        resolve(output)
+      }
     })
   })
 
