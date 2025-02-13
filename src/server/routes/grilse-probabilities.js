@@ -10,9 +10,7 @@ import {
 } from '../../schemas/grilse-probabilities.schema.js'
 import { GrilseProbability } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import { getMonthNumberFromName } from '../../utils/date-utils.js'
 import { handleServerError } from '../../utils/server-utils.js'
-import { parse } from 'csv-parse'
 
 export default [
   {
