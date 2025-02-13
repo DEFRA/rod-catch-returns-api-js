@@ -1,12 +1,12 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
-  isGrilseProbabilityExistsForSeasonAndGate
+  isGrilseProbabilityExistsForSeasonAndGate,
+  parseGrilseProbabilitiesCsv,
+  processGrilseProbabilities
 } from '../../services/grilse-probabilities.service.js'
 import { GrilseProbability } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import { getMonthNumberFromName } from '../../utils/date-utils.js'
 import { handleServerError } from '../../utils/server-utils.js'
-import { parse } from 'csv-parse'
 
 export default [
   {
@@ -47,42 +47,13 @@ export default [
             await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
           }
 
-          const records = await new Promise((resolve, reject) => {
-            parse(
-              csvData,
-              { columns: true, skip_empty_lines: true },
-              (err, output) => {
-                if (err) reject(err)
-                else resolve(output)
-              }
-            )
-          })
+          const records = await parseGrilseProbabilitiesCsv(csvData)
 
-          /**
-           * Array to store valid GrilseProbability records before bulk inserting.
-           * Each entry represents a probability associated with a specific month, mass, and gate.
-           *
-           * @type {Array<{ season: number, gate_id: number, month: number, massInPounds: number, probability: number, version: Date }>}
-           */
-          const grilseProbabilities = []
-          for (const record of records) {
-            const { Weight, ...months } = record
-            const massInPounds = Number(Weight)
-
-            Object.entries(months).forEach(([monthName, probability]) => {
-              const probabilityValue = Number(probability)
-              if (probabilityValue > 0) {
-                grilseProbabilities.push({
-                  season: Number(season),
-                  gate_id: Number(gate),
-                  month: getMonthNumberFromName(monthName),
-                  massInPounds,
-                  probability: probabilityValue,
-                  version: new Date()
-                })
-              }
-            })
-          }
+          const grilseProbabilities = processGrilseProbabilities(
+            records,
+            season,
+            gate
+          )
 
           // Bulk insert records if there are valid probabilities
           if (grilseProbabilities.length > 0) {
