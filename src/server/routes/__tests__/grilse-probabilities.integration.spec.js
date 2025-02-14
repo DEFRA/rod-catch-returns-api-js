@@ -26,7 +26,7 @@ describe('grilse-probabilities.integration', () => {
     })
   }
 
-  const loadFile = (fileName) => {
+  const loadFixture = (fileName) => {
     const filePath = path.join(__dirname, '__fixtures__', fileName)
     const fileBuffer = fs.readFileSync(filePath)
     return fileBuffer
@@ -38,7 +38,7 @@ describe('grilse-probabilities.integration', () => {
     })
 
     it('should return 201 if the csv file is uploaded successfully', async () => {
-      const fileBuffer = loadFile('valid-grilse-data-69-datapoints.csv')
+      const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
       const result = await server.inject({
         method: 'POST',
@@ -66,7 +66,7 @@ describe('grilse-probabilities.integration', () => {
     })
 
     it('should return an error if the data already exists in the database and ovewrite is false', async () => {
-      const fileBuffer = loadFile('valid-grilse-data-69-datapoints.csv')
+      const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
       const resultSuccess = await server.inject({
         method: 'POST',
@@ -94,7 +94,7 @@ describe('grilse-probabilities.integration', () => {
     })
 
     it('should return 201 if the data has already been uploaded and overwrite is true', async () => {
-      const fileBuffer = loadFile('valid-grilse-data-69-datapoints.csv')
+      const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
       const result = await server.inject({
         method: 'POST',
