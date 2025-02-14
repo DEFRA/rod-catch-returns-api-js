@@ -4,6 +4,10 @@ import {
   parseGrilseProbabilitiesCsv,
   processGrilseProbabilities
 } from '../../services/grilse-probabilities.service.js'
+import {
+  grilseProbabilityRequestParamSchema,
+  grilseProbabilityRequestQuerySchema
+} from '../../schemas/grilse-probabilities.schema.js'
 import { GrilseProbability } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { handleServerError } from '../../utils/server-utils.js'
@@ -27,7 +31,7 @@ export default [
       handler: async (request, h) => {
         try {
           const { season, gate } = request.params
-          const overwrite = request.query.overwrite === 'true'
+          const { overwrite } = request.query
 
           if (
             typeof request.payload === 'object' &&
@@ -83,6 +87,10 @@ export default [
             h
           )
         }
+      },
+      validate: {
+        params: grilseProbabilityRequestParamSchema,
+        query: grilseProbabilityRequestQuerySchema
       },
       description: 'Upload a grilse probabilities csv file to the database',
       notes: 'Upload a grilse probabilities csv file to the database',

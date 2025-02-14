@@ -33,7 +33,7 @@ describe('grilse-probabilities.unit', () => {
     const mockSeason = '2024'
     const mockGate = '1'
     const mockCsvData = 'Weight,January,February\n10,0.2,0.3\n15,0.5,0.6'
-    const getMockRequest = ({ overwrite = 'false' } = {}) => ({
+    const getMockRequest = ({ overwrite = false } = {}) => ({
       params: { season: mockSeason, gate: mockGate },
       query: { overwrite },
       payload: Buffer.from(mockCsvData)
@@ -72,7 +72,7 @@ describe('grilse-probabilities.unit', () => {
       isGrilseProbabilityExistsForSeasonAndGate.mockResolvedValueOnce(true)
 
       const result = await uploadGrilseProbabilitiesHandler(
-        getServerDetails(getMockRequest({ overwrite: 'false' })),
+        getServerDetails(getMockRequest({ overwrite: false })),
         getMockResponseToolkit()
       )
 
@@ -101,7 +101,7 @@ describe('grilse-probabilities.unit', () => {
       GrilseProbability.bulkCreate.mockResolvedValueOnce()
 
       await uploadGrilseProbabilitiesHandler(
-        getServerDetails(getMockRequest({ overwrite: 'true' })),
+        getServerDetails(getMockRequest({ overwrite: true })),
         getMockResponseToolkit()
       )
 
