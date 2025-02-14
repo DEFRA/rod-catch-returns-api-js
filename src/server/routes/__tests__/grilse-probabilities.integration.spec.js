@@ -51,6 +51,19 @@ describe('grilse-probabilities.integration', () => {
       expect(result.statusCode).toBe(201)
     })
 
+    it('should return an error if an object is passed in instead of a file', async () => {
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        payload: { test: 'test' }
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        message: 'Invalid file format: expected a Buffer or string'
+      })
+      expect(result.statusCode).toBe(400)
+    })
+
     it('should return an error if the data already exists in the database and ovewrite is false', async () => {
       const filePath = path.join(
         __dirname,

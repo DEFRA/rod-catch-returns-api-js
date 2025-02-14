@@ -34,8 +34,10 @@ export default [
           const { overwrite } = request.query
 
           if (
-            typeof request.payload === 'object' &&
-            !Buffer.isBuffer(request.payload)
+            !(
+              typeof request.payload === 'string' ||
+              Buffer.isBuffer(request.payload)
+            )
           ) {
             return h
               .response({
