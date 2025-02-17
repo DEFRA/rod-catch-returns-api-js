@@ -11,7 +11,7 @@ import {
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
 const BASE_SMALL_CATCHES_URL = '/smallCatches/{smallCatchId}'
