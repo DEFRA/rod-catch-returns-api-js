@@ -4,5 +4,6 @@ module.exports = {
   },
   contactForLicensee: jest.fn(),
   createActivity: jest.fn(),
+  permissionForFullReferenceNumber: jest.fn(),
   updateActivity: jest.fn()
 }

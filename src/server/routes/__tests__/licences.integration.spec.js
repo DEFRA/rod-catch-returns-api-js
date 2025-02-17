@@ -1,4 +1,7 @@
-import { contactForLicensee } from '@defra-fish/dynamics-lib'
+import {
+  contactForLicensee,
+  permissionForFullReferenceNumber
+} from '@defra-fish/dynamics-lib'
 import initialiseServer from '../../server.js'
 
 const mockResponse = {
@@ -88,6 +91,25 @@ describe('licences.integration', () => {
       })
 
       expect(result.statusCode).toBe(500)
+    })
+  })
+
+  describe.skip('GET /api/licence/full/{licence}', () => {
+    it('should return the licence number and contact details, if the licence number is valid', async () => {
+      permissionForFullReferenceNumber.mockResolvedValueOnce({})
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/licence/full/23210126-2WC3FBP-ABNFA7'
+      })
+
+      expect(result.payload).toStrictEqual({
+        licenceNumber: '23210126-2WC3FBP-ABNFA7',
+        contact: {
+          id: 'a1a91429-deb7-ef11-b8e8-7c1e5237cbf4',
+          fullName: 'Brenin Pysgotwr'
+        }
+      })
+      expect(result.statusCode).toBe(200)
     })
   })
 })
