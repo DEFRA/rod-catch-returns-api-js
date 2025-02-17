@@ -90,25 +90,25 @@ const speciesField = Joi.string()
 const massField = Joi.object({
   kg: Joi.when('type', {
     is: MEASURES.METRIC,
-    then: Joi.number().required().min(MIN_FISH_MASS).max(MAX_FISH_MASS_KG)
+    then: Joi.number().required().greater(MIN_FISH_MASS).max(MAX_FISH_MASS_KG)
   })
     .messages({
       'any.required': 'CATCH_MASS_KG_REQUIRED',
       'number.base': 'CATCH_MASS_KG_REQUIRED',
       'number.positive': 'CATCH_MASS_KG_POSITIVE',
-      'number.min': 'CATCH_MASS_BELOW_MINIMUM',
+      'number.greater': 'CATCH_MASS_BELOW_MINIMUM',
       'number.max': 'CATCH_MASS_MAX_EXCEEDED'
     })
     .description('The mass of the catch in metric kg'),
   oz: Joi.when('type', {
     is: MEASURES.IMPERIAL,
-    then: Joi.number().required().min(MIN_FISH_MASS).max(MAX_FISH_MASS_OZ)
+    then: Joi.number().required().greater(MIN_FISH_MASS).max(MAX_FISH_MASS_OZ)
   })
     .messages({
       'any.required': 'CATCH_MASS_OZ_REQUIRED',
       'number.base': 'CATCH_MASS_OZ_REQUIRED',
       'number.positive': 'CATCH_MASS_OZ_POSITIVE',
-      'number.min': 'CATCH_MASS_BELOW_MINIMUM',
+      'number.greater': 'CATCH_MASS_BELOW_MINIMUM',
       'number.max': 'CATCH_MASS_MAX_EXCEEDED'
     })
     .description('The mass of the catch in imperial ounces'),

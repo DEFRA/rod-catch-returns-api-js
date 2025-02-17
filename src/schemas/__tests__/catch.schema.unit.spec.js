@@ -558,6 +558,20 @@ describe('catch.schema.unit', () => {
         )
       })
 
+      it('should return a CATCH_MASS_BELOW_MINIMUM if "mass.kg" is 0', async () => {
+        const payload = getValidPayload({
+          mass: {
+            kg: 0,
+            oz: 1,
+            type: 'METRIC'
+          }
+        })
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_BELOW_MINIMUM'
+        )
+      })
+
       it('should return a CATCH_MASS_MAX_EXCEEDED if "mass.kg" is over 50kg', async () => {
         const payload = getValidPayload({
           mass: {
@@ -577,6 +591,20 @@ describe('catch.schema.unit', () => {
           mass: {
             kg: 5,
             oz: -2,
+            type: 'IMPERIAL'
+          }
+        })
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_MASS_BELOW_MINIMUM'
+        )
+      })
+
+      it('should return a CATCH_MASS_BELOW_MINIMUM if "mass.oz" is 0', async () => {
+        const payload = getValidPayload({
+          mass: {
+            kg: 5,
+            oz: 0,
             type: 'IMPERIAL'
           }
         })
