@@ -24,6 +24,9 @@ const [
     options: { handler: postSubmissionHandler }
   },
   {
+    options: { handler: getSubmissionsByContactIdHandler }
+  },
+  {
     options: { handler: getSubmissionByContactIdAndSeasonHandler }
   },
   {

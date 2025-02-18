@@ -310,7 +310,7 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe.skip('GET /api/submissions/search/findByContactId?contact_id={contactId}', () => {
+  describe('GET /api/submissions/search/findByContactId?contact_id={contactId}', () => {
     const CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT =
       'contact-identifier-get-submissions-by-contact'
 
@@ -341,6 +341,16 @@ describe('submissions.integration', () => {
           source: 'WEB'
         }
       })
+      await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+          season: '2024',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
 
       const result = await server.inject({
         method: 'GET',
@@ -348,30 +358,88 @@ describe('submissions.integration', () => {
       })
 
       expect(result.statusCode).toBe(200)
-      expect(JSON.parse(result.payload)).toEqual([
-        {
-          id: expect.any(String),
-          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
-          season: 2023,
-          status: 'INCOMPLETE',
-          source: 'WEB',
-          reportingExclude: false,
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-          version: expect.any(String),
-          _links: {
-            activities: {
-              href: expect.stringMatching(/\/api\/submissions\/\d+\/activities/)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: [
+            {
+              id: expect.any(String),
+              contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+              season: 2023,
+              status: 'INCOMPLETE',
+              source: 'WEB',
+              reportingExclude: false,
+              createdAt: expect.any(String),
+              updatedAt: expect.any(String),
+              version: expect.any(String),
+              _links: {
+                activities: {
+                  href: expect.stringMatching(
+                    /\/api\/submissions\/\d+\/activities/
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                },
+                submission: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                }
+              }
             },
-            self: {
-              href: expect.stringMatching(/\/api\/submissions\/\d+/)
-            },
-            submission: {
-              href: expect.stringMatching(/\/api\/submissions\/\d+/)
+            {
+              id: expect.any(String),
+              contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+              season: 2024,
+              status: 'INCOMPLETE',
+              source: 'WEB',
+              reportingExclude: false,
+              createdAt: expect.any(String),
+              updatedAt: expect.any(String),
+              version: expect.any(String),
+              _links: {
+                activities: {
+                  href: expect.stringMatching(
+                    /\/api\/submissions\/\d+\/activities/
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                },
+                submission: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                }
+              }
             }
-          }
+          ]
         }
-      ])
+      })
+    })
+
+    it('should return an empty array if no submissions are found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/findByContactId?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT}`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: []
+        }
+      })
+    })
+
+    it('should return an empty array if no submissions are found for a contact id that does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/search/findByContactId?contact_id=0'
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: []
+        }
+      })
     })
   })
 
