@@ -102,6 +102,7 @@ describe('licences.mapper.unit', () => {
       }
     }
   ]
+
   describe('mapCRMPermissionToLicence', () => {
     it('should map a CRM permission object to a licence object', () => {
       const result = mapCRMPermissionToLicence(getMockCRMPermission())
