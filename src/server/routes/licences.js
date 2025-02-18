@@ -4,6 +4,7 @@ import {
   permissionForFullReferenceNumber
 } from '@defra-fish/dynamics-lib'
 import {
+  fullLicenceLoginRequestParamSchema,
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schemas/licences.schema.js'
@@ -89,7 +90,7 @@ export default [
           )
           const mappedResult = mapCRMPermissionToLicence(result)
           if (mappedResult) {
-            return h.response(result).code(StatusCodes.OK)
+            return h.response(mappedResult).code(StatusCodes.OK)
           }
           return h.response().code(StatusCodes.FORBIDDEN)
         } catch (error) {
@@ -99,6 +100,10 @@ export default [
             h
           )
         }
+      },
+      validate: {
+        params: fullLicenceLoginRequestParamSchema,
+        options: { entity: 'Licence' }
       },
       description:
         'Retrieve a licence and its associated contact based on the full licence number',

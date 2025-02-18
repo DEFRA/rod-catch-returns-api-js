@@ -11,3 +11,10 @@ export const licenceLoginRequestParamSchema = Joi.object({
     .required()
     .description('The last 6 digits of the licence number')
 })
+
+export const fullLicenceLoginRequestParamSchema = Joi.object({
+  licence: Joi.string()
+    .pattern(/^[A-Za-z0-9-]*$/) // only contains letters, numbers or hyphens
+    .required()
+    .description('The full licence number')
+})
