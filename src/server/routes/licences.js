@@ -54,9 +54,8 @@ export default [
             const licence = new Licence(result.ReturnPermissionNumber, contact)
             return h.response(licence).code(StatusCodes.OK)
           }
-        } catch (e) {
-          logger.error(e)
-          throw e
+        } catch (error) {
+          return handleServerError('Error with user login', error, h)
         }
       },
       validate: {
