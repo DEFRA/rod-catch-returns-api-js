@@ -1,8 +1,31 @@
 /**
+ * Validates the CRM permission response.
+ *
+ * @param {Array} permission - The response array from the Dynamics API.
+ * @throws {Error} If the permission data is missing or invalid.
+ */
+const validatePermission = (permission) => {
+  if (!Array.isArray(permission) || permission.length === 0) {
+    throw new Error('Invalid permission data: Expected a non-empty array.')
+  }
+
+  const [licenceData] = permission
+
+  if (
+    !licenceData.entity?.referenceNumber ||
+    !licenceData.expanded?.licensee?.entity?.id
+  ) {
+    throw new Error('Invalid permission data: Missing required fields.')
+  }
+
+  return licenceData
+}
+
+/**
  * Maps a CRM permission response to a structured licence object.
  *
  * @param {Array} permission - The response array from the Dynamics API.
- * @returns {Object|null} - The mapped licence object or null if the response is invalid.
+ * @returns {Object} - The mapped licence object.
  *
  * @typedef {Object} MappedLicence
  * @property {string} licenceNumber - The full licence number.
@@ -11,28 +34,16 @@
  * @property {string} contact.fullName - The full name of the contact.
  */
 export const mapCRMPermissionToLicence = (permission) => {
-  if (!Array.isArray(permission) || permission.length === 0) {
-    return null
-  }
-
-  const licenceData = permission[0]
-
-  if (
-    !licenceData.entity?.referenceNumber ||
-    !licenceData.expanded?.licensee?.entity?.id
-  ) {
-    return null
-  }
-
+  const licenceData = validatePermission(permission)
   const contact = licenceData.expanded.licensee.entity
-  const fullName =
-    [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Unknown'
 
   return {
     licenceNumber: licenceData.entity.referenceNumber,
     contact: {
       id: contact.id,
-      fullName
+      fullName:
+        [contact.firstName, contact.lastName].filter(Boolean).join(' ') ||
+        'Unknown'
     }
   }
 }

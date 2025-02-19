@@ -177,7 +177,9 @@ describe('licences.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toBe()
+      expect(result.payload).toStrictEqual({
+        message: 'Invalid permission data: Expected a non-empty array.'
+      })
       expect(result.statusCode).toBe(403)
     })
 
