@@ -56,6 +56,9 @@ const [
   },
   {
     options: { handler: patchActivityHandler }
+  },
+  {
+    options: { handler: getSubmissionForActivityHandler }
   }
 ] = routes
 
@@ -1038,6 +1041,101 @@ describe('activities.unit', () => {
         getActivityRequest({
           daysFishedOther: 12
         }),
+        h
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /activities/{activityId}/submission', () => {
+    const getActivityRequest = (activityId) => ({
+      ...getServerDetails(),
+      params: {
+        activityId
+      }
+    })
+
+    const getActivityWithSubmission = () => ({
+      Submission: {
+        toJSON: jest.fn().mockReturnValue({
+          id: '1',
+          contactId: 'contact-identifier-111',
+          season: '2024',
+          status: 'SUBMITTED',
+          source: 'WEB',
+          version: '2024-10-10T13:13:11.000Z',
+          reportingExclude: false,
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z'
+        })
+      }
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the submission if the activity is found', async () => {
+      Activity.findOne.mockResolvedValueOnce(getActivityWithSubmission())
+
+      const result = await getSubmissionForActivityHandler(
+        getActivityRequest('1'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleNotFound if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await getSubmissionForActivityHandler(
+        getActivityRequest('nonexistent-id'),
+        h
+      )
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        'Activity not found or has no associated submission',
+        h
+      )
+    })
+
+    it('should return a not found response if the activity is not found', async () => {
+      Activity.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      const result = await getSubmissionForActivityHandler(
+        getActivityRequest('nonexistent-id'),
+        h
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while fetching the submission for the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getSubmissionForActivityHandler(getActivityRequest('1'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching submission for activity',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while fetching the submission for the activity', async () => {
+      const error = new Error('Database error')
+      Activity.findOne.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await getSubmissionForActivityHandler(
+        getActivityRequest('1'),
         h
       )
 

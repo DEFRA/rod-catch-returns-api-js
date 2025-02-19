@@ -839,4 +839,72 @@ describe('activities.integration', () => {
       })
     })
   })
+
+  describe('GET /api/activities/{activityId}/submission', () => {
+    const CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION =
+      'contact-identifier-get-activity-submission'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION
+        )
+    )
+
+    it('should return the submission associated with an activity', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      const activity = await createActivity(server, submissionId)
+      const activityId = JSON.parse(activity.payload).id
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/activities/${activityId}/submission`
+      })
+
+      expect(JSON.parse(result.payload)).toEqual({
+        id: expect.any(String),
+        contactId: CONTACT_IDENTIFIER_GET_ACTIVITY_SUBMISSION,
+        season: 2023,
+        status: 'INCOMPLETE',
+        source: 'WEB',
+        reportingExclude: false,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+        version: expect.any(String),
+        _links: {
+          activities: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+\/activities/)
+          },
+          self: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          },
+          submission: {
+            href: expect.stringMatching(/\/api\/submissions\/\d+/)
+          }
+        }
+      })
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return a 404 and empty body if the activity could not be found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/activities/0/submission'
+      })
+
+      expect(result.payload).toBe('')
+      expect(result.statusCode).toBe(404)
+    })
+  })
 })

@@ -3,7 +3,8 @@ import {
   Catch,
   River,
   SmallCatch,
-  SmallCatchCount
+  SmallCatchCount,
+  Submission
 } from '../../entities/index.js'
 import {
   createActivitySchema,
@@ -20,6 +21,7 @@ import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'
+import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
 const BASE_ACTIVITIES_URL = '/activities/{activityId}'
@@ -396,6 +398,58 @@ export default [
       },
       description: 'Update an activity',
       notes: 'Update an activity',
+      tags: ['api', 'activities']
+    }
+  },
+  {
+    method: 'GET',
+    path: `${BASE_ACTIVITIES_URL}/submission`,
+    options: {
+      /**
+       * Retrieve the submission associated with an activity
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.activityId - The activity id
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        try {
+          const activityId = request.params.activityId
+          const activity = await Activity.findOne({
+            where: { id: activityId },
+            include: [
+              {
+                model: Submission,
+                required: true
+              }
+            ]
+          })
+
+          if (!activity) {
+            return handleNotFound(
+              'Activity not found or has no associated submission',
+              h
+            )
+          }
+
+          const mappedSubmission = mapSubmissionToResponse(
+            request,
+            activity.Submission.toJSON()
+          )
+
+          return h.response(mappedSubmission).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error fetching submission for activity',
+            error,
+            h
+          )
+        }
+      },
+      description:
+        'Retrieve the submission associated with an activity in the database',
+      notes: 'Retrieve submission associated with an activity in the database',
       tags: ['api', 'activities']
     }
   }
