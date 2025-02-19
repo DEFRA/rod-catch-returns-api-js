@@ -30,11 +30,13 @@ handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('grilse-probabilities.unit', () => {
   describe('POST /reporting/reference/grilse-probabilities/{season}/{gate}', () => {
-    const mockSeason = '2024'
-    const mockGate = '1'
     const mockCsvData = 'Weight,January,February\n10,0.2,0.3\n15,0.5,0.6'
-    const getMockRequest = ({ overwrite = false } = {}) => ({
-      params: { season: mockSeason, gate: mockGate },
+    const getMockRequest = ({
+      season = '2024',
+      gate = '1',
+      overwrite = false
+    } = {}) => ({
+      params: { season, gate },
       query: { overwrite },
       payload: Buffer.from(mockCsvData)
     })
@@ -50,8 +52,8 @@ describe('grilse-probabilities.unit', () => {
       ])
       processGrilseProbabilities.mockReturnValueOnce([
         {
-          season: mockSeason,
-          gate_id: mockGate,
+          season: '2024',
+          gate_id: '1',
           massInPounds: 10,
           probability: 0.2,
           version: new Date()
@@ -91,8 +93,8 @@ describe('grilse-probabilities.unit', () => {
       ])
       processGrilseProbabilities.mockReturnValueOnce([
         {
-          season: mockSeason,
-          gate_id: mockGate,
+          season: '2024',
+          gate_id: '1',
           massInPounds: 10,
           probability: 0.2,
           version: new Date()
@@ -106,8 +108,8 @@ describe('grilse-probabilities.unit', () => {
       )
 
       expect(deleteGrilseProbabilitiesForSeasonAndGate).toHaveBeenCalledWith(
-        mockSeason,
-        mockGate
+        '2024',
+        '1'
       )
       expect(GrilseProbability.bulkCreate).toHaveBeenCalled()
     })
