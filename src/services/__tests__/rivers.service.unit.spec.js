@@ -41,7 +41,7 @@ describe('rivers.service.unit', () => {
       River.findOne.mockResolvedValue(null)
 
       await expect(isRiverInternal(mockRiverId)).rejects.toThrow(
-        'River does not exist'
+        'RIVER_NOT_FOUND'
       )
     })
   })

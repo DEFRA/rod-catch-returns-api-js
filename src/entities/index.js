@@ -1,6 +1,7 @@
 import { Activity } from './activity.entity.js'
 import { Catch } from './catch.entity.js'
 import { Catchment } from './catchment.entity.js'
+import { GrilseWeightGate } from './grilse-weight-gate.entity.js'
 import { Method } from './method.entity.js'
 import { Region } from './region.entity.js'
 import { River } from './river.entity.js'
@@ -14,6 +15,7 @@ const models = {
   Activity,
   Catch,
   Catchment,
+  GrilseWeightGate,
   Method,
   Region,
   River,
@@ -29,6 +31,7 @@ export {
   Activity,
   Catch,
   Catchment,
+  GrilseWeightGate,
   Method,
   Region,
   River,

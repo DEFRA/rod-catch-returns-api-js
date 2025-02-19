@@ -109,6 +109,10 @@ describe('server.unit', () => {
         method: 'DELETE',
         path: '/activities/{activityId}'
       }),
+      expect.objectContaining({
+        method: 'PATCH',
+        path: '/activities/{activityId}'
+      }),
       expect.objectContaining({ method: 'POST', path: '/catches' }),
       expect.objectContaining({
         method: 'GET',
@@ -126,7 +130,16 @@ describe('server.unit', () => {
         method: 'GET',
         path: '/catches/{catchId}'
       }),
+      expect.objectContaining({
+        method: 'DELETE',
+        path: '/catches/{catchId}'
+      }),
+      expect.objectContaining({
+        method: 'PATCH',
+        path: '/catches/{catchId}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/catchments' }),
+      expect.objectContaining({ method: 'GET', path: '/grilseWeightGates' }),
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
       expect.objectContaining({ method: 'GET', path: '/methods' }),
       expect.objectContaining({ method: 'GET', path: '/methods/{methodId}' }),
@@ -139,6 +152,14 @@ describe('server.unit', () => {
       }),
       expect.objectContaining({
         method: 'GET',
+        path: '/smallCatches/{smallCatchId}'
+      }),
+      expect.objectContaining({
+        method: 'DELETE',
+        path: '/smallCatches/{smallCatchId}'
+      }),
+      expect.objectContaining({
+        method: 'PATCH',
         path: '/smallCatches/{smallCatchId}'
       }),
       expect.objectContaining({ method: 'GET', path: '/species' }),
