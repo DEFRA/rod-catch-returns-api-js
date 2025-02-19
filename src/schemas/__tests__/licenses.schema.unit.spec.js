@@ -50,12 +50,15 @@ describe('licenses.schema.unit', () => {
   })
 
   describe('fullLicenceLoginRequestParamSchema', () => {
-    it('should validate successfully when the "licence" field is provided and matches the pattern', () => {
-      const params = { licence: 'ABC123-XYZ' }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
+    test.each([['ABC123-XYZ'], ['ABC123'], ['23210126-2WC3FBP-ABNFA7']])(
+      'should validate successfully when the "licence" field is %s (contains numbers, letters, and dashes)',
+      (licence) => {
+        const params = { licence }
+        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
 
-      expect(error).toBeUndefined()
-    })
+        expect(error).toBeUndefined()
+      }
+    )
 
     it('should return an error if the "licence" field is missing', () => {
       const params = {}
@@ -91,20 +94,6 @@ describe('licenses.schema.unit', () => {
       expect(error.details[0].message).toContain(
         '"licence" with value "ABC@123" fails to match the required pattern'
       )
-    })
-
-    it('should validate successfully when the "licence" field contains only letters and numbers', () => {
-      const params = { licence: 'ABC123' }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
-
-      expect(error).toBeUndefined()
-    })
-
-    it('should validate successfully when the "licence" field contains letters, numbers, and hyphens', () => {
-      const params = { licence: '23210126-2WC3FBP-ABNFA7' }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
-
-      expect(error).toBeUndefined()
     })
   })
 })
