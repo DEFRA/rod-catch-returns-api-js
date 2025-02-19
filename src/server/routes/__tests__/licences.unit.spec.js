@@ -183,6 +183,16 @@ describe('licences.unit', () => {
       expect(result.statusCode).toBe(403)
     })
 
+    it('should log an error when no licence is found', async () => {
+      executeQuery.mockResolvedValueOnce(null)
+
+      await getFullLicenceHandler(getLicenceRequest(), getMockResponseToolkit())
+
+      expect(logger.error).toHaveBeenCalledWith(
+        new Error('Invalid permission data: Expected a non-empty array.')
+      )
+    })
+
     it('should call handleServerError if an error occurs', async () => {
       const error = new Error('Unexpected error')
       executeQuery.mockRejectedValueOnce(error)

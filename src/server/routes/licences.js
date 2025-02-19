@@ -89,18 +89,7 @@ export default [
           )
           try {
             const mappedResult = mapCRMPermissionToLicence(result)
-            if (mappedResult) {
-              return h.response(mappedResult).code(StatusCodes.OK)
-            }
-
-            logger.error(
-              'Unable to map permission to licence',
-              result,
-              mappedResult
-            )
-            return h
-              .response({ message: 'Licence not found or invalid' })
-              .code(StatusCodes.FORBIDDEN)
+            return h.response(mappedResult).code(StatusCodes.OK)
           } catch (mapperError) {
             logger.error(mapperError)
             return h

@@ -42,8 +42,11 @@ export const mapCRMPermissionToLicence = (permission) => {
     contact: {
       id: contact.id,
       fullName:
-        [contact.firstName, contact.lastName].filter(Boolean).join(' ') ||
-        'Unknown'
+        [contact.firstName, contact.lastName]
+          .filter(
+            (name) => name !== null && name !== undefined && name.trim() !== ''
+          )
+          .join(' ') || 'Unknown'
     }
   }
 }
