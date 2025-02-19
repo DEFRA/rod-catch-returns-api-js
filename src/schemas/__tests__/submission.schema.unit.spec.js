@@ -222,7 +222,7 @@ describe('Validation Schemas', () => {
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
       expect(error.details[0].message).toContain(
-        '"contact_id" must be a string'
+        'SUBMISSION_CONTACT_ID_INVALID'
       )
     })
 
@@ -237,21 +237,23 @@ describe('Validation Schemas', () => {
       const query = { ...getValidQuery(), season: 'invalidYear' }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error.details[0].message).toContain('"season" must be a number')
+      expect(error.details[0].message).toContain('SUBMISSION_SEASON_INVALID')
     })
 
     it('should return an error if "season" is missing', () => {
       const query = { ...getValidQuery(), season: undefined }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error.details[0].message).toContain('"season" is required')
+      expect(error.details[0].message).toContain('SUBMISSION_SEASON_REQUIRED')
     })
 
     it('should return an error if "contact_id" is missing', () => {
       const query = { ...getValidQuery(), contact_id: undefined }
       const { error } = getSubmissionByContactAndSeasonSchema.validate(query)
 
-      expect(error.details[0].message).toContain('"contact_id" is required')
+      expect(error.details[0].message).toContain(
+        'SUBMISSION_CONTACT_ID_REQUIRED'
+      )
     })
   })
 
@@ -268,7 +270,7 @@ describe('Validation Schemas', () => {
       const { error } = getSubmissionsByContactSchema.validate(query)
 
       expect(error.details[0].message).toContain(
-        '"contact_id" must be a string'
+        'SUBMISSION_CONTACT_ID_INVALID'
       )
     })
 
@@ -276,7 +278,9 @@ describe('Validation Schemas', () => {
       const query = {}
       const { error } = getSubmissionsByContactSchema.validate(query)
 
-      expect(error.details[0].message).toContain('"contact_id" is required')
+      expect(error.details[0].message).toContain(
+        'SUBMISSION_CONTACT_ID_REQUIRED'
+      )
     })
   })
 
