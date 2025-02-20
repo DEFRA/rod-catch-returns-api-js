@@ -61,30 +61,23 @@ describe('licenses.schema.unit', () => {
     )
 
     test.each([
-      [{}, 'is required'],
-      [{ licence: 123456 }, 'must be a string']
+      [{}, '"licence" is required'],
+      [{ licence: 123456 }, '"licence" must be a string'],
+      [
+        { licence: 'ABC_123' },
+        '"licence" with value "ABC_123" fails to match the required pattern'
+      ],
+      [
+        { licence: 'ABC@123' },
+        '"licence" with value "ABC@123" fails to match the required pattern'
+      ]
     ])(
       'should return an error if the "licence" field is invalid: %j',
       (params, expectedMessage) => {
         const { error } = fullLicenceLoginRequestParamSchema.validate(params)
 
         expect(error).toBeDefined()
-        expect(error.details[0].message).toContain(
-          `"licence" ${expectedMessage}`
-        )
-      }
-    )
-
-    test.each([['ABC_123'], ['ABC@123']])(
-      'should return an error if the "licence" field contains invalid characters: %s',
-      (licence) => {
-        const params = { licence }
-        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
-
-        expect(error).toBeDefined()
-        expect(error.details[0].message).toContain(
-          `"licence" with value "${licence}" fails to match the required pattern`
-        )
+        expect(error.details[0].message).toContain(expectedMessage)
       }
     )
   })
