@@ -229,7 +229,8 @@ describe('grilse-probabilities.service.unit', () => {
     it.each([
       ['object', { invalid: 'object' }],
       ['empty string', ''],
-      ['only spaces', ' ']
+      ['only spaces', ' '],
+      ['empty buffer', Buffer.from('')]
     ])(
       'should throw "File is empty or not a valid csv." error if the request is a %s',
       (_, payload) => {
