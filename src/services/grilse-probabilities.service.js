@@ -1,4 +1,5 @@
 import { GrilseProbability } from '../entities/index.js'
+import { StatusCodes } from 'http-status-codes'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { parse } from 'csv-parse'
 
@@ -94,4 +95,51 @@ export const processGrilseProbabilities = (records, season, gate) => {
     })
   }
   return grilseProbabilities
+}
+
+/**
+ * Validates the uploaded CSV file.
+ *
+ * @param {string|Buffer} file - The CSV file as a buffer or string
+ * @returns {null} If there are no errors
+ * @throws {Error} If the file is empty or not a valid CSV.
+ */
+export const validateCsvFile = (file) => {
+  if (!(typeof file === 'string' || Buffer.isBuffer(file))) {
+    throwValidationError(
+      'File is empty or not a valid csv.',
+      [],
+      StatusCodes.UNPROCESSABLE_ENTITY
+    )
+  }
+
+  const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
+
+  if (!csvData) {
+    throwValidationError(
+      'File is empty or not a valid csv.',
+      [],
+      StatusCodes.UNPROCESSABLE_ENTITY
+    )
+  }
+
+  return null
+}
+
+/**
+ * Throws a structured validation error.
+ *
+ * @param {string} message - Error message.
+ * @param {Array} errors - Detailed error list.
+ * @param {number} statusCode - HTTP status code.
+ * @throws {Error} Always throws with a structured error response.
+ */
+const throwValidationError = (message, errors, statusCode) => {
+  const errorResponse = {
+    timestamp: new Date().toISOString(),
+    status: statusCode,
+    message: `"${message}"`,
+    errors
+  }
+  throw new Error(JSON.stringify(errorResponse))
 }

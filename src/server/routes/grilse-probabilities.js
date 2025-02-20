@@ -2,7 +2,8 @@ import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
   parseGrilseProbabilitiesCsv,
-  processGrilseProbabilities
+  processGrilseProbabilities,
+  validateCsvFile
 } from '../../services/grilse-probabilities.service.js'
 import {
   grilseProbabilityRequestParamSchema,
@@ -33,17 +34,11 @@ export default [
           const { season, gate } = request.params
           const { overwrite } = request.query
 
-          if (
-            !(
-              typeof request.payload === 'string' ||
-              Buffer.isBuffer(request.payload)
-            )
-          ) {
-            return h
-              .response({
-                message: 'Invalid file format: expected a Buffer or string'
-              })
-              .code(StatusCodes.BAD_REQUEST)
+          try {
+            validateCsvFile(request.payload)
+          } catch (validationError) {
+            const errorData = JSON.parse(validationError.message)
+            return h.response(errorData).code(errorData.status)
           }
 
           const csvData = Buffer.isBuffer(request.payload)
