@@ -116,7 +116,8 @@ export const validateCsvFile = (file) => {
     throw new GrilseValidationError(fileEmptyErrorDetails)
   }
 
-  if (!Buffer.isBuffer(file) ? !file.trim() : !file.length) {
+  const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
+  if (!csvData) {
     throw new GrilseValidationError(fileEmptyErrorDetails)
   }
 

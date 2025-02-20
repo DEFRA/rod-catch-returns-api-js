@@ -168,7 +168,7 @@ describe('grilse-probabilities.unit', () => {
 
     it('should return an error response with timestamp, message and path if validation fails', async () => {
       validateCsvFile.mockImplementation(() => {
-        throw new GrilseValidationError({ status: 400 })
+        throw new GrilseValidationError()
       })
       const request = {
         params: { season: '2023', gate: '1' },

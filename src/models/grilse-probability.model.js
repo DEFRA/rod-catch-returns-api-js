@@ -13,7 +13,7 @@ export class GrilseValidationError extends Error {
     message = 'Validation error',
     errors,
     error
-  }) {
+  } = {}) {
     super(message)
     this.name = 'GrilseValidationError'
     this.status = status
