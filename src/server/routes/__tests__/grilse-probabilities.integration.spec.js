@@ -60,9 +60,13 @@ describe('grilse-probabilities.integration', () => {
       })
 
       expect(JSON.parse(result.payload)).toStrictEqual({
-        message: 'Invalid file format: expected a Buffer or string'
+        error: 'Unprocessable Entity',
+        message: 'File is empty or not a valid csv.',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        status: 422,
+        timestamp: expect.any(String)
       })
-      expect(result.statusCode).toBe(400)
+      expect(result.statusCode).toBe(422)
     })
 
     it('should return an error if the data already exists in the database and ovewrite is false', async () => {
