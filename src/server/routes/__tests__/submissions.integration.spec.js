@@ -310,14 +310,14 @@ describe('submissions.integration', () => {
     })
   })
 
-  describe('GET /api/submissions/search/getByContactIdAndSeason?contact_id={contactId}&season={season}', () => {
-    const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT =
-      'contact-identifier-get-submission-by-contact'
+  describe('GET /api/submissions/search/findByContactId?contact_id={contactId}', () => {
+    const CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT =
+      'contact-identifier-get-submissions-by-contact'
 
     beforeEach(async () => {
       await Submission.destroy({
         where: {
-          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT
         }
       })
     })
@@ -325,7 +325,140 @@ describe('submissions.integration', () => {
     afterAll(async () => {
       await Submission.destroy({
         where: {
-          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT
+        }
+      })
+    })
+
+    it('should successfully get submissions with a valid contactId', async () => {
+      await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+          season: '2023',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+      await server.inject({
+        method: 'POST',
+        url: '/api/submissions',
+        payload: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+          season: '2024',
+          status: 'INCOMPLETE',
+          source: 'WEB'
+        }
+      })
+
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/findByContactId?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT}`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: [
+            {
+              id: expect.any(String),
+              contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+              season: 2023,
+              status: 'INCOMPLETE',
+              source: 'WEB',
+              reportingExclude: false,
+              createdAt: expect.any(String),
+              updatedAt: expect.any(String),
+              version: expect.any(String),
+              _links: {
+                activities: {
+                  href: expect.stringMatching(
+                    /\/api\/submissions\/\d+\/activities/
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                },
+                submission: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                }
+              }
+            },
+            {
+              id: expect.any(String),
+              contactId: CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT,
+              season: 2024,
+              status: 'INCOMPLETE',
+              source: 'WEB',
+              reportingExclude: false,
+              createdAt: expect.any(String),
+              updatedAt: expect.any(String),
+              version: expect.any(String),
+              _links: {
+                activities: {
+                  href: expect.stringMatching(
+                    /\/api\/submissions\/\d+\/activities/
+                  )
+                },
+                self: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                },
+                submission: {
+                  href: expect.stringMatching(/\/api\/submissions\/\d+/)
+                }
+              }
+            }
+          ]
+        }
+      })
+    })
+
+    it('should return an empty array if no submissions are found', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/search/findByContactId?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSIONS_BY_CONTACT}`
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: []
+        }
+      })
+    })
+
+    it('should return an empty array if no submissions are found for a contact id that does not exist', async () => {
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/submissions/search/findByContactId?contact_id=0'
+      })
+
+      expect(result.statusCode).toBe(200)
+      expect(JSON.parse(result.payload)).toEqual({
+        _embedded: {
+          submissions: []
+        }
+      })
+    })
+  })
+
+  describe('GET /api/submissions/search/getByContactIdAndSeason?contact_id={contactId}&season={season}', () => {
+    const CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON =
+      'contact-identifier-get-submission-by-contact-and-season'
+
+    beforeEach(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON
+        }
+      })
+    })
+
+    afterAll(async () => {
+      await Submission.destroy({
+        where: {
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON
         }
       })
     })
@@ -335,7 +468,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON,
           season: '2023',
           status: 'INCOMPLETE',
           source: 'WEB'
@@ -344,13 +477,13 @@ describe('submissions.integration', () => {
 
       const result = await server.inject({
         method: 'GET',
-        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT}&season=2023`
+        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON}&season=2023`
       })
 
       expect(result.statusCode).toBe(200)
       expect(JSON.parse(result.payload)).toEqual({
         id: expect.any(String),
-        contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+        contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON,
         season: 2023,
         status: 'INCOMPLETE',
         source: 'WEB',
@@ -387,7 +520,7 @@ describe('submissions.integration', () => {
         method: 'POST',
         url: '/api/submissions',
         payload: {
-          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT,
+          contactId: CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON,
           season: '2023',
           status: 'INCOMPLETE',
           source: 'WEB'
@@ -396,7 +529,7 @@ describe('submissions.integration', () => {
 
       const result = await server.inject({
         method: 'GET',
-        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT}&season=2022`
+        url: `/api/submissions/search/getByContactIdAndSeason?contact_id=${CONTACT_IDENTIFIER_GET_SUBMISSION_BY_CONTACT_AND_SEASON}&season=2022`
       })
 
       expect(result.statusCode).toBe(404)

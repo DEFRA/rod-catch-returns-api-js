@@ -4,6 +4,7 @@ import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
   getSubmissionByContactAndSeasonSchema,
+  getSubmissionsByContactSchema,
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
@@ -73,6 +74,50 @@ export default [
       },
       description: 'Create a submission',
       notes: 'Create a submission',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/submissions/search/findByContactId',
+    options: {
+      /**
+       * Get all submissions by contactId from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.query.contact_id - The ID of the contact for which the submission is being retrieved.
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const contactId = request.query.contact_id
+
+        try {
+          const foundSubmissions = await Submission.findAll({
+            where: {
+              contactId
+            }
+          })
+
+          let response = []
+          if (foundSubmissions.length > 0) {
+            response = foundSubmissions.map((foundSubmission) =>
+              mapSubmissionToResponse(request, foundSubmission.toJSON())
+            )
+          }
+
+          return h
+            .response({ _embedded: { submissions: response } })
+            .code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError('Error finding submissions', error, h)
+        }
+      },
+      validate: {
+        query: getSubmissionsByContactSchema
+      },
+      description: 'Get all submissions by contactId',
+      notes: 'Get all submissions by contactId',
       tags: ['api', 'submissions']
     }
   },
