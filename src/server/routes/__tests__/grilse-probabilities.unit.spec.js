@@ -166,7 +166,7 @@ describe('grilse-probabilities.unit', () => {
       expect(result.statusCode).toBe(400)
     })
 
-    it('should return a an error response with timestamp, message and path if validation fails', async () => {
+    it('should return an error response with timestamp, message and path if validation fails', async () => {
       validateCsvFile.mockImplementation(() => {
         throw new GrilseValidationError({ status: 400 })
       })

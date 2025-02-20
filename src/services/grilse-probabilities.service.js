@@ -106,22 +106,18 @@ export const processGrilseProbabilities = (records, season, gate) => {
  * @throws {Error} If the file is empty or not a valid CSV.
  */
 export const validateCsvFile = (file) => {
-  if (!(typeof file === 'string' || Buffer.isBuffer(file))) {
-    throw new GrilseValidationError({
-      status: StatusCodes.UNPROCESSABLE_ENTITY,
-      message: 'File is empty or not a valid csv.',
-      error: 'Unprocessable Entity'
-    })
+  const fileEmptyErrorDetails = {
+    status: StatusCodes.UNPROCESSABLE_ENTITY,
+    message: 'File is empty or not a valid csv.',
+    error: 'Unprocessable Entity'
   }
 
-  const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
+  if (!(typeof file === 'string' || Buffer.isBuffer(file))) {
+    throw new GrilseValidationError(fileEmptyErrorDetails)
+  }
 
-  if (!csvData) {
-    throw new GrilseValidationError({
-      status: StatusCodes.UNPROCESSABLE_ENTITY,
-      message: 'File is empty or not a valid csv.',
-      error: 'Unprocessable Entity'
-    })
+  if (!Buffer.isBuffer(file) ? !file.trim() : !file.length) {
+    throw new GrilseValidationError(fileEmptyErrorDetails)
   }
 
   return null
