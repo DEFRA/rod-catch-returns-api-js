@@ -1,12 +1,19 @@
 import {
+  contactForLicensee,
+  executeQuery,
+  permissionForFullReferenceNumber
+} from '@defra-fish/dynamics-lib'
+import {
+  fullLicenceLoginRequestParamSchema,
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schemas/licences.schema.js'
 import { Contact } from '../../models/contact.model.js'
 import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'
-import { contactForLicensee } from '@defra-fish/dynamics-lib'
+import { handleServerError } from '../../utils/server-utils.js'
 import logger from '../../utils/logger-utils.js'
+import { mapCRMPermissionToLicence } from '../../mappers/licences.mapper.js'
 
 export default [
   {
@@ -47,9 +54,8 @@ export default [
             const licence = new Licence(result.ReturnPermissionNumber, contact)
             return h.response(licence).code(StatusCodes.OK)
           }
-        } catch (e) {
-          logger.error(e)
-          throw e
+        } catch (error) {
+          return handleServerError('Error with user login', error, h)
         }
       },
       validate: {
@@ -60,6 +66,52 @@ export default [
         'Retrieve a licence and its associated contact based on the given last 6 digits of the licence number and postcode',
       notes:
         'Retrieve a licence and its associated contact based on the given last 6 digits of the licence number and postcode',
+      tags: ['api', 'licence']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/licence/full/{licence}',
+    options: {
+      /**
+       * Retrieve a licence and its associated contact based on the full licence number
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.licence - The full licence number used to retrieve licence information
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link River}
+       */
+      handler: async (request, h) => {
+        try {
+          const fullLicenceNumber = request.params.licence
+          const result = await executeQuery(
+            permissionForFullReferenceNumber(fullLicenceNumber)
+          )
+          try {
+            const mappedResult = mapCRMPermissionToLicence(result)
+            return h.response(mappedResult).code(StatusCodes.OK)
+          } catch (mapperError) {
+            logger.error(mapperError)
+            return h
+              .response({ message: mapperError.message })
+              .code(StatusCodes.FORBIDDEN)
+          }
+        } catch (error) {
+          return handleServerError(
+            'Error fetching licence information',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: fullLicenceLoginRequestParamSchema,
+        options: { entity: 'Licence' }
+      },
+      description:
+        'Retrieve a licence and its associated contact based on the full licence number',
+      notes:
+        'Retrieve a licence and its associated contact based on the full licence number',
       tags: ['api', 'licence']
     }
   }

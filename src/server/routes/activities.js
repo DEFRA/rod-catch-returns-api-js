@@ -17,7 +17,7 @@ import {
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
 
-import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'

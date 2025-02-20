@@ -1,6 +1,6 @@
-import { mapActivityToResponse } from '../activity.mapper.js'
+import { mapActivityToResponse } from '../activities.mapper.js'
 
-describe('activity.mapper.unit', () => {
+describe('activities.mapper.unit', () => {
   describe('mapActivityToResponse', () => {
     const mockRequest = {
       url: {

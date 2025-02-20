@@ -1,4 +1,5 @@
 import {
+  fullLicenceLoginRequestParamSchema,
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../licences.schema.js'
@@ -46,5 +47,38 @@ describe('licenses.schema.unit', () => {
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"licence" must be a string')
     })
+  })
+
+  describe('fullLicenceLoginRequestParamSchema', () => {
+    test.each([['ABC123-XYZ'], ['ABC123'], ['23210126-2WC3FBP-ABNFA7']])(
+      'should validate successfully when the "licence" field is %s (contains numbers, letters, and dashes)',
+      (licence) => {
+        const params = { licence }
+        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
+
+        expect(error).toBeUndefined()
+      }
+    )
+
+    test.each([
+      [{}, '"licence" is required'],
+      [{ licence: 123456 }, '"licence" must be a string'],
+      [
+        { licence: 'ABC_123' },
+        '"licence" with value "ABC_123" fails to match the required pattern'
+      ],
+      [
+        { licence: 'ABC@123' },
+        '"licence" with value "ABC@123" fails to match the required pattern'
+      ]
+    ])(
+      'should return an error if the "licence" field is invalid: %j',
+      (params, expectedMessage) => {
+        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
+
+        expect(error).toBeDefined()
+        expect(error.details[0].message).toContain(expectedMessage)
+      }
+    )
   })
 })
