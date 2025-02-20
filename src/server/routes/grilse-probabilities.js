@@ -73,6 +73,7 @@ export default [
 
           return h.response().code(StatusCodes.CREATED)
         } catch (error) {
+          console.log(error)
           if (error instanceof GrilseValidationError) {
             return h
               .response({

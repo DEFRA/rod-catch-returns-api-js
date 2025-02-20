@@ -234,11 +234,11 @@ describe('grilse-probabilities.service.unit', () => {
       'should throw "File is empty or not a valid csv." error if the request is a %s',
       (_, payload) => {
         expect(() => validateCsvFile(payload)).toThrow(
-          new GrilseValidationError(
-            422,
-            'File is empty or not a valid csv.',
-            []
-          )
+          new GrilseValidationError({
+            status: 422,
+            message: 'File is empty or not a valid csv.',
+            error: 'Unprocessable Entity'
+          })
         )
       }
     )
