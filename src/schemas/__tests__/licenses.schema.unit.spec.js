@@ -60,40 +60,32 @@ describe('licenses.schema.unit', () => {
       }
     )
 
-    it('should return an error if the "licence" field is missing', () => {
-      const params = {}
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
+    test.each([
+      [{}, 'is required'],
+      [{ licence: 123456 }, 'must be a string']
+    ])(
+      'should return an error if the "licence" field is invalid: %j',
+      (params, expectedMessage) => {
+        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
 
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"licence" is required')
-    })
+        expect(error).toBeDefined()
+        expect(error.details[0].message).toContain(
+          `"licence" ${expectedMessage}`
+        )
+      }
+    )
 
-    it('should return an error if the "licence" field is not a string', () => {
-      const params = { licence: 123456 }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
+    test.each([['ABC_123'], ['ABC@123']])(
+      'should return an error if the "licence" field contains invalid characters: %s',
+      (licence) => {
+        const params = { licence }
+        const { error } = fullLicenceLoginRequestParamSchema.validate(params)
 
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain('"licence" must be a string')
-    })
-
-    it('should return an error if the "licence" field contains an underscore', () => {
-      const params = { licence: 'ABC_123' }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
-        '"licence" with value "ABC_123" fails to match the required pattern'
-      )
-    })
-
-    it('should return an error if the "licence" field contains special characters other than hyphen', () => {
-      const params = { licence: 'ABC@123' }
-      const { error } = fullLicenceLoginRequestParamSchema.validate(params)
-
-      expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
-        '"licence" with value "ABC@123" fails to match the required pattern'
-      )
-    })
+        expect(error).toBeDefined()
+        expect(error.details[0].message).toContain(
+          `"licence" with value "${licence}" fails to match the required pattern`
+        )
+      }
+    )
   })
 })
