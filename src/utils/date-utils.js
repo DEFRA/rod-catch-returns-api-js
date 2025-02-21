@@ -1,4 +1,4 @@
-const months = [
+export const MONTH_NAMES = [
   'JANUARY',
   'FEBRUARY',
   'MARCH',
@@ -24,7 +24,7 @@ export const getMonthNumberFromName = (monthName) => {
     throw new Error('Invalid month name: monthName must be a non-empty string.')
   }
 
-  const monthNumber = months.indexOf(monthName.toUpperCase()) + 1
+  const monthNumber = MONTH_NAMES.indexOf(monthName.toUpperCase()) + 1
 
   if (monthNumber === 0) {
     throw new Error(
@@ -55,7 +55,7 @@ export const getMonthNameFromNumber = (monthNumber) => {
     )
   }
 
-  return months[parsedMonthNumber - 1]
+  return MONTH_NAMES[parsedMonthNumber - 1]
 }
 
 /**

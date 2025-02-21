@@ -1,7 +1,7 @@
+import { MONTH_NAMES, getMonthNumberFromName } from '../utils/date-utils.js'
 import { GrilseProbability } from '../entities/index.js'
 import { GrilseValidationError } from '../models/grilse-probability.model.js'
 import { StatusCodes } from 'http-status-codes'
-import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { parse } from 'csv-parse'
 
 /**
@@ -119,6 +119,42 @@ export const validateCsvFile = (file) => {
   const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
   if (!csvData) {
     throw new GrilseValidationError(fileEmptyErrorDetails)
+  }
+
+  const records = parseGrilseProbabilitiesCsv(csvData)
+
+  const headers = records[0].map((header) => header.toUpperCase())
+
+  const errors = []
+
+  // first header should always be Weight
+  if (headers[0].toUpperCase() !== 'WEIGHT') {
+    errors.add({ errorType: 'MISSING_WEIGHT_HEADER', row: 0, column: 0 })
+  }
+
+  const visitedMonthHeaders = new Set()
+  for (let i = 1; i < headers.length; i++) {
+    const headerKey = headers[i].toUpperCase()
+
+    // check if all headers contain the correct month names
+    if (!MONTH_NAMES.includes(headerKey)) {
+      errors.add({ errorType: 'COLUMN_DISALLOWED', row: 0, column: i })
+    }
+
+    // check if there any months have been more than once
+    if (visitedMonthHeaders.has(headerKey)) {
+      errors.push({ type: 'DUPLICATE_HEADERS', row: 0, column: i })
+    } else {
+      visitedMonthHeaders.add(headerKey)
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new GrilseValidationError({
+      status: StatusCodes.BAD_REQUEST,
+      message: '400 BAD_REQUEST "Invalid CSV data"',
+      errors
+    })
   }
 
   return null
