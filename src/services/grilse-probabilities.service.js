@@ -1,4 +1,6 @@
 import { GrilseProbability } from '../entities/index.js'
+import { GrilseValidationError } from '../models/grilse-probability.model.js'
+import { StatusCodes } from 'http-status-codes'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { parse } from 'csv-parse'
 
@@ -94,4 +96,30 @@ export const processGrilseProbabilities = (records, season, gate) => {
     })
   }
   return grilseProbabilities
+}
+
+/**
+ * Validates the uploaded CSV file.
+ *
+ * @param {string|Buffer} file - The CSV file as a buffer or string
+ * @returns {null} If there are no errors
+ * @throws {Error} If the file is empty or not a valid CSV.
+ */
+export const validateCsvFile = (file) => {
+  const fileEmptyErrorDetails = {
+    status: StatusCodes.UNPROCESSABLE_ENTITY,
+    message: 'File is empty or not a valid csv.',
+    error: 'Unprocessable Entity'
+  }
+
+  if (!(typeof file === 'string' || Buffer.isBuffer(file))) {
+    throw new GrilseValidationError(fileEmptyErrorDetails)
+  }
+
+  const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
+  if (!csvData) {
+    throw new GrilseValidationError(fileEmptyErrorDetails)
+  }
+
+  return null
 }

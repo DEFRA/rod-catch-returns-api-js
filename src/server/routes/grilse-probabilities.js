@@ -2,13 +2,15 @@ import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
   parseGrilseProbabilitiesCsv,
-  processGrilseProbabilities
+  processGrilseProbabilities,
+  validateCsvFile
 } from '../../services/grilse-probabilities.service.js'
 import {
   grilseProbabilityRequestParamSchema,
   grilseProbabilityRequestQuerySchema
 } from '../../schemas/grilse-probabilities.schema.js'
 import { GrilseProbability } from '../../entities/index.js'
+import { GrilseValidationError } from '../../models/grilse-probability.model.js'
 import { StatusCodes } from 'http-status-codes'
 import { handleServerError } from '../../utils/server-utils.js'
 
@@ -33,18 +35,7 @@ export default [
           const { season, gate } = request.params
           const { overwrite } = request.query
 
-          if (
-            !(
-              typeof request.payload === 'string' ||
-              Buffer.isBuffer(request.payload)
-            )
-          ) {
-            return h
-              .response({
-                message: 'Invalid file format: expected a Buffer or string'
-              })
-              .code(StatusCodes.BAD_REQUEST)
-          }
+          validateCsvFile(request.payload)
 
           const csvData = Buffer.isBuffer(request.payload)
             ? request.payload.toString('utf-8')
@@ -82,7 +73,18 @@ export default [
 
           return h.response().code(StatusCodes.CREATED)
         } catch (error) {
-          console.log(error)
+          if (error instanceof GrilseValidationError) {
+            return h
+              .response({
+                timestamp: new Date().toISOString(),
+                status: error.status,
+                message: error.message,
+                path: request.path,
+                ...(error.error && { error: error.error }),
+                ...(error.errors && { errors: error.errors })
+              })
+              .code(error.status)
+          }
           return handleServerError(
             'Error uploading grilse probabilities file',
             error,

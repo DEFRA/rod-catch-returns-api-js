@@ -2,7 +2,8 @@ import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
   parseGrilseProbabilitiesCsv,
-  processGrilseProbabilities
+  processGrilseProbabilities,
+  validateCsvFile
 } from '../../../services/grilse-probabilities.service.js'
 import {
   getMockResponseToolkit,
@@ -10,6 +11,7 @@ import {
 } from '../../../test-utils/server-test-utils.js'
 
 import { GrilseProbability } from '../../../entities/index.js'
+import { GrilseValidationError } from '../../../models/grilse-probability.model.js'
 import { handleServerError } from '../../../utils/server-utils.js'
 import routes from '../grilse-probabilities.js'
 
@@ -147,7 +149,10 @@ describe('grilse-probabilities.unit', () => {
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
 
-    it('should return a 400 error if the payload is neither a Buffer nor a string', async () => {
+    it('should return a 400 error if validation fails', async () => {
+      validateCsvFile.mockImplementation(() => {
+        throw new GrilseValidationError({ status: 400 })
+      })
       const request = {
         params: { season: '2023', gate: '1' },
         query: { overwrite: 'true' },
@@ -158,8 +163,77 @@ describe('grilse-probabilities.unit', () => {
         getServerDetails(request),
         getMockResponseToolkit()
       )
-
       expect(result.statusCode).toBe(400)
+    })
+
+    it('should return an error response with timestamp, message and path if validation fails', async () => {
+      validateCsvFile.mockImplementation(() => {
+        throw new GrilseValidationError()
+      })
+      const request = {
+        params: { season: '2023', gate: '1' },
+        query: { overwrite: 'true' },
+        payload: { invalid: 'object' } // Object payload
+      }
+
+      const result = await uploadGrilseProbabilitiesHandler(
+        getServerDetails(request),
+        getMockResponseToolkit()
+      )
+      expect(result.payload).toStrictEqual({
+        timestamp: expect.any(String),
+        status: 400,
+        message: 'Validation error',
+        path: undefined
+      })
+    })
+
+    it('should return an error field, if it is returned by GrilseValidationError', async () => {
+      validateCsvFile.mockImplementation(() => {
+        throw new GrilseValidationError({
+          status: 400,
+          error: 'This is an error'
+        })
+      })
+      const request = {
+        params: { season: '2023', gate: '1' },
+        query: { overwrite: 'true' },
+        payload: { invalid: 'object' } // Object payload
+      }
+
+      const result = await uploadGrilseProbabilitiesHandler(
+        getServerDetails(request),
+        getMockResponseToolkit()
+      )
+      expect(result.payload).toStrictEqual(
+        expect.objectContaining({
+          error: 'This is an error'
+        })
+      )
+    })
+
+    it('should return an errors array, if it is returned by GrilseValidationError', async () => {
+      validateCsvFile.mockImplementation(() => {
+        throw new GrilseValidationError({
+          status: 400,
+          errors: ['this is an error']
+        })
+      })
+      const request = {
+        params: { season: '2023', gate: '1' },
+        query: { overwrite: 'true' },
+        payload: { invalid: 'object' } // Object payload
+      }
+
+      const result = await uploadGrilseProbabilitiesHandler(
+        getServerDetails(request),
+        getMockResponseToolkit()
+      )
+      expect(result.payload).toStrictEqual(
+        expect.objectContaining({
+          errors: ['this is an error']
+        })
+      )
     })
   })
 })

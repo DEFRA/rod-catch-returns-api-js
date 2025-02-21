@@ -2,9 +2,11 @@ import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
   parseGrilseProbabilitiesCsv,
-  processGrilseProbabilities
+  processGrilseProbabilities,
+  validateCsvFile
 } from '../grilse-probabilities.service.js'
 import { GrilseProbability } from '../../entities/index.js'
+import { GrilseValidationError } from '../../models/grilse-probability.model.js'
 import { parse } from 'csv-parse'
 
 jest.mock('../../entities/index.js')
@@ -217,5 +219,29 @@ describe('grilse-probabilities.service.unit', () => {
 
       expect(result).toEqual([])
     })
+  })
+
+  describe('validateCsvFile', () => {
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it.each([
+      ['object', { invalid: 'object' }],
+      ['empty string', ''],
+      ['only spaces', ' '],
+      ['empty buffer', Buffer.from('')]
+    ])(
+      'should throw "File is empty or not a valid csv." error if the request is a %s',
+      (_, payload) => {
+        expect(() => validateCsvFile(payload)).toThrow(
+          new GrilseValidationError({
+            status: 422,
+            message: 'File is empty or not a valid csv.',
+            error: 'Unprocessable Entity'
+          })
+        )
+      }
+    )
   })
 })
