@@ -126,6 +126,16 @@ export const validateAndParseCsvFile = async (file) => {
 
   const headers = records[0]
 
+  validateHeaders(headers)
+
+  return records
+}
+
+/**
+ * @param {Array<string>} headers - The headers of the CSV file as an array of strings.
+ * @throws {GrilseValidationError} If there are validation errors with the headers.
+ */
+export const validateHeaders = (headers) => {
   const errors = []
 
   // first header should always be Weight
@@ -166,6 +176,4 @@ export const validateAndParseCsvFile = async (file) => {
       errors
     })
   }
-
-  return records
 }
