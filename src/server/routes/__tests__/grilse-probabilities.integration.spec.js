@@ -120,5 +120,116 @@ describe('grilse-probabilities.integration', () => {
       })
       expect(resultOverwrite.statusCode).toBe(201)
     })
+
+    it('should return an error if an invalid csv is passed in', async () => {
+      const fileBuffer = loadFixture('invalid-csv.csv')
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        error: 'Unprocessable Entity',
+        message: 'File is empty or not a valid csv.',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        status: 422,
+        timestamp: expect.any(String)
+      })
+      expect(result.statusCode).toBe(422)
+    })
+
+    it('should return an error if the csv contains an invalid column', async () => {
+      const fileBuffer = loadFixture('invalid-headers.csv')
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        errors: [
+          {
+            column: 9,
+            errorType: 'COLUMN_DISALLOWED',
+            row: 1
+          }
+        ],
+        status: 400,
+        timestamp: expect.any(String)
+      })
+      expect(result.statusCode).toBe(400)
+    })
+
+    it('should return an error if the csv contains duplicate columns', async () => {
+      const fileBuffer = loadFixture('duplicate-headers.csv')
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        errors: [
+          {
+            column: 3,
+            errorType: 'DUPLICATE_HEADERS',
+            row: 1
+          },
+          {
+            column: 6,
+            errorType: 'DUPLICATE_HEADERS',
+            row: 1
+          }
+        ],
+        status: 400,
+        timestamp: expect.any(String)
+      })
+      expect(result.statusCode).toBe(400)
+    })
+
+    it('should return an error if the csv does not contain a weight column', async () => {
+      const fileBuffer = loadFixture('no-weight-heading.csv')
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        errors: [
+          {
+            column: 1,
+            errorType: 'MISSING_WEIGHT_HEADER',
+            row: 1
+          }
+        ],
+        status: 400,
+        timestamp: expect.any(String)
+      })
+      expect(result.statusCode).toBe(400)
+    })
   })
 })

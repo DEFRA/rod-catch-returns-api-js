@@ -1,9 +1,8 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
-  parseGrilseProbabilitiesCsv,
   processGrilseProbabilities,
-  validateCsvFile
+  validateAndParseCsvFile
 } from '../../services/grilse-probabilities.service.js'
 import {
   grilseProbabilityRequestParamSchema,
@@ -35,12 +34,7 @@ export default [
           const { season, gate } = request.params
           const { overwrite } = request.query
 
-          // TODO process csv
-          await validateCsvFile(request.payload)
-
-          const csvData = Buffer.isBuffer(request.payload)
-            ? request.payload.toString('utf-8')
-            : request.payload
+          const records = await validateAndParseCsvFile(request.payload)
 
           const exists = await isGrilseProbabilityExistsForSeasonAndGate(
             season,
@@ -58,8 +52,6 @@ export default [
             }
             await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
           }
-
-          const records = await parseGrilseProbabilitiesCsv(csvData)
 
           const grilseProbabilities = processGrilseProbabilities(
             records,

@@ -73,21 +73,32 @@ export const parseGrilseProbabilitiesCsv = async (csvData) => {
  * Converts mass and probability values, maps month names to numeric values,
  * and filters out records where probability is 0 or less.
  *
- * @param {Array<Object>} records - The parsed CSV data, where each object represents a row.
+ * @param {Array<Array<string>>} csvData - The parsed CSV data, where each sub-array represents a row.
  * @param {number} season - The season associated with the probabilities.
  * @param {number} gate - The gate ID associated with the probabilities.
  * @returns {Array<{ season: number, gate_id: number, month: number, massInPounds: number, probability: number, version: Date }>}
  * An array of valid GrilseProbability records ready for database insertion.
  */
-export const processGrilseProbabilities = (records, season, gate) => {
-  const grilseProbabilities = []
-  for (const record of records) {
-    const { Weight, ...months } = record
-    const massInPounds = Number(Weight)
+export const processGrilseProbabilities = (csvData, season, gate) => {
+  if (!Array.isArray(csvData) || csvData.length < 2) {
+    throw new Error(
+      'Invalid CSV data: must contain a header row and at least one data row.'
+    )
+  }
 
-    Object.entries(months).forEach(([monthName, probability]) => {
-      const probabilityValue = Number(probability)
-      if (probabilityValue > 0) {
+  const [headers, ...rows] = csvData
+
+  const grilseProbabilities = []
+
+  for (const row of rows) {
+    const massInPounds = Number(row[0])
+    if (isNaN(massInPounds)) continue // Skip invalid rows
+
+    for (let i = 1; i < row.length; i++) {
+      const monthName = headers[i]
+      const probabilityValue = Number(row[i])
+
+      if (!isNaN(probabilityValue) && probabilityValue > 0) {
         grilseProbabilities.push({
           season: Number(season),
           gate_id: Number(gate),
@@ -97,8 +108,27 @@ export const processGrilseProbabilities = (records, season, gate) => {
           version: new Date()
         })
       }
-    })
+    }
   }
+
+  // for (const record of records) {
+  //   const { Weight, ...months } = record
+  //   const massInPounds = Number(Weight)
+
+  //   Object.entries(months).forEach(([monthName, probability]) => {
+  //     const probabilityValue = Number(probability)
+  //     if (probabilityValue > 0) {
+  //       grilseProbabilities.push({
+  //         season: Number(season),
+  //         gate_id: Number(gate),
+  //         month: getMonthNumberFromName(monthName),
+  //         massInPounds,
+  //         probability: probabilityValue,
+  //         version: new Date()
+  //       })
+  //     }
+  //   })
+  // }
   return grilseProbabilities
 }
 
@@ -140,13 +170,11 @@ export const validateAndParseCsvFile = async (file) => {
 
   const headers = records[0]
 
-  console.log(records)
-
   const errors = []
 
   // first header should always be Weight
   if (headers[0].toUpperCase() !== 'WEIGHT') {
-    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 0, column: 0 })
+    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 })
   }
 
   const visitedMonthHeaders = new Set()
@@ -155,12 +183,12 @@ export const validateAndParseCsvFile = async (file) => {
 
     // check if all headers contain the correct month names
     if (!MONTH_NAMES.includes(headerKey)) {
-      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 0, column: i })
+      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 1, column: i + 1 })
     }
 
     // check if there any months have been more than once
     if (visitedMonthHeaders.has(headerKey)) {
-      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 0, column: i })
+      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 1, column: i + 1 })
     } else {
       visitedMonthHeaders.add(headerKey)
     }

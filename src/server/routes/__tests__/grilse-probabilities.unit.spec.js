@@ -1,9 +1,8 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
-  parseGrilseProbabilitiesCsv,
   processGrilseProbabilities,
-  validateCsvFile
+  validateAndParseCsvFile
 } from '../../../services/grilse-probabilities.service.js'
 import {
   getMockResponseToolkit,
@@ -49,8 +48,10 @@ describe('grilse-probabilities.unit', () => {
 
     it('should return 201 amd create the records when the CSV is processed successfully', async () => {
       isGrilseProbabilityExistsForSeasonAndGate.mockResolvedValueOnce(false)
-      parseGrilseProbabilitiesCsv.mockResolvedValueOnce([
-        { Weight: '10', January: '0.2' }
+      validateAndParseCsvFile.mockResolvedValueOnce([
+        ['Weight', 'June'],
+        ['1', '1.0'],
+        ['2', '1.0']
       ])
       processGrilseProbabilities.mockReturnValueOnce([
         {
@@ -90,8 +91,10 @@ describe('grilse-probabilities.unit', () => {
     it('should delete existing data and create new if overwrite is set to true', async () => {
       isGrilseProbabilityExistsForSeasonAndGate.mockResolvedValueOnce(true)
 
-      parseGrilseProbabilitiesCsv.mockResolvedValueOnce([
-        { Weight: '10', January: '0.2' }
+      validateAndParseCsvFile.mockResolvedValueOnce([
+        ['Weight', 'June'],
+        ['1', '1.0'],
+        ['2', '1.0']
       ])
       processGrilseProbabilities.mockReturnValueOnce([
         {
@@ -118,8 +121,10 @@ describe('grilse-probabilities.unit', () => {
 
     it('should return a 201 and not create any records if there are no valid probabilities', async () => {
       isGrilseProbabilityExistsForSeasonAndGate.mockResolvedValueOnce(false)
-      parseGrilseProbabilitiesCsv.mockResolvedValueOnce([
-        { Weight: '10', January: '-0.2' }
+      validateAndParseCsvFile.mockResolvedValueOnce([
+        ['Weight', 'June'],
+        ['1', '1.0'],
+        ['2', '1.0']
       ])
       processGrilseProbabilities.mockReturnValueOnce([])
 
@@ -150,7 +155,7 @@ describe('grilse-probabilities.unit', () => {
     })
 
     it('should return a 400 error if validation fails', async () => {
-      validateCsvFile.mockImplementation(() => {
+      validateAndParseCsvFile.mockImplementation(() => {
         throw new GrilseValidationError({ status: 400 })
       })
       const request = {
@@ -167,7 +172,7 @@ describe('grilse-probabilities.unit', () => {
     })
 
     it('should return an error response with timestamp, message and path if validation fails', async () => {
-      validateCsvFile.mockImplementation(() => {
+      validateAndParseCsvFile.mockImplementation(() => {
         throw new GrilseValidationError()
       })
       const request = {
@@ -189,7 +194,7 @@ describe('grilse-probabilities.unit', () => {
     })
 
     it('should return an error field, if it is returned by GrilseValidationError', async () => {
-      validateCsvFile.mockImplementation(() => {
+      validateAndParseCsvFile.mockImplementation(() => {
         throw new GrilseValidationError({
           status: 400,
           error: 'This is an error'
@@ -213,7 +218,7 @@ describe('grilse-probabilities.unit', () => {
     })
 
     it('should return an errors array, if it is returned by GrilseValidationError', async () => {
-      validateCsvFile.mockImplementation(() => {
+      validateAndParseCsvFile.mockImplementation(() => {
         throw new GrilseValidationError({
           status: 400,
           errors: ['this is an error']
