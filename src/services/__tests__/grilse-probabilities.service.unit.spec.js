@@ -1,18 +1,12 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
-  parseGrilseProbabilitiesCsv,
   processGrilseProbabilities,
-  validateCsvFile
+  validateAndParseCsvFile
 } from '../grilse-probabilities.service.js'
 import { GrilseProbability } from '../../entities/index.js'
-import { GrilseValidationError } from '../../models/grilse-probability.model.js'
-import { parse } from 'csv-parse'
 
 jest.mock('../../entities/index.js')
-jest.mock('csv-parse', () => ({
-  parse: jest.fn()
-}))
 
 describe('grilse-probabilities.service.unit', () => {
   describe('isGrilseProbabilityExistsForSeasonAndGate', () => {
@@ -96,43 +90,6 @@ describe('grilse-probabilities.service.unit', () => {
       await expect(
         deleteGrilseProbabilitiesForSeasonAndGate(mockSeason, mockGate)
       ).rejects.toThrow('Database error')
-    })
-  })
-
-  describe('parseGrilseProbabilitiesCsv', () => {
-    const mockCsvData = `Weight,January,February,March
-10,0.2,0.3,0.1
-15,0.5,0.6,0.4`
-
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
-    it('should parse CSV data correctly', async () => {
-      const mockParsedData = [
-        { Weight: '10', January: '0.2', February: '0.3', March: '0.1' },
-        { Weight: '15', January: '0.5', February: '0.6', March: '0.4' }
-      ]
-
-      parse.mockImplementation((data, options, callback) => {
-        callback(null, mockParsedData)
-      })
-
-      const result = await parseGrilseProbabilitiesCsv(mockCsvData)
-
-      expect(result).toEqual(mockParsedData)
-    })
-
-    it('should throw an error if CSV parsing fails', async () => {
-      const mockError = new Error('CSV parsing error')
-
-      parse.mockImplementation((data, options, callback) => {
-        callback(mockError, null)
-      })
-
-      await expect(parseGrilseProbabilitiesCsv(mockCsvData)).rejects.toThrow(
-        'CSV parsing error'
-      )
     })
   })
 
@@ -221,9 +178,22 @@ describe('grilse-probabilities.service.unit', () => {
     })
   })
 
-  describe('validateCsvFile', () => {
+  describe('validateAndParseCsvFile', () => {
     beforeEach(() => {
       jest.clearAllMocks()
+    })
+
+    it('should return the data as a 2D array if it is valid', async () => {
+      const payload = `Weight,June,July,August
+1,1.0,1.0,1.0
+2,1.0,1.0,1.0
+      `
+
+      await expect(validateAndParseCsvFile(payload)).resolves.toStrictEqual([
+        ['Weight', 'June', 'July', 'August'],
+        ['1', '1.0', '1.0', '1.0'],
+        ['2', '1.0', '1.0', '1.0']
+      ])
     })
 
     it.each([
@@ -233,15 +203,60 @@ describe('grilse-probabilities.service.unit', () => {
       ['empty buffer', Buffer.from('')]
     ])(
       'should throw "File is empty or not a valid csv." error if the request is a %s',
-      (_, payload) => {
-        expect(() => validateCsvFile(payload)).toThrow(
-          new GrilseValidationError({
-            status: 422,
-            message: 'File is empty or not a valid csv.',
-            error: 'Unprocessable Entity'
-          })
-        )
+      async (_, payload) => {
+        await expect(() =>
+          validateAndParseCsvFile(payload)
+        ).rejects.toMatchObject({
+          status: 422,
+          message: 'File is empty or not a valid csv.',
+          error: 'Unprocessable Entity'
+        })
       }
     )
+
+    it('should return COLUMN_DISALLOWED if there is an invalid header', async () => {
+      const payload = `Weight,June,July,Unknown
+1,1.0,1.0,1.0
+2,1.0,1.0,1.0
+      `
+
+      await expect(() =>
+        validateAndParseCsvFile(payload)
+      ).rejects.toMatchObject({
+        status: 400,
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: [{ errorType: 'COLUMN_DISALLOWED', row: 0, column: 3 }]
+      })
+    })
+
+    it('should return MISSING_WEIGHT_HEADER if the weight column is missing', async () => {
+      const payload = `Bob,June,July,August
+1,1.0,1.0,1.0
+2,1.0,1.0,1.0
+      `
+
+      await expect(() =>
+        validateAndParseCsvFile(payload)
+      ).rejects.toMatchObject({
+        status: 400,
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: [{ errorType: 'MISSING_WEIGHT_HEADER', row: 0, column: 0 }]
+      })
+    })
+
+    it('should return DUPLICATE_HEADERS if a month is defined twice', async () => {
+      const payload = `Weight,June,July,August,July
+1,1.0,1.0,1.0,1.0
+2,1.0,1.0,1.0,1.0
+      `
+
+      await expect(() =>
+        validateAndParseCsvFile(payload)
+      ).rejects.toMatchObject({
+        status: 400,
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: [{ errorType: 'DUPLICATE_HEADERS', row: 0, column: 4 }]
+      })
+    })
   })
 })

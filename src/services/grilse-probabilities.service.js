@@ -3,6 +3,9 @@ import { GrilseProbability } from '../entities/index.js'
 import { GrilseValidationError } from '../models/grilse-probability.model.js'
 import { StatusCodes } from 'http-status-codes'
 import { parse } from 'csv-parse'
+import { promisify } from 'util'
+
+const parseAsync = promisify(parse)
 
 /**
  * Checks if grilse probabilities exist for a given season and gate.
@@ -42,6 +45,7 @@ export const deleteGrilseProbabilitiesForSeasonAndGate = (season, gate) => {
   })
 }
 
+// TODO remove this
 /**
  * Parses a CSV string containing grilse probability data into an array of objects.
  *
@@ -102,10 +106,18 @@ export const processGrilseProbabilities = (records, season, gate) => {
  * Validates the uploaded CSV file.
  *
  * @param {string|Buffer} file - The CSV file as a buffer or string
- * @returns {null} If there are no errors
- * @throws {Error} If the file is empty or not a valid CSV.
+ * @returns {Promise<Array<Array<string>>>} A promise that resolves to a 2D array of parsed CSV data.
+ * @throws {GrilseValidationError} If the file is empty, not a valid CSV, or contains validation errors.
+ *
+ * @example
+ * // Example of a successful return value:
+ * [
+ *   ["Weight", "June", "July", "August", "July"],
+ *   ["1", "1.0", "1.0", "1.0", "1.0"],
+ *   ["2", "1.0", "1.0", "1.0", "1.0"]
+ * ]
  */
-export const validateCsvFile = (file) => {
+export const validateAndParseCsvFile = async (file) => {
   const fileEmptyErrorDetails = {
     status: StatusCodes.UNPROCESSABLE_ENTITY,
     message: 'File is empty or not a valid csv.',
@@ -121,15 +133,20 @@ export const validateCsvFile = (file) => {
     throw new GrilseValidationError(fileEmptyErrorDetails)
   }
 
-  const records = parseGrilseProbabilitiesCsv(csvData)
+  const records = await parseAsync(csvData, {
+    skip_empty_lines: true,
+    trim: true
+  })
 
-  const headers = records[0].map((header) => header.toUpperCase())
+  const headers = records[0]
+
+  console.log(records)
 
   const errors = []
 
   // first header should always be Weight
   if (headers[0].toUpperCase() !== 'WEIGHT') {
-    errors.add({ errorType: 'MISSING_WEIGHT_HEADER', row: 0, column: 0 })
+    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 0, column: 0 })
   }
 
   const visitedMonthHeaders = new Set()
@@ -138,12 +155,12 @@ export const validateCsvFile = (file) => {
 
     // check if all headers contain the correct month names
     if (!MONTH_NAMES.includes(headerKey)) {
-      errors.add({ errorType: 'COLUMN_DISALLOWED', row: 0, column: i })
+      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 0, column: i })
     }
 
     // check if there any months have been more than once
     if (visitedMonthHeaders.has(headerKey)) {
-      errors.push({ type: 'DUPLICATE_HEADERS', row: 0, column: i })
+      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 0, column: i })
     } else {
       visitedMonthHeaders.add(headerKey)
     }
@@ -157,5 +174,5 @@ export const validateCsvFile = (file) => {
     })
   }
 
-  return null
+  return records
 }

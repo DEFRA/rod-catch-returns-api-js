@@ -35,7 +35,8 @@ export default [
           const { season, gate } = request.params
           const { overwrite } = request.query
 
-          validateCsvFile(request.payload)
+          // TODO process csv
+          await validateCsvFile(request.payload)
 
           const csvData = Buffer.isBuffer(request.payload)
             ? request.payload.toString('utf-8')
