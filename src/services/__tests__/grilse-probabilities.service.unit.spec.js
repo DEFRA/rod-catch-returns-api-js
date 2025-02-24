@@ -266,5 +266,20 @@ describe('grilse-probabilities.service.unit', () => {
         errors: expectedErrors
       })
     })
+
+    it('should return MISSING_MONTH_HEADER if the months are missing', async () => {
+      const payload = `Weight
+1
+2
+      `
+
+      await expect(() =>
+        validateAndParseCsvFile(payload)
+      ).rejects.toMatchObject({
+        status: 400,
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: [{ errorType: 'MISSING_MONTH_HEADER', row: 1, column: 1 }]
+      })
+    })
   })
 })
