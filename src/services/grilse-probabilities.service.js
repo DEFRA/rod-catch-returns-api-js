@@ -45,6 +45,7 @@ export const deleteGrilseProbabilitiesForSeasonAndGate = (season, gate) => {
   })
 }
 
+// TODO remove this
 /**
  * Processes grilse probability records from parsed CSV data.
  * Converts mass and probability values, maps month names to numeric values,
