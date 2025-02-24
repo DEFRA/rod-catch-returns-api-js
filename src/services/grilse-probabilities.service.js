@@ -80,10 +80,8 @@ export const parseGrilseProbabilitiesCsv = async (csvData) => {
  * An array of valid GrilseProbability records ready for database insertion.
  */
 export const processGrilseProbabilities = (csvData, season, gate) => {
-  if (!Array.isArray(csvData) || csvData.length < 2) {
-    throw new Error(
-      'Invalid CSV data: must contain a header row and at least one data row.'
-    )
+  if (!Array.isArray(csvData)) {
+    throw new Error('Invalid CSV data: input must be an array')
   }
 
   const [headers, ...rows] = csvData

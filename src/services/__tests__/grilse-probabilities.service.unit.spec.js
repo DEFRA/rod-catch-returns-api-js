@@ -93,7 +93,7 @@ describe('grilse-probabilities.service.unit', () => {
     })
   })
 
-  describe.skip('processGrilseProbabilities', () => {
+  describe('processGrilseProbabilities', () => {
     const mockSeason = 2024
     const mockGate = 1
 
@@ -103,8 +103,9 @@ describe('grilse-probabilities.service.unit', () => {
 
     it('should process records correctly and return valid probabilities', () => {
       const mockRecords = [
-        { Weight: '10', January: '0.2', February: '0.0', March: '0.5' },
-        { Weight: '15', January: '0.0', February: '0.6', March: '-0.1' }
+        ['Weight', 'January', 'February', 'March'],
+        ['10', '0.2', '0.0', '0.5'],
+        ['15', '0.0', '0.6', '-0.1']
       ]
 
       const result = processGrilseProbabilities(
@@ -143,8 +144,9 @@ describe('grilse-probabilities.service.unit', () => {
 
     it('should return only return records which have a probability of more than 0', () => {
       const mockRecords = [
-        { Weight: '10', January: '0.0', February: '-0.2', March: '-0.5' },
-        { Weight: '15', January: '-0.1', February: '0.5', March: '0.0' }
+        ['Weight', 'January', 'February', 'March'],
+        ['10', '0.0', '-0.2', '-0.5'],
+        ['15', '-0.1', '0.5', '0.0']
       ]
 
       const result = processGrilseProbabilities(
@@ -175,6 +177,14 @@ describe('grilse-probabilities.service.unit', () => {
       )
 
       expect(result).toEqual([])
+    })
+
+    it('should throw an error if an array is not passed in', () => {
+      const mockRecords = {}
+
+      expect(() =>
+        processGrilseProbabilities(mockRecords, mockSeason, mockGate)
+      ).toThrowError(new Error('Invalid CSV data: input must be an array'))
     })
   })
 
