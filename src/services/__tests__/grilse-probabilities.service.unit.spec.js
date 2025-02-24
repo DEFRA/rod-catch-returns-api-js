@@ -93,7 +93,7 @@ describe('grilse-probabilities.service.unit', () => {
     })
   })
 
-  describe.skip('processGrilseProbabilities', () => {
+  describe('processGrilseProbabilities', () => {
     const mockSeason = 2024
     const mockGate = 1
 
