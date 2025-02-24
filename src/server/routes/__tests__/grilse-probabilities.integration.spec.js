@@ -231,5 +231,33 @@ describe('grilse-probabilities.integration', () => {
       })
       expect(result.statusCode).toBe(400)
     })
+
+    it('should return an error if the csv does not have any months', async () => {
+      const fileBuffer = loadFixture('no-month-headings.csv')
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(JSON.parse(result.payload)).toStrictEqual({
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        path: '/api/reporting/reference/grilse-probabilities/2024/1',
+        errors: [
+          {
+            column: 1,
+            errorType: 'MISSING_MONTH_HEADER',
+            row: 1
+          }
+        ],
+        status: 400,
+        timestamp: expect.any(String)
+      })
+      expect(result.statusCode).toBe(400)
+    })
   })
 })

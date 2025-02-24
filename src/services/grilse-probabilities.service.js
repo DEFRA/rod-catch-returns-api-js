@@ -45,29 +45,6 @@ export const deleteGrilseProbabilitiesForSeasonAndGate = (season, gate) => {
   })
 }
 
-// TODO remove this
-/**
- * Parses a CSV string containing grilse probability data into an array of objects.
- *
- * @param {string} csvData - The CSV data as a string.
- * @returns {Promise<Object[]>} A promise that resolves to an array of objects,
- * each representing a row from the CSV with column headers as keys.
- * @throws {Error} If there is an error while parsing the CSV.
- */
-export const parseGrilseProbabilitiesCsv = async (csvData) => {
-  const records = await new Promise((resolve, reject) => {
-    parse(csvData, { columns: true, skip_empty_lines: true }, (err, output) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(output)
-      }
-    })
-  })
-
-  return records
-}
-
 /**
  * Processes grilse probability records from parsed CSV data.
  * Converts mass and probability values, maps month names to numeric values,
@@ -171,6 +148,14 @@ export const validateAndParseCsvFile = async (file) => {
     } else {
       visitedMonthHeaders.add(headerKey)
     }
+  }
+
+  if (visitedMonthHeaders.size === 0) {
+    errors.push({
+      errorType: 'MISSING_MONTH_HEADER',
+      row: 1,
+      column: headers.length
+    })
   }
 
   if (errors.length > 0) {
