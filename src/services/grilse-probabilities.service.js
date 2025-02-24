@@ -150,6 +150,7 @@ export const validateAndParseCsvFile = async (file) => {
     }
   }
 
+  // check if there are any valid months in the header
   if (visitedMonthHeaders.size === 0) {
     errors.push({
       errorType: 'MISSING_MONTH_HEADER',

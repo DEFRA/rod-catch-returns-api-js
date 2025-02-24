@@ -224,63 +224,46 @@ describe('grilse-probabilities.service.unit', () => {
       }
     )
 
-    it('should return COLUMN_DISALLOWED if there is an invalid header', async () => {
-      const payload = `Weight,June,July,Unknown
-1,1.0,1.0,1.0
-2,1.0,1.0,1.0
-      `
-
+    it.each([
+      [
+        'COLUMN_DISALLOWED if there is an invalid header',
+        `Weight,June,July,Unknown
+    1,1.0,1.0,1.0
+    2,1.0,1.0,1.0
+        `,
+        [{ errorType: 'COLUMN_DISALLOWED', row: 1, column: 4 }]
+      ],
+      [
+        'MISSING_WEIGHT_HEADER if the weight column is missing',
+        `Bob,June,July,August
+    1,1.0,1.0,1.0
+    2,1.0,1.0,1.0
+        `,
+        [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 }]
+      ],
+      [
+        'DUPLICATE_HEADERS if a month is defined twice',
+        `Weight,June,July,August,July
+    1,1.0,1.0,1.0,1.0
+    2,1.0,1.0,1.0,1.0
+        `,
+        [{ errorType: 'DUPLICATE_HEADERS', row: 1, column: 5 }]
+      ],
+      [
+        'MISSING_MONTH_HEADER if the months are missing',
+        `Weight
+    1
+    2
+        `,
+        [{ errorType: 'MISSING_MONTH_HEADER', row: 1, column: 1 }]
+      ]
+    ])('should return %s', async (_, payload, expectedErrors) => {
       await expect(() =>
         validateAndParseCsvFile(payload)
       ).rejects.toMatchObject({
         status: 400,
         message: '400 BAD_REQUEST "Invalid CSV data"',
-        errors: [{ errorType: 'COLUMN_DISALLOWED', row: 1, column: 4 }]
-      })
-    })
-
-    it('should return MISSING_WEIGHT_HEADER if the weight column is missing', async () => {
-      const payload = `Bob,June,July,August
-1,1.0,1.0,1.0
-2,1.0,1.0,1.0
-      `
-
-      await expect(() =>
-        validateAndParseCsvFile(payload)
-      ).rejects.toMatchObject({
-        status: 400,
-        message: '400 BAD_REQUEST "Invalid CSV data"',
-        errors: [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 }]
-      })
-    })
-
-    it('should return DUPLICATE_HEADERS if a month is defined twice', async () => {
-      const payload = `Weight,June,July,August,July
-1,1.0,1.0,1.0,1.0
-2,1.0,1.0,1.0,1.0
-      `
-
-      await expect(() =>
-        validateAndParseCsvFile(payload)
-      ).rejects.toMatchObject({
-        status: 400,
-        message: '400 BAD_REQUEST "Invalid CSV data"',
-        errors: [{ errorType: 'DUPLICATE_HEADERS', row: 1, column: 5 }]
-      })
-    })
-
-    it('should return MISSING_MONTH_HEADER if the months are missing', async () => {
-      const payload = `Weight
-1
-2
-      `
-
-      await expect(() =>
-        validateAndParseCsvFile(payload)
-      ).rejects.toMatchObject({
-        status: 400,
-        message: '400 BAD_REQUEST "Invalid CSV data"',
-        errors: [{ errorType: 'MISSING_MONTH_HEADER', row: 1, column: 1 }]
+        errors: expectedErrors
       })
     })
   })
