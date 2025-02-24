@@ -90,7 +90,6 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
 
   for (const row of rows) {
     const massInPounds = Number(row[0])
-    if (isNaN(massInPounds)) continue // Skip invalid rows
 
     for (let i = 1; i < row.length; i++) {
       const monthName = headers[i]
@@ -109,24 +108,6 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
     }
   }
 
-  // for (const record of records) {
-  //   const { Weight, ...months } = record
-  //   const massInPounds = Number(Weight)
-
-  //   Object.entries(months).forEach(([monthName, probability]) => {
-  //     const probabilityValue = Number(probability)
-  //     if (probabilityValue > 0) {
-  //       grilseProbabilities.push({
-  //         season: Number(season),
-  //         gate_id: Number(gate),
-  //         month: getMonthNumberFromName(monthName),
-  //         massInPounds,
-  //         probability: probabilityValue,
-  //         version: new Date()
-  //       })
-  //     }
-  //   })
-  // }
   return grilseProbabilities
 }
 
