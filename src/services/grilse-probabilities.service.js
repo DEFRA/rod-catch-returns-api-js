@@ -132,6 +132,8 @@ export const validateAndParseCsvFile = async (file) => {
 }
 
 /**
+ * Validates the headers of the CSV file.
+ *
  * @param {Array<string>} headers - The headers of the CSV file as an array of strings.
  * @throws {GrilseValidationError} If there are validation errors with the headers.
  */
