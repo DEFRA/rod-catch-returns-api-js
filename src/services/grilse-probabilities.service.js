@@ -146,7 +146,7 @@ export const validateHeaders = (headers) => {
 
   // first header should always be Weight
   if (headers[0].toUpperCase() !== 'WEIGHT') {
-    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 })
+    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 1, col: 1 })
   }
 
   const visitedMonthHeaders = new Set()
@@ -155,12 +155,12 @@ export const validateHeaders = (headers) => {
 
     // check if all headers contain the correct month names
     if (!MONTH_NAMES.includes(headerKey)) {
-      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 1, column: i + 1 })
+      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 1, col: i + 1 })
     }
 
     // check if there any months have been more than once
     if (visitedMonthHeaders.has(headerKey)) {
-      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 1, column: i + 1 })
+      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 1, col: i + 1 })
     } else {
       visitedMonthHeaders.add(headerKey)
     }
@@ -171,7 +171,7 @@ export const validateHeaders = (headers) => {
     errors.push({
       errorType: 'MISSING_MONTH_HEADER',
       row: 1,
-      column: headers.length
+      col: headers.length
     })
   }
 
