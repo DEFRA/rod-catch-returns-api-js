@@ -166,10 +166,26 @@ describe('grilse-probabilities.integration', () => {
         'missing months',
         'no-month-headings.csv',
         [{ column: 1, errorType: 'MISSING_MONTH_HEADER', row: 1 }]
+      ],
+      [
+        'a row which has a length that does not match the length of the headings',
+        'wrong-number-of-data-on-row.csv',
+        [
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 4, col: 8 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 5, col: 9 }
+        ]
+      ],
+      [
+        'a weight that is not a whole number',
+        'weight-not-whole-number.csv',
+        [
+          { errorType: 'NOT_WHOLE_NUMBER', row: 3, col: 1 },
+          { errorType: 'NOT_WHOLE_NUMBER', row: 4, col: 1 }
+        ]
       ]
     ])(
       'should return an error if csv contains %s',
-      async (errorType, fixture, expectedErrors) => {
+      async (_, fixture, expectedErrors) => {
         const fileBuffer = loadFixture(fixture)
 
         const result = await server.inject({
