@@ -52,6 +52,23 @@ describe('grilse-probabilities.integration', () => {
       expect(result.statusCode).toBe(201)
     })
 
+    it.only('should return 201 if the csv contains missing probabilities (should treat them as 0)', async () => {
+      const fileBuffer = loadFixture(
+        'missing-probabilities-treated-as-zeros.csv'
+      )
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(result.statusCode).toBe(201)
+    })
+
     it('should return an error if an object is passed in instead of a file', async () => {
       const result = await server.inject({
         method: 'POST',
@@ -200,6 +217,17 @@ describe('grilse-probabilities.integration', () => {
           { errorType: 'INVALID_PROBABILITY', row: 4, col: 8 },
           { errorType: 'INVALID_PROBABILITY', row: 5, col: 5 },
           { errorType: 'INVALID_PROBABILITY', row: 5, col: 8 }
+        ]
+      ],
+      [
+        'mixed errors',
+        'probability-not-between-0-and-1.csv',
+        [
+          { errorType: 'DUPLICATE_WEIGHT', row: 4, col: 1 },
+          { errorType: 'DUPLICATE_WEIGHT', row: 5, col: 1 },
+          { errorType: 'INVALID_PROBABILITY', row: 6, col: 4 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 7, col: 9 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 8, col: 9 }
         ]
       ]
     ])(
