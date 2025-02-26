@@ -186,6 +186,7 @@ export const validateHeaders = (headers) => {
 
 export const validateRows = (headers, rows) => {
   const errors = []
+  const weightsProcessed = new Set()
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
@@ -200,14 +201,33 @@ export const validateRows = (headers, rows) => {
       })
     }
 
-    const massInPounds = Number(row[0])
-
-    if (!Number.isInteger(massInPounds)) {
+    // Extract the weight (in lbs) that this row of data belongs to and check that it isn't duplicated from a previously processed row
+    const weightField = Number(row[0])
+    if (!Number.isInteger(weightField)) {
       errors.push({
         errorType: 'NOT_WHOLE_NUMBER',
         row: rowIndex,
         col: 1
       })
+    } else {
+      const weightValue = weightField
+      if (weightsProcessed.has(weightValue)) {
+        errors.push({ errorType: 'DUPLICATE_WEIGHT', row: rowIndex, col: 1 })
+      } else {
+        weightsProcessed.add(weightValue)
+      }
+    }
+
+    // For each month column that was discovered, check the probability is between 0 and 1
+    for (let j = 1; j < row.length; j++) {
+      const probability = Number(row[j])
+      if (probability < 0 || probability > 1) {
+        errors.push({
+          errorType: 'INVALID_PROBABILITY',
+          row: rowIndex,
+          col: j + 1
+        })
+      }
     }
   }
 

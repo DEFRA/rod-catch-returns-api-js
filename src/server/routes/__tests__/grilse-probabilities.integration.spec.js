@@ -182,6 +182,25 @@ describe('grilse-probabilities.integration', () => {
           { errorType: 'NOT_WHOLE_NUMBER', row: 3, col: 1 },
           { errorType: 'NOT_WHOLE_NUMBER', row: 4, col: 1 }
         ]
+      ],
+      [
+        'a weight that has been duplicated',
+        'duplicate-weight.csv',
+        [
+          { errorType: 'DUPLICATE_WEIGHT', row: 4, col: 1 },
+          { errorType: 'DUPLICATE_WEIGHT', row: 5, col: 1 }
+        ]
+      ],
+      [
+        'probabilities not between 0 and 1',
+        'probability-not-between-0-and-1.csv',
+        [
+          { errorType: 'INVALID_PROBABILITY', row: 3, col: 2 },
+          { errorType: 'INVALID_PROBABILITY', row: 4, col: 2 },
+          { errorType: 'INVALID_PROBABILITY', row: 4, col: 8 },
+          { errorType: 'INVALID_PROBABILITY', row: 5, col: 5 },
+          { errorType: 'INVALID_PROBABILITY', row: 5, col: 8 }
+        ]
       ]
     ])(
       'should return an error if csv contains %s',
