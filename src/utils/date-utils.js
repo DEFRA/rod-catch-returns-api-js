@@ -1,4 +1,4 @@
-export const MONTH_NAMES = [
+export const MONTH_NAMES = Object.freeze([
   'JANUARY',
   'FEBRUARY',
   'MARCH',
@@ -11,7 +11,8 @@ export const MONTH_NAMES = [
   'OCTOBER',
   'NOVEMBER',
   'DECEMBER'
-]
+])
+
 /**
  * Converts a month name to its corresponding month number.
  *

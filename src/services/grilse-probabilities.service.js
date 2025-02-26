@@ -124,7 +124,7 @@ export const validateAndParseCsvFile = async (file) => {
     trim: true
   })
 
-  const headers = records[0]
+  const [headers] = records
 
   validateHeaders(headers)
 
