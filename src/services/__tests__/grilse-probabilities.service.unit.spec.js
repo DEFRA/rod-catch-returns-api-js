@@ -1,18 +1,12 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
   isGrilseProbabilityExistsForSeasonAndGate,
-  parseGrilseProbabilitiesCsv,
   processGrilseProbabilities,
-  validateCsvFile
+  validateAndParseCsvFile
 } from '../grilse-probabilities.service.js'
 import { GrilseProbability } from '../../entities/index.js'
-import { GrilseValidationError } from '../../models/grilse-probability.model.js'
-import { parse } from 'csv-parse'
 
 jest.mock('../../entities/index.js')
-jest.mock('csv-parse', () => ({
-  parse: jest.fn()
-}))
 
 describe('grilse-probabilities.service.unit', () => {
   describe('isGrilseProbabilityExistsForSeasonAndGate', () => {
@@ -99,43 +93,6 @@ describe('grilse-probabilities.service.unit', () => {
     })
   })
 
-  describe('parseGrilseProbabilitiesCsv', () => {
-    const mockCsvData = `Weight,January,February,March
-10,0.2,0.3,0.1
-15,0.5,0.6,0.4`
-
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
-    it('should parse CSV data correctly', async () => {
-      const mockParsedData = [
-        { Weight: '10', January: '0.2', February: '0.3', March: '0.1' },
-        { Weight: '15', January: '0.5', February: '0.6', March: '0.4' }
-      ]
-
-      parse.mockImplementation((data, options, callback) => {
-        callback(null, mockParsedData)
-      })
-
-      const result = await parseGrilseProbabilitiesCsv(mockCsvData)
-
-      expect(result).toEqual(mockParsedData)
-    })
-
-    it('should throw an error if CSV parsing fails', async () => {
-      const mockError = new Error('CSV parsing error')
-
-      parse.mockImplementation((data, options, callback) => {
-        callback(mockError, null)
-      })
-
-      await expect(parseGrilseProbabilitiesCsv(mockCsvData)).rejects.toThrow(
-        'CSV parsing error'
-      )
-    })
-  })
-
   describe('processGrilseProbabilities', () => {
     const mockSeason = 2024
     const mockGate = 1
@@ -146,8 +103,9 @@ describe('grilse-probabilities.service.unit', () => {
 
     it('should process records correctly and return valid probabilities', () => {
       const mockRecords = [
-        { Weight: '10', January: '0.2', February: '0.0', March: '0.5' },
-        { Weight: '15', January: '0.0', February: '0.6', March: '-0.1' }
+        ['Weight', 'January', 'February', 'March'],
+        ['10', '0.2', '0.0', '0.5'],
+        ['15', '0.0', '0.6', '-0.1']
       ]
 
       const result = processGrilseProbabilities(
@@ -186,8 +144,9 @@ describe('grilse-probabilities.service.unit', () => {
 
     it('should return only return records which have a probability of more than 0', () => {
       const mockRecords = [
-        { Weight: '10', January: '0.0', February: '-0.2', March: '-0.5' },
-        { Weight: '15', January: '-0.1', February: '0.5', March: '0.0' }
+        ['Weight', 'January', 'February', 'March'],
+        ['10', '0.0', '-0.2', '-0.5'],
+        ['15', '-0.1', '0.5', '0.0']
       ]
 
       const result = processGrilseProbabilities(
@@ -219,11 +178,32 @@ describe('grilse-probabilities.service.unit', () => {
 
       expect(result).toEqual([])
     })
+
+    it('should throw an error if an array is not passed in', () => {
+      const mockRecords = {}
+
+      expect(() =>
+        processGrilseProbabilities(mockRecords, mockSeason, mockGate)
+      ).toThrowError(new Error('Invalid CSV data: input must be an array'))
+    })
   })
 
-  describe('validateCsvFile', () => {
+  describe('validateAndParseCsvFile', () => {
     beforeEach(() => {
       jest.clearAllMocks()
+    })
+
+    it('should return the data as a 2D array if it is valid', async () => {
+      const payload = `Weight,June,July,August
+1,1.0,1.0,1.0
+2,1.0,1.0,1.0
+      `
+
+      await expect(validateAndParseCsvFile(payload)).resolves.toStrictEqual([
+        ['Weight', 'June', 'July', 'August'],
+        ['1', '1.0', '1.0', '1.0'],
+        ['2', '1.0', '1.0', '1.0']
+      ])
     })
 
     it.each([
@@ -233,15 +213,58 @@ describe('grilse-probabilities.service.unit', () => {
       ['empty buffer', Buffer.from('')]
     ])(
       'should throw "File is empty or not a valid csv." error if the request is a %s',
-      (_, payload) => {
-        expect(() => validateCsvFile(payload)).toThrow(
-          new GrilseValidationError({
-            status: 422,
-            message: 'File is empty or not a valid csv.',
-            error: 'Unprocessable Entity'
-          })
-        )
+      async (_, payload) => {
+        await expect(() =>
+          validateAndParseCsvFile(payload)
+        ).rejects.toMatchObject({
+          status: 422,
+          message: 'File is empty or not a valid csv.',
+          error: 'Unprocessable Entity'
+        })
       }
     )
+
+    it.each([
+      [
+        'COLUMN_DISALLOWED if there is an invalid header',
+        `Weight,June,July,Unknown
+    1,1.0,1.0,1.0
+    2,1.0,1.0,1.0
+        `,
+        [{ errorType: 'COLUMN_DISALLOWED', row: 1, column: 4 }]
+      ],
+      [
+        'MISSING_WEIGHT_HEADER if the weight column is missing',
+        `Bob,June,July,August
+    1,1.0,1.0,1.0
+    2,1.0,1.0,1.0
+        `,
+        [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 }]
+      ],
+      [
+        'DUPLICATE_HEADERS if a month is defined twice',
+        `Weight,June,July,August,July
+    1,1.0,1.0,1.0,1.0
+    2,1.0,1.0,1.0,1.0
+        `,
+        [{ errorType: 'DUPLICATE_HEADERS', row: 1, column: 5 }]
+      ],
+      [
+        'MISSING_MONTH_HEADER if the months are missing',
+        `Weight
+    1
+    2
+        `,
+        [{ errorType: 'MISSING_MONTH_HEADER', row: 1, column: 1 }]
+      ]
+    ])('should return %s', async (_, payload, expectedErrors) => {
+      await expect(() =>
+        validateAndParseCsvFile(payload)
+      ).rejects.toMatchObject({
+        status: 400,
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: expectedErrors
+      })
+    })
   })
 })
