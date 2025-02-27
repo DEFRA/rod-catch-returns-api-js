@@ -45,7 +45,6 @@ export const deleteGrilseProbabilitiesForSeasonAndGate = (season, gate) => {
   })
 }
 
-// TODO remove this
 /**
  * Processes grilse probability records from parsed CSV data.
  * Converts mass and probability values, maps month names to numeric values,
@@ -73,6 +72,7 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
       const monthName = headers[i]
       const probabilityValue = Number(row[i])
 
+      // Only add a grilse probability value if the probability is greater than zero (reporting assumes 0 for any missing data point)
       if (!isNaN(probabilityValue) && probabilityValue > 0) {
         grilseProbabilities.push({
           season: Number(season),
@@ -126,8 +126,7 @@ export const validateAndParseCsvFile = async (file) => {
     relax_column_count: true // don't error if there are inconsistent columns count, we handle this by throwing ROW_HEADER_DISCREPANCY
   })
 
-  const [headers] = records
-  const rows = records.slice(1) // Everything after the first row
+  const [headers, ...rows] = records
 
   validateHeaders(headers)
   validateRows(headers, rows)
