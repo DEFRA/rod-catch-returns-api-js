@@ -72,6 +72,7 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
       const monthName = headers[i]
       const probabilityValue = Number(row[i])
 
+      // Only add a grilse probability value if the probability is greater than zero (reporting assumes 0 for any missing data point)
       if (!isNaN(probabilityValue) && probabilityValue > 0) {
         grilseProbabilities.push({
           season: Number(season),
@@ -121,12 +122,14 @@ export const validateAndParseCsvFile = async (file) => {
 
   const records = await parseAsync(csvData, {
     skip_empty_lines: true,
-    trim: true
+    trim: true,
+    relax_column_count: true // don't error if there are inconsistent columns count, we handle this by throwing ROW_HEADER_DISCREPANCY
   })
 
-  const [headers] = records
+  const [headers, ...rows] = records
 
   validateHeaders(headers)
+  validateRows(headers, rows)
 
   return records
 }
@@ -142,7 +145,7 @@ export const validateHeaders = (headers) => {
 
   // first header should always be Weight
   if (headers[0].toUpperCase() !== 'WEIGHT') {
-    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 })
+    errors.push({ errorType: 'MISSING_WEIGHT_HEADER', row: 1, col: 1 })
   }
 
   const visitedMonthHeaders = new Set()
@@ -151,12 +154,12 @@ export const validateHeaders = (headers) => {
 
     // check if all headers contain the correct month names
     if (!MONTH_NAMES.includes(headerKey)) {
-      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 1, column: i + 1 })
+      errors.push({ errorType: 'COLUMN_DISALLOWED', row: 1, col: i + 1 })
     }
 
     // check if there any months have been more than once
     if (visitedMonthHeaders.has(headerKey)) {
-      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 1, column: i + 1 })
+      errors.push({ errorType: 'DUPLICATE_HEADERS', row: 1, col: i + 1 })
     } else {
       visitedMonthHeaders.add(headerKey)
     }
@@ -167,8 +170,64 @@ export const validateHeaders = (headers) => {
     errors.push({
       errorType: 'MISSING_MONTH_HEADER',
       row: 1,
-      column: headers.length
+      col: headers.length
     })
+  }
+
+  if (errors.length > 0) {
+    throw new GrilseValidationError({
+      status: StatusCodes.BAD_REQUEST,
+      message: '400 BAD_REQUEST "Invalid CSV data"',
+      errors
+    })
+  }
+}
+
+export const validateRows = (headers, rows) => {
+  const errors = []
+  const weightsProcessed = new Set()
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowIndex = i + 2 // we are not looping through the headers so it is +2
+
+    if (headers.length !== row.length) {
+      const col = Math.min(headers.length, row.length) + 1
+      errors.push({
+        errorType: 'ROW_HEADER_DISCREPANCY',
+        row: rowIndex,
+        col
+      })
+    }
+
+    // Extract the weight (in lbs) that this row of data belongs to and check that it isn't duplicated from a previously processed row
+    const weightField = Number(row[0])
+    if (!Number.isInteger(weightField)) {
+      errors.push({
+        errorType: 'NOT_WHOLE_NUMBER',
+        row: rowIndex,
+        col: 1
+      })
+    } else {
+      const weightValue = weightField
+      if (weightsProcessed.has(weightValue)) {
+        errors.push({ errorType: 'DUPLICATE_WEIGHT', row: rowIndex, col: 1 })
+      } else {
+        weightsProcessed.add(weightValue)
+      }
+    }
+
+    // For each month column that was discovered, check the probability is between 0 and 1
+    for (let j = 1; j < row.length; j++) {
+      const probability = Number(row[j])
+      if (probability < 0 || probability > 1) {
+        errors.push({
+          errorType: 'INVALID_PROBABILITY',
+          row: rowIndex,
+          col: j + 1
+        })
+      }
+    }
   }
 
   if (errors.length > 0) {

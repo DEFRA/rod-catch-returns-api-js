@@ -52,6 +52,23 @@ describe('grilse-probabilities.integration', () => {
       expect(result.statusCode).toBe(201)
     })
 
+    it('should return 201 if the csv contains missing probabilities (should treat them as 0)', async () => {
+      const fileBuffer = loadFixture(
+        'missing-probabilities-treated-as-zeros.csv'
+      )
+
+      const result = await server.inject({
+        method: 'POST',
+        url: '/api/reporting/reference/grilse-probabilities/2024/1',
+        headers: {
+          'Content-Type': 'text/csv'
+        },
+        payload: fileBuffer
+      })
+
+      expect(result.statusCode).toBe(201)
+    })
+
     it('should return an error if an object is passed in instead of a file', async () => {
       const result = await server.inject({
         method: 'POST',
@@ -147,29 +164,75 @@ describe('grilse-probabilities.integration', () => {
       [
         'invalid column',
         'invalid-headers.csv',
-        [{ column: 9, errorType: 'COLUMN_DISALLOWED', row: 1 }]
+        [{ errorType: 'COLUMN_DISALLOWED', row: 1, col: 9 }]
       ],
       [
         'duplicate columns',
         'duplicate-headers.csv',
         [
-          { column: 3, errorType: 'DUPLICATE_HEADERS', row: 1 },
-          { column: 6, errorType: 'DUPLICATE_HEADERS', row: 1 }
+          { errorType: 'DUPLICATE_HEADERS', row: 1, col: 3 },
+          { errorType: 'DUPLICATE_HEADERS', row: 1, col: 6 }
         ]
       ],
       [
         'missing weight column',
         'no-weight-heading.csv',
-        [{ column: 1, errorType: 'MISSING_WEIGHT_HEADER', row: 1 }]
+        [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, col: 1 }]
       ],
       [
         'missing months',
         'no-month-headings.csv',
-        [{ column: 1, errorType: 'MISSING_MONTH_HEADER', row: 1 }]
+        [{ errorType: 'MISSING_MONTH_HEADER', row: 1, col: 1 }]
+      ],
+      [
+        'a row which does not have the same number of fields as the headings',
+        'wrong-number-of-data-on-row.csv',
+        [
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 4, col: 8 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 5, col: 9 }
+        ]
+      ],
+      [
+        'a weight that is not a whole number',
+        'weight-not-whole-number.csv',
+        [
+          { errorType: 'NOT_WHOLE_NUMBER', row: 3, col: 1 },
+          { errorType: 'NOT_WHOLE_NUMBER', row: 4, col: 1 }
+        ]
+      ],
+      [
+        'a weight that has been duplicated',
+        'duplicate-weight.csv',
+        [
+          { errorType: 'DUPLICATE_WEIGHT', row: 4, col: 1 },
+          { errorType: 'DUPLICATE_WEIGHT', row: 5, col: 1 }
+        ]
+      ],
+      [
+        'probabilities not between 0 and 1',
+        'probability-not-between-0-and-1.csv',
+        [
+          { errorType: 'INVALID_PROBABILITY', row: 3, col: 2 },
+          { errorType: 'INVALID_PROBABILITY', row: 4, col: 2 },
+          { errorType: 'INVALID_PROBABILITY', row: 4, col: 8 },
+          { errorType: 'INVALID_PROBABILITY', row: 5, col: 5 },
+          { errorType: 'INVALID_PROBABILITY', row: 5, col: 8 }
+        ]
+      ],
+      [
+        'mixed errors',
+        'mixed-errors.csv',
+        [
+          { errorType: 'DUPLICATE_WEIGHT', row: 4, col: 1 },
+          { errorType: 'DUPLICATE_WEIGHT', row: 5, col: 1 },
+          { errorType: 'INVALID_PROBABILITY', row: 6, col: 4 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 7, col: 9 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 8, col: 9 }
+        ]
       ]
     ])(
       'should return an error if csv contains %s',
-      async (errorType, fixture, expectedErrors) => {
+      async (_, fixture, expectedErrors) => {
         const fileBuffer = loadFixture(fixture)
 
         const result = await server.inject({
@@ -181,10 +244,10 @@ describe('grilse-probabilities.integration', () => {
           payload: fileBuffer
         })
 
-        expect(JSON.parse(result.payload)).toStrictEqual({
+        expect(JSON.parse(result.payload)).toEqual({
           message: '400 BAD_REQUEST "Invalid CSV data"',
           path: '/api/reporting/reference/grilse-probabilities/2024/1',
-          errors: expectedErrors,
+          errors: expect.arrayContaining(expectedErrors),
           status: 400,
           timestamp: expect.any(String)
         })

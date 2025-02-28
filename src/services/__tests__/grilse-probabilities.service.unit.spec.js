@@ -231,7 +231,7 @@ describe('grilse-probabilities.service.unit', () => {
     1,1.0,1.0,1.0
     2,1.0,1.0,1.0
         `,
-        [{ errorType: 'COLUMN_DISALLOWED', row: 1, column: 4 }]
+        [{ errorType: 'COLUMN_DISALLOWED', row: 1, col: 4 }]
       ],
       [
         'MISSING_WEIGHT_HEADER if the weight column is missing',
@@ -239,7 +239,7 @@ describe('grilse-probabilities.service.unit', () => {
     1,1.0,1.0,1.0
     2,1.0,1.0,1.0
         `,
-        [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, column: 1 }]
+        [{ errorType: 'MISSING_WEIGHT_HEADER', row: 1, col: 1 }]
       ],
       [
         'DUPLICATE_HEADERS if a month is defined twice',
@@ -247,7 +247,7 @@ describe('grilse-probabilities.service.unit', () => {
     1,1.0,1.0,1.0,1.0
     2,1.0,1.0,1.0,1.0
         `,
-        [{ errorType: 'DUPLICATE_HEADERS', row: 1, column: 5 }]
+        [{ errorType: 'DUPLICATE_HEADERS', row: 1, col: 5 }]
       ],
       [
         'MISSING_MONTH_HEADER if the months are missing',
@@ -255,7 +255,46 @@ describe('grilse-probabilities.service.unit', () => {
     1
     2
         `,
-        [{ errorType: 'MISSING_MONTH_HEADER', row: 1, column: 1 }]
+        [{ errorType: 'MISSING_MONTH_HEADER', row: 1, col: 1 }]
+      ],
+      [
+        'ROW_HEADER_DISCREPANCY if the number of fields in a row that does not match the number of headings',
+        `Weight,June,July
+    1,0.5,0.5,0.5
+    2,0.5
+        `,
+        [
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 2, col: 4 },
+          { errorType: 'ROW_HEADER_DISCREPANCY', row: 3, col: 3 }
+        ]
+      ],
+      [
+        'NOT_WHOLE_NUMBER if any of the weights are not whole numbers',
+        `Weight,June,July
+    1.1,0.5,0.5
+    2,0.5,0.5
+        `,
+        [{ errorType: 'NOT_WHOLE_NUMBER', row: 2, col: 1 }]
+      ],
+      [
+        'DUPLICATE_WEIGHT if any of the weights duplicated',
+        `Weight,June,July
+    1,0.5,0.5
+    2,0.5,0.5
+    1,0.5,0.5
+        `,
+        [{ errorType: 'DUPLICATE_WEIGHT', row: 4, col: 1 }]
+      ],
+      [
+        'INVALID_PROBABILITY if any of the probabilities are less than 0 or more than 1',
+        `Weight,June,July
+    1,1.5,0.5
+    2,0.5,-0.5
+        `,
+        [
+          { errorType: 'INVALID_PROBABILITY', row: 2, col: 2 },
+          { errorType: 'INVALID_PROBABILITY', row: 3, col: 3 }
+        ]
       ]
     ])('should return %s', async (_, payload, expectedErrors) => {
       await expect(() =>
