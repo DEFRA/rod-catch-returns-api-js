@@ -37,7 +37,8 @@ export const getGrilseProbabilitiesBySeasonRange = async (
     },
     order: [
       ['season', 'DESC'], // Sort by season, highest first
-      ['month', 'ASC'] // Sort by month, lowest first
+      ['month', 'ASC'], // Sort by month, lowest first
+      ['massInPounds', 'ASC'] // Sort by mass, lowest first
     ]
   })
 }
