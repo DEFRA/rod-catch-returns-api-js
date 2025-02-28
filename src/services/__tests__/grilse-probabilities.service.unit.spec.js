@@ -1,14 +1,100 @@
+import { GrilseProbability, GrilseWeightGate } from '../../entities/index.js'
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
+  generateCsvFromGrilseProbabilities,
+  getGrilseProbabilitiesBySeasonRange,
   isGrilseProbabilityExistsForSeasonAndGate,
   processGrilseProbabilities,
   validateAndParseCsvFile
 } from '../grilse-probabilities.service.js'
-import { GrilseProbability } from '../../entities/index.js'
+import { Op } from 'sequelize'
 
 jest.mock('../../entities/index.js')
 
 describe('grilse-probabilities.service.unit', () => {
+  describe('getGrilseProbabilitiesBySeasonRange', () => {
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return grilse probabilities for the given season range', async () => {
+      const mockData = [
+        { season: 2024, month: 2, massInPounds: 4, probability: 0.7 },
+        { season: 2023, month: 1, massInPounds: 2, probability: 0.5 }
+      ]
+      GrilseProbability.findAll.mockResolvedValue(mockData)
+
+      const result = await getGrilseProbabilitiesBySeasonRange(2023, 2024)
+
+      expect(result).toEqual(mockData)
+    })
+
+    it('should call findAll with the correct sorting and associations', async () => {
+      const startSeason = 2023
+      const endSeason = 2024
+      const mockData = [
+        { season: 2024, month: 2, massInPounds: 4, probability: 0.7 },
+        { season: 2023, month: 1, massInPounds: 2, probability: 0.5 }
+      ]
+      GrilseProbability.findAll.mockResolvedValue(mockData)
+
+      await getGrilseProbabilitiesBySeasonRange(startSeason, endSeason)
+
+      expect(GrilseProbability.findAll).toHaveBeenCalledWith({
+        where: { season: { [Op.between]: [startSeason, endSeason] } },
+        include: {
+          model: GrilseWeightGate,
+          required: true
+        },
+        order: [
+          ['season', 'DESC'],
+          ['month', 'ASC'],
+          ['massInPounds', 'ASC']
+        ]
+      })
+    })
+
+    it('should return an empty array if no records exist', async () => {
+      GrilseProbability.findAll.mockResolvedValue([])
+
+      const result = await getGrilseProbabilitiesBySeasonRange(2023, 2024)
+
+      expect(result).toEqual([])
+    })
+
+    it('should throw an error if startSeason is missing', async () => {
+      await expect(
+        getGrilseProbabilitiesBySeasonRange(null, 2024)
+      ).rejects.toThrow(
+        'Invalid season range. Ensure startSeason is less than or equal to endSeason.'
+      )
+    })
+
+    it('should throw an error if endSeason is missing', async () => {
+      await expect(
+        getGrilseProbabilitiesBySeasonRange(2023, null)
+      ).rejects.toThrow(
+        'Invalid season range. Ensure startSeason is less than or equal to endSeason.'
+      )
+    })
+
+    it('should throw an error if startSeason is greater than endSeason', async () => {
+      await expect(
+        getGrilseProbabilitiesBySeasonRange(2025, 2023)
+      ).rejects.toThrow(
+        'Invalid season range. Ensure startSeason is less than or equal to endSeason.'
+      )
+    })
+
+    it('should throw an error if the database query fails', async () => {
+      GrilseProbability.findAll.mockRejectedValue(new Error('Database error'))
+
+      await expect(
+        getGrilseProbabilitiesBySeasonRange(2023, 2024)
+      ).rejects.toThrow('Database error')
+    })
+  })
+
   describe('isGrilseProbabilityExistsForSeasonAndGate', () => {
     const mockSeason = '2024'
     const mockGate = '1'
@@ -304,6 +390,69 @@ describe('grilse-probabilities.service.unit', () => {
         message: '400 BAD_REQUEST "Invalid CSV data"',
         errors: expectedErrors
       })
+    })
+  })
+
+  describe('generateCsvFromGrilseProbabilities', () => {
+    it('should generate a CSV from valid grilse probabilities', () => {
+      const input = [
+        {
+          season: 2024,
+          month: 6,
+          massInPounds: 1,
+          probability: '1.0000000000000000',
+          GrilseWeightGate: { name: 'Dee' }
+        },
+        {
+          season: 2024,
+          month: 7,
+          massInPounds: 2,
+          probability: '0.5000000000000000',
+          GrilseWeightGate: { name: 'Tamar' }
+        }
+      ]
+
+      const expectedCsv = `Season,Gate,Month,Mass (lbs),Probability
+2024,Dee,6,1,1.0000000000000000
+2024,Tamar,7,2,0.5000000000000000`
+
+      expect(generateCsvFromGrilseProbabilities(input)).toBe(expectedCsv)
+    })
+
+    it('should use "Unknown" for missing GrilseWeightGate', () => {
+      const input = [
+        {
+          season: 2024,
+          month: 6,
+          massInPounds: 1,
+          probability: '1.0000000000000000'
+        }
+      ]
+
+      const expectedCsv = `Season,Gate,Month,Mass (lbs),Probability
+2024,Unknown,6,1,1.0000000000000000`
+
+      expect(generateCsvFromGrilseProbabilities(input)).toBe(expectedCsv)
+    })
+
+    it('should return only the header for an empty input array', () => {
+      const expectedCsv = 'Season,Gate,Month,Mass (lbs),Probability'
+      expect(generateCsvFromGrilseProbabilities([])).toBe(expectedCsv)
+    })
+
+    it('should handle large datasets correctly', () => {
+      const input = Array.from({ length: 1000 }, (_, i) => ({
+        season: 2024,
+        month: (i % 12) + 1,
+        massInPounds: (i % 10) + 1,
+        probability: (1 - i / 1000).toFixed(16),
+        GrilseWeightGate: { name: `Gate ${i % 5}` }
+      }))
+
+      const result = generateCsvFromGrilseProbabilities(input)
+      const lines = result.split('\n')
+
+      expect(lines.length).toBe(1001) // 1000 data rows + header
     })
   })
 })

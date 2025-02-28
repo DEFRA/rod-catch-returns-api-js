@@ -1,17 +1,18 @@
 import {
-  grilseProbabilityRequestParamSchema,
-  grilseProbabilityRequestQuerySchema
+  postGrilseProbabilityRequestParamSchema,
+  postGrilseProbabilityRequestQuerySchema
 } from '../grilse-probabilities.schema.js'
 
 describe('grilse-probabilities.schema.unit', () => {
-  describe('grilseProbabilityRequestParamSchema', () => {
+  describe('postGrilseProbabilityRequestParamSchema', () => {
     it.each([
       ['numbers', { season: 2024, gate: 1 }],
       ['strings', { season: '2024', gate: '1' }]
     ])(
       'should validate successfully when "season" and "gate" are provided as %s',
       (_, params) => {
-        const { error } = grilseProbabilityRequestParamSchema.validate(params)
+        const { error } =
+          postGrilseProbabilityRequestParamSchema.validate(params)
 
         expect(error).toBeUndefined()
       }
@@ -21,7 +22,7 @@ describe('grilse-probabilities.schema.unit', () => {
       ['season', { gate: 1 }],
       ['gate', { season: 2024 }]
     ])('should return an error if %s is missing', (field, params) => {
-      const { error } = grilseProbabilityRequestParamSchema.validate(params)
+      const { error } = postGrilseProbabilityRequestParamSchema.validate(params)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain(`"${field}" is required`)
@@ -31,14 +32,14 @@ describe('grilse-probabilities.schema.unit', () => {
       ['season', { season: 'abc', gate: 1 }],
       ['gate', { season: 2024, gate: 'abc' }]
     ])('should return an error if a %s is not a number', (field, params) => {
-      const { error } = grilseProbabilityRequestParamSchema.validate(params)
+      const { error } = postGrilseProbabilityRequestParamSchema.validate(params)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain(`"${field}" must be a number`)
     })
   })
 
-  describe('grilseProbabilityRequestQuerySchema', () => {
+  describe('postGrilseProbabilityRequestQuerySchema', () => {
     it.each([
       ['true as a boolean', { overwrite: true }],
       ['false as a boolean', { overwrite: false }],
@@ -46,14 +47,14 @@ describe('grilse-probabilities.schema.unit', () => {
       ['false as a string', { overwrite: 'false' }],
       ['not provided', {}]
     ])('should validate successfully when "overwrite" is %s', (_, query) => {
-      const { error } = grilseProbabilityRequestQuerySchema.validate(query)
+      const { error } = postGrilseProbabilityRequestQuerySchema.validate(query)
 
       expect(error).toBeUndefined()
     })
 
     it('should return an error if "overwrite" is not a boolean', () => {
       const query = { overwrite: 'bob' }
-      const { error } = grilseProbabilityRequestQuerySchema.validate(query)
+      const { error } = postGrilseProbabilityRequestQuerySchema.validate(query)
 
       expect(error).toBeDefined()
       expect(error.details[0].message).toContain(

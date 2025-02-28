@@ -1,11 +1,47 @@
+import { GrilseProbability, GrilseWeightGate } from '../entities/index.js'
 import { MONTH_NAMES, getMonthNumberFromName } from '../utils/date-utils.js'
-import { GrilseProbability } from '../entities/index.js'
 import { GrilseValidationError } from '../models/grilse-probability.model.js'
+import { Op } from 'sequelize'
 import { StatusCodes } from 'http-status-codes'
 import { parse } from 'csv-parse'
 import { promisify } from 'util'
 
 const parseAsync = promisify(parse)
+
+/**
+ * Get the grilse probabilities for a given season range.
+ *
+ * @param {number} startSeason - The start of the season range (e.g., 2023).
+ * @param {number} endSeason - The end of the season range (e.g., 2025).
+ * @returns {Promise<Array<GrilseProbability>>} - Resolves to an array of GrilseProbability
+ */
+export const getGrilseProbabilitiesBySeasonRange = async (
+  startSeason,
+  endSeason
+) => {
+  if (!startSeason || !endSeason || startSeason > endSeason) {
+    throw new Error(
+      'Invalid season range. Ensure startSeason is less than or equal to endSeason.'
+    )
+  }
+
+  return GrilseProbability.findAll({
+    where: {
+      season: {
+        [Op.between]: [startSeason, endSeason]
+      }
+    },
+    include: {
+      model: GrilseWeightGate,
+      required: true
+    },
+    order: [
+      ['season', 'DESC'], // Sort by season, highest first
+      ['month', 'ASC'], // Sort by month, lowest first
+      ['massInPounds', 'ASC'] // Sort by mass, lowest first
+    ]
+  })
+}
 
 /**
  * Checks if grilse probabilities exist for a given season and gate.
@@ -237,4 +273,21 @@ export const validateRows = (headers, rows) => {
       errors
     })
   }
+}
+
+/**
+ * Generates a CSV string from grilse probabilities and associated weight gates.
+ *
+ * @param {Array<GrilseProbability} grilseProbabilities - An array of grilse probability objects with associated weight gates.
+ * @returns {string} - A CSV string representing the grilse probabilities.
+ */
+export const generateCsvFromGrilseProbabilities = (grilseProbabilities) => {
+  const header = 'Season,Gate,Month,Mass (lbs),Probability'
+
+  const rows = grilseProbabilities.map((grilseProbability) => {
+    const foundGrilseWeightGate = grilseProbability?.GrilseWeightGate
+    return `${grilseProbability.season},${foundGrilseWeightGate ? foundGrilseWeightGate?.name : 'Unknown'},${grilseProbability.month},${grilseProbability.massInPounds},${grilseProbability.probability}`
+  })
+
+  return [header, ...rows].join('\n')
 }
