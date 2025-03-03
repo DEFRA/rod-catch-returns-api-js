@@ -18,14 +18,16 @@ export const postGrilseProbabilityRequestQuerySchema = Joi.object({
 })
 
 export const getGrilseProbabilityRequestParamSchema = Joi.object({
-  season: Joi.alternatives().try(
-    Joi.string()
-      .regex(/^\d+$/)
-      .required()
-      .description('A single season year (e.g., 2024)'),
-    Joi.string()
-      .pattern(/^\d{4}-\d{4}$/)
-      .required()
-      .description('A season range in the format YYYY-YYYY (e.g., 2023-2025)')
-  )
+  season: Joi.alternatives()
+    .try(
+      Joi.string()
+        .regex(/^\d+$/)
+        .required()
+        .description('A single season year (e.g., 2024)'),
+      Joi.string()
+        .pattern(/^\d{4}-\d{4}$/)
+        .required()
+        .description('A season range in the format YYYY-YYYY (e.g., 2023-2025)')
+    )
+    .required()
 })

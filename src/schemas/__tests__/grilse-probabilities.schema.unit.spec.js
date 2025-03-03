@@ -1,4 +1,5 @@
 import {
+  getGrilseProbabilityRequestParamSchema,
   postGrilseProbabilityRequestParamSchema,
   postGrilseProbabilityRequestQuerySchema
 } from '../grilse-probabilities.schema.js'
@@ -60,6 +61,36 @@ describe('grilse-probabilities.schema.unit', () => {
       expect(error.details[0].message).toContain(
         '"overwrite" must be a boolean'
       )
+    })
+  })
+
+  describe('getGrilseProbabilityRequestParamSchema', () => {
+    it.each([
+      ['a single year as a string', { season: '2024' }],
+      ['a season range', { season: '2023-2025' }]
+    ])('should validate successfully when "season" is %s', (_, params) => {
+      const { error } = getGrilseProbabilityRequestParamSchema.validate(params)
+
+      expect(error).toBeUndefined()
+    })
+
+    it('should return an error if "season" is missing', () => {
+      const params = {}
+      const { error } = getGrilseProbabilityRequestParamSchema.validate(params)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"season" is required')
+    })
+
+    it.each([
+      ['not a number', { season: 'abcd' }],
+      ['an invalid range format', { season: '2023/2025' }],
+      ['a range with non-numeric values', { season: '20ab-20cd' }]
+    ])('should return an error if "season" is %s', (_, params) => {
+      const { error } = getGrilseProbabilityRequestParamSchema.validate(params)
+
+      expect(error).toBeDefined()
+      expect(error.details[0].message).toContain('"season"')
     })
   })
 })
