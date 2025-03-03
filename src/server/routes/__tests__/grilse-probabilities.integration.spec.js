@@ -306,11 +306,44 @@ describe('grilse-probabilities.integration', () => {
       expect(result.statusCode).toBe(200)
     })
 
+    it('should return 200 and a result if the season is a range, but one of the years specified contains no data', async () => {
+      // upload multiple seasons
+      const seasons = ['2023', '2024']
+      for (const season of seasons) {
+        const fileBuffer = loadFixture('valid-grilse-data-10-datapoints.csv')
+        await uploadFile(
+          server,
+          `/api/reporting/reference/grilse-probabilities/${season}/1`,
+          fileBuffer
+        )
+      }
+
+      // No data for 2022
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2022-2024'
+      })
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
     it('should return 404 if there is no result for the specified season', async () => {
       // upload multiple seasons
       const result = await server.inject({
         method: 'GET',
         url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+
+    it('should return 404 if there is no result for the specified season range', async () => {
+      // upload multiple seasons
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2023-2024'
       })
 
       expect(result.statusCode).toBe(404)
