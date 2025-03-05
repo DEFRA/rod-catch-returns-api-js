@@ -11,6 +11,7 @@ import SmallCatches from './small-catches.js'
 import Species from './species.js'
 import Static from './static.js'
 import Submissions from './submissions.js'
+import SystemUsers from './system-users.js'
 
 export const apiPrefixRoutes = [].concat(
   Activity,
@@ -24,7 +25,8 @@ export const apiPrefixRoutes = [].concat(
   Rivers,
   SmallCatches,
   Species,
-  Submissions
+  Submissions,
+  SystemUsers
 )
 
 export const rootRoutes = [].concat(Static)

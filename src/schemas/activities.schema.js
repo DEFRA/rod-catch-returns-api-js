@@ -16,6 +16,7 @@ import Joi from 'joi'
 import { isRiverInternal } from '../services/rivers.service.js'
 
 const validateDaysFished = (daysFishedOther, helper) => {
+  console.log(helper.prefs.context.headers)
   const daysFishedWithMandatoryRelease =
     helper.state.ancestors[0].daysFishedWithMandatoryRelease
 
