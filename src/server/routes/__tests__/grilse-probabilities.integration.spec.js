@@ -6,8 +6,6 @@ import path from 'path'
 describe('grilse-probabilities.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
-  const season = 2024
-  const gate = 1
 
   beforeAll(async () => {
     server = await initialiseServer()
@@ -17,11 +15,10 @@ describe('grilse-probabilities.integration', () => {
     await server.stop()
   })
 
-  const deleteGrilseProbabilitiesForSeasonAndGate = () => {
+  const deleteGrilseProbabilitiesForSeasons = (seasons) => {
     return GrilseProbability.destroy({
       where: {
-        season,
-        gate_id: gate
+        season: seasons
       }
     })
   }
@@ -32,24 +29,40 @@ describe('grilse-probabilities.integration', () => {
     return fileBuffer
   }
 
+  const uploadFile = (server, url, payload) => {
+    return server.inject({
+      method: 'POST',
+      url,
+      headers: {
+        'Content-Type': 'text/csv'
+      },
+      payload
+    })
+  }
+
   describe('POST /api/reporting/reference/grilse-probabilities/{season}/{gate}', () => {
     beforeEach(async () => {
-      await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
+      await deleteGrilseProbabilitiesForSeasons([2024])
     })
 
     it('should return 201 if the csv file is uploaded successfully', async () => {
       const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
-      const result = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const result = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
 
       expect(result.statusCode).toBe(201)
+      expect(result.payload).toBe('')
+
+      // check probabilities have uploaded successfully
+      const getResult = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+      expect(getResult.payload).toMatchSnapshot()
     })
 
     it('should return 201 if the csv contains missing probabilities (should treat them as 0)', async () => {
@@ -57,16 +70,20 @@ describe('grilse-probabilities.integration', () => {
         'missing-probabilities-treated-as-zeros.csv'
       )
 
-      const result = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const result = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
 
       expect(result.statusCode).toBe(201)
+
+      // check probabilities have uploaded successfully
+      const getResult = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+      expect(getResult.payload).toMatchSnapshot()
     })
 
     it('should return an error if an object is passed in instead of a file', async () => {
@@ -89,24 +106,18 @@ describe('grilse-probabilities.integration', () => {
     it('should return an error if the data already exists in the database and ovewrite is false', async () => {
       const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
-      const resultSuccess = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const resultSuccess = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
+        fileBuffer
+      )
       expect(resultSuccess.statusCode).toBe(201)
 
-      const resultError = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const resultError = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=false',
+        fileBuffer
+      )
       expect(resultError.statusCode).toBe(409)
       expect(JSON.parse(resultError.payload)).toStrictEqual({
         message:
@@ -117,38 +128,36 @@ describe('grilse-probabilities.integration', () => {
     it('should return 201 if the data has already been uploaded and overwrite is true', async () => {
       const fileBuffer = loadFixture('valid-grilse-data-69-datapoints.csv')
 
-      const result = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const result = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
       expect(result.statusCode).toBe(201)
 
-      const resultOverwrite = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=true',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const resultOverwrite = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1?overwrite=true',
+        fileBuffer
+      )
       expect(resultOverwrite.statusCode).toBe(201)
+
+      // check probabilities have uploaded successfully
+      const getResult = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+      expect(getResult.payload).toMatchSnapshot()
     })
 
     it('should return an error if an invalid csv is passed in', async () => {
       const fileBuffer = loadFixture('invalid-csv.csv')
 
-      const result = await server.inject({
-        method: 'POST',
-        url: '/api/reporting/reference/grilse-probabilities/2024/1',
-        headers: {
-          'Content-Type': 'text/csv'
-        },
-        payload: fileBuffer
-      })
+      const result = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
 
       expect(JSON.parse(result.payload)).toStrictEqual({
         error: 'Unprocessable Entity',
@@ -235,14 +244,11 @@ describe('grilse-probabilities.integration', () => {
       async (_, fixture, expectedErrors) => {
         const fileBuffer = loadFixture(fixture)
 
-        const result = await server.inject({
-          method: 'POST',
-          url: '/api/reporting/reference/grilse-probabilities/2024/1',
-          headers: {
-            'Content-Type': 'text/csv'
-          },
-          payload: fileBuffer
-        })
+        const result = await uploadFile(
+          server,
+          '/api/reporting/reference/grilse-probabilities/2024/1',
+          fileBuffer
+        )
 
         expect(JSON.parse(result.payload)).toEqual({
           message: '400 BAD_REQUEST "Invalid CSV data"',
@@ -254,5 +260,94 @@ describe('grilse-probabilities.integration', () => {
         expect(result.statusCode).toBe(400)
       }
     )
+  })
+
+  describe('GET /api/reporting/reference/grilse-probabilities/{season}', () => {
+    beforeEach(async () => {
+      await deleteGrilseProbabilitiesForSeasons([2022, 2023, 2024])
+    })
+
+    it('should return 200 and a result if the season is valid', async () => {
+      // upload file
+      const fileBuffer = loadFixture('valid-grilse-data-10-datapoints.csv')
+      await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
+
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return 200 and a result if the season is a range', async () => {
+      // upload multiple seasons
+      const seasons = ['2022', '2023', '2024']
+      for (const season of seasons) {
+        const fileBuffer = loadFixture('valid-grilse-data-10-datapoints.csv')
+        await uploadFile(
+          server,
+          `/api/reporting/reference/grilse-probabilities/${season}/1`,
+          fileBuffer
+        )
+      }
+
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2022-2024'
+      })
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return 200 and a result if the season is a range, but one of the years specified contains no data', async () => {
+      // upload multiple seasons
+      const seasons = ['2023', '2024']
+      for (const season of seasons) {
+        const fileBuffer = loadFixture('valid-grilse-data-10-datapoints.csv')
+        await uploadFile(
+          server,
+          `/api/reporting/reference/grilse-probabilities/${season}/1`,
+          fileBuffer
+        )
+      }
+
+      // No data for 2022
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2022-2024'
+      })
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return 404 if there is no result for the specified season', async () => {
+      // upload multiple seasons
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2024'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
+
+    it('should return 404 if there is no result for the specified season range', async () => {
+      // upload multiple seasons
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/reporting/reference/grilse-probabilities/2023-2024'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
+    })
   })
 })

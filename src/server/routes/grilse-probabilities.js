@@ -1,17 +1,20 @@
 import {
   deleteGrilseProbabilitiesForSeasonAndGate,
+  generateCsvFromGrilseProbabilities,
+  getGrilseProbabilitiesBySeasonRange,
   isGrilseProbabilityExistsForSeasonAndGate,
   processGrilseProbabilities,
   validateAndParseCsvFile
 } from '../../services/grilse-probabilities.service.js'
 import {
-  grilseProbabilityRequestParamSchema,
-  grilseProbabilityRequestQuerySchema
+  getGrilseProbabilityRequestParamSchema,
+  postGrilseProbabilityRequestParamSchema,
+  postGrilseProbabilityRequestQuerySchema
 } from '../../schemas/grilse-probabilities.schema.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { GrilseProbability } from '../../entities/index.js'
 import { GrilseValidationError } from '../../models/grilse-probability.model.js'
 import { StatusCodes } from 'http-status-codes'
-import { handleServerError } from '../../utils/server-utils.js'
 
 export default [
   {
@@ -86,11 +89,72 @@ export default [
         }
       },
       validate: {
-        params: grilseProbabilityRequestParamSchema,
-        query: grilseProbabilityRequestQuerySchema
+        params: postGrilseProbabilityRequestParamSchema,
+        query: postGrilseProbabilityRequestQuerySchema
       },
       description: 'Upload a grilse probabilities csv file to the database',
       notes: 'Upload a grilse probabilities csv file to the database',
+      tags: ['api', 'reporting']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/reporting/reference/grilse-probabilities/{season}',
+    options: {
+      /**
+       * Retrieve the grilse probabilities as a csv file from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.season - The year which the grilse probabilities relates to, either as a single year or range
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing an empty body
+       */
+      handler: async (request, h) => {
+        try {
+          const { season } = request.params
+
+          // Split the season if it's a range, otherwise set endSeason to startSeason
+          const [startSeason, endSeason] = season.includes('-')
+            ? season.split('-').map(Number)
+            : [Number(season), Number(season)]
+
+          const grilseProbabilities = await getGrilseProbabilitiesBySeasonRange(
+            startSeason,
+            endSeason
+          )
+
+          if (grilseProbabilities.length === 0) {
+            return handleNotFound(
+              `Grilse probabilities not found for ${season}`,
+              h
+            )
+          }
+
+          const csv = generateCsvFromGrilseProbabilities(grilseProbabilities)
+
+          return h
+            .response(csv)
+            .type('text/csv')
+            .header(
+              'Content-Disposition',
+              `attachment; filename="grilse-probabilities-${season}.csv"`
+            )
+            .code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error retrieving grilse probabilities file',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: getGrilseProbabilityRequestParamSchema
+      },
+      description:
+        'Retrieve the grilse probabilities as a csv file from the database',
+      notes:
+        'Retrieve the grilse probabilities as a csv file from the database',
       tags: ['api', 'reporting']
     }
   }
