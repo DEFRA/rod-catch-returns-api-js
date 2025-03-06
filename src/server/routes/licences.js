@@ -34,6 +34,11 @@ export default [
         const licenseePostcode = request.query.verification
 
         try {
+          logger.info(
+            'Fetching contact with licence ending:%s and postcode%s',
+            permissionReferenceNumberLast6Characters,
+            licenseePostcode
+          )
           const result = await contactForLicensee(
             permissionReferenceNumberLast6Characters,
             licenseePostcode
@@ -48,6 +53,12 @@ export default [
             )
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
+            logger.info(
+              'Contact found with licence ending:%s and postcode%s with contact id:%s',
+              permissionReferenceNumberLast6Characters,
+              licenseePostcode,
+              result.ContactId
+            )
             const contact = new Contact()
             contact.id = result.ContactId
             contact.postcode = result.Postcode

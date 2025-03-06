@@ -1,6 +1,6 @@
 import { Region } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
+import { handleServerError } from '../../utils/server-utils.js'
 
 export default [
   {
@@ -25,10 +25,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching regions:', error)
-          return h
-            .response({ error: 'Unable to fetch regions' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching regions', error, h)
         }
       },
       description: 'Retrieve all the regions in the database',

@@ -11,6 +11,7 @@ import {
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
+import loggerUtils from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
@@ -178,6 +179,10 @@ export default [
         const transaction = await sequelize.transaction()
 
         try {
+          loggerUtils.info(
+            `Deleting small catches with id:%s and related records`,
+            smallCatchId
+          )
           await SmallCatchCount.destroy({
             where: { small_catch_id: smallCatchId },
             transaction
@@ -198,6 +203,11 @@ export default [
 
           // Commit transaction
           await transaction.commit()
+
+          loggerUtils.info(
+            `Deleted small catches with id:%s and related records`,
+            smallCatchId
+          )
           return h.response().code(StatusCodes.NO_CONTENT)
         } catch (error) {
           await transaction.rollback()
