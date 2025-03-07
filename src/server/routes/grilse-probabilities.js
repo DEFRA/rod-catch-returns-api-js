@@ -13,7 +13,7 @@ import {
 } from '../../schemas/grilse-probabilities.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { GrilseProbability } from '../../entities/index.js'
-import { GrilseValidationError } from '../../models/grilse-probability.model.js'
+import { GrilseValidationError } from '../../models/grilse-validation-error.model.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 

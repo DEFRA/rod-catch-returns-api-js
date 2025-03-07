@@ -11,7 +11,6 @@ import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { getSubmissionByCatchId } from '../services/submissions.service.js'
 import { isMethodInternal } from '../services/methods.service.js'
 import { isSpeciesExists } from '../services/species.service.js'
-import logger from '../utils/logger-utils.js'
 
 const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
 const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG) // 1763.698097oz
@@ -171,7 +170,6 @@ export const createCatchSchema = Joi.object({
       })
       validateDateCaughtYear(value, submission?.season)
     } catch (error) {
-      logger.error(error)
       return helper.message(error.message)
     }
     return value
