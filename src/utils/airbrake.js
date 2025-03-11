@@ -17,7 +17,7 @@ let airbrake = null
 /**
  * Resets the Airbrake notifier instance.
  */
-export const reset = () => {
+const reset = () => {
   airbrake = null
 }
 
@@ -34,8 +34,9 @@ const reportToAirbrake = (method, ...args) => {
   const error =
     args.find((arg) => arg instanceof Error) ??
     new Error(formatWithOptions(INSPECT_OPTS, ...args))
-  const request = args.find((arg) =>
-    Object.prototype.hasOwnProperty.call(arg, 'headers')
+
+  const request = args.find(
+    (arg) => arg && typeof arg === 'object' && 'headers' in arg
   )
 
   // notify returns a promise, but we do not await it
@@ -70,47 +71,50 @@ const reportToAirbrake = (method, ...args) => {
  *
  * @returns {boolean} `true` if the Airbrake client was initialized, `false` otherwise.
  */
-export const initialise = () => {
+const initialise = () => {
   if (
-    !airbrake &&
-    process.env.AIRBRAKE_PROJECT_KEY &&
-    process.env.AIRBRAKE_HOST
+    airbrake ||
+    !process.env.AIRBRAKE_PROJECT_KEY ||
+    !process.env.AIRBRAKE_HOST
   ) {
-    airbrake = new Notifier({
-      projectId: 4,
-      projectKey: process.env.AIRBRAKE_PROJECT_KEY,
-      host: process.env.AIRBRAKE_HOST,
-      environment: process.env.NODE_ENV,
-      errorNotifications: true,
-      performanceStats: false,
-      remoteConfig: false
-    })
-
-    const nativeConsoleMethods = {}
-
-    // Proxy the console.warn and console.error methods, notifying airbrake/errbit asynchronously
-    ;['warn', 'error'].forEach((method) => {
-      nativeConsoleMethods[method] = console[method].bind(console)
-      console[method] = (...args) => {
-        reportToAirbrake(method, ...args)
-        nativeConsoleMethods[method](...args)
-      }
-    })
-
-    // Ensure uncaught exceptions/rejections are logged to the native console
-    process.on('uncaughtExceptionMonitor', (err) =>
-      nativeConsoleMethods.error(err)
-    )
-
-    // Override the @airbrake/node uncaughtException/unhandledRejection handlers with our own as errors were not flushing correctly.
-    const flushAndDie = async () => {
-      await airbrake.flush()
-      process.exit(1)
-    }
-    process.on('uncaughtException', flushAndDie)
-    process.on('unhandledRejection', flushAndDie)
+    return !!airbrake
   }
-  return !!airbrake
+
+  airbrake = new Notifier({
+    projectId: 4,
+    projectKey: process.env.AIRBRAKE_PROJECT_KEY,
+    host: process.env.AIRBRAKE_HOST,
+    environment: process.env.NODE_ENV,
+    errorNotifications: true,
+    performanceStats: false,
+    remoteConfig: false
+  })
+
+  const originalError = console.error.bind(console)
+  const originalWarn = console.warn.bind(console)
+
+  console.error = (...args) => {
+    reportToAirbrake('error', ...args)
+    originalError(...args)
+  }
+
+  console.warn = (...args) => {
+    reportToAirbrake('warn', ...args)
+    originalWarn(...args)
+  }
+
+  // Ensure uncaught errors are logged
+  process.on('uncaughtExceptionMonitor', originalError)
+
+  // Override Airbrake's uncaughtException/unhandledRejection handlers to flush before exit
+  const flushAndExit = async () => {
+    await airbrake.flush()
+    process.exitCode = 1
+  }
+  process.on('uncaughtException', flushAndExit)
+  process.on('unhandledRejection', flushAndExit)
+
+  return true
 }
 
 /**
@@ -119,14 +123,13 @@ export const initialise = () => {
  * @param {Function} logFunction - The debug logging function to wrap.
  * @returns {Function} A new logging function that reports to Airbrake before logging.
  */
-export const attachAirbrakeToDebugLogger = (logFunction) => {
+const attachAirbrakeToDebugLogger = (logFunction) => {
   if (!airbrake) {
     return logFunction
   }
 
   return (...args) => {
     reportToAirbrake(logFunction.namespace, ...args)
-
     logFunction(...args)
   }
 }
@@ -137,9 +140,16 @@ export const attachAirbrakeToDebugLogger = (logFunction) => {
  *
  * @returns {Promise<void>}
  */
-export const flush = async () => {
+const flush = async () => {
   if (initialise()) {
     await airbrake.flush()
     airbrake.close()
   }
+}
+
+export default {
+  initialise,
+  attachAirbrakeToDebugLogger,
+  flush,
+  reset
 }
