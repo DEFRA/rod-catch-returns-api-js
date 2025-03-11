@@ -14,15 +14,61 @@ const INSPECT_OPTS = {
 /** @type {Notifier} */
 let airbrake = null
 
+/**
+ * Resets the Airbrake notifier instance.
+ */
 export const reset = () => {
   airbrake = null
 }
 
 /**
- * Initialise the airbrake client and intercept console.error and console.warn calls, notifying airbrake/errbit of any invocations.
- * If the required environment variables are not set then airbrake will not be initialised.
+ * Reports a console method invocation to Airbrake.
  *
- * @returns {boolean} true if the client was initialised, false otherwise.
+ * @param {string} method - The console method being called (e.g., "warn" or "error").
+ * @param {...any} args - The arguments passed to the console method.
+ * @returns {void}
+ */
+const reportToAirbrake = (method, ...args) => {
+  if (!airbrake) return
+
+  const error =
+    args.find((arg) => arg instanceof Error) ??
+    new Error(formatWithOptions(INSPECT_OPTS, ...args))
+  const request = args.find((arg) =>
+    Object.prototype.hasOwnProperty.call(arg, 'headers')
+  )
+
+  // notify returns a promise, but we do not await it
+  airbrake.notify({
+    error,
+    params: {
+      consoleInvocationDetails: {
+        method,
+        arguments: args.map((arg) => inspect(arg, INSPECT_OPTS))
+      }
+    },
+    environment: {
+      ...(process.env.name && { name: process.env.name })
+    },
+    ...(request?.state && { session: request.state }),
+    context: {
+      ...(request?.method && {
+        action: `${request.method.toUpperCase()} ${request.path}`
+      }),
+      ...(request?.headers?.['user-agent'] && {
+        userAgent: request.headers['user-agent']
+      })
+    }
+  })
+}
+
+/**
+ * Initializes the Airbrake client and intercepts `console.warn` and `console.error`
+ * to send notifications to Airbrake/Errbit.
+ *
+ * If the required environment variables are not set, Airbrake will not be initialized.
+ *
+ * @returns {boolean} `true` if the Airbrake client was initialized, `false` otherwise.
  */
 export const initialise = () => {
   if (
@@ -46,44 +92,7 @@ export const initialise = () => {
     ;['warn', 'error'].forEach((method) => {
       nativeConsoleMethods[method] = console[method].bind(console)
       console[method] = (...args) => {
-        const error =
-          args.find((arg) => arg instanceof Error) ??
-          new Error(formatWithOptions(INSPECT_OPTS, ...args))
-        const request = args.find((arg) =>
-          Object.prototype.hasOwnProperty.call(arg, 'headers')
-        )
-
-        const promise = airbrake.notify({
-          error,
-          params: {
-            consoleInvocationDetails: {
-              method,
-              arguments: { ...args.map((arg) => inspect(arg, INSPECT_OPTS)) }
-            }
-          },
-          environment: {
-            // Support for PM2 process.env.name
-            ...(process.env.name && { name: process.env.name })
-          },
-          ...(request?.state && { session: request?.state }),
-          context: {
-            ...(request?.method && {
-              action: `${request?.method?.toUpperCase()} ${request?.path}`
-            }),
-            ...(request?.headers?.['user-agent'] && {
-              userAgent: request?.headers?.['user-agent']
-            })
-          }
-        })
-
-        promise.then((notice) => {
-          if (notice.id) {
-            console.log('notice id', notice.id)
-          } else {
-            console.log('notify failed', notice.error)
-          }
-        })
-
+        reportToAirbrake(method, ...args)
         nativeConsoleMethods[method](...args)
       }
     })
@@ -104,50 +113,27 @@ export const initialise = () => {
   return !!airbrake
 }
 
-export const attachAirbrakeToHapi = (server) => {
-  server.ext('onPreResponse', async (request, h) => {
-    const response = request.response
+/**
+ * Wraps a debug logging function so that log messages are also reported to Airbrake.
+ *
+ * @param {Function} logFunction - The debug logging function to wrap.
+ * @returns {Function} A new logging function that reports to Airbrake before logging.
+ */
+export const attachAirbrakeToDebugLogger = (logFunction) => {
+  if (!airbrake) {
+    return logFunction
+  }
 
-    console.log(request)
-    if (response.statusCode >= 400 && response.statusCode <= 599) {
-      const promise = airbrake.notify({
-        error: response.source.error,
-        params: {
-          consoleInvocationDetails: {
-            method: request.method
-            //arguments: { ...args.map((arg) => inspect(arg, INSPECT_OPTS)) }
-          }
-        },
-        environment: {
-          // Support for PM2 process.env.name
-          ...(process.env.name && { name: process.env.name })
-        },
-        ...(request?.state && { session: request?.state }),
-        context: {
-          ...(request?.method && {
-            action: `${request?.method?.toUpperCase()} ${request?.path}`
-          }),
-          ...(request?.headers?.['user-agent'] && {
-            userAgent: request?.headers?.['user-agent']
-          })
-        }
-      })
+  return (...args) => {
+    reportToAirbrake(logFunction.namespace, ...args)
 
-      promise.then((notice) => {
-        if (notice.id) {
-          console.log('notice id', notice.id)
-        } else {
-          console.log('notify failed', notice.error)
-        }
-      })
-    }
-
-    return h.continue
-  })
+    logFunction(...args)
+  }
 }
 
 /**
- * Flush the buffer ensuring that any data waiting to be sent to airbrake/errbit is sent before returning
+ * Flushes the Airbrake buffer, ensuring that any pending notifications are sent
+ * before returning.
  *
  * @returns {Promise<void>}
  */

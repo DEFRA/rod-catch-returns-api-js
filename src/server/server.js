@@ -1,14 +1,13 @@
 import 'dotenv/config'
 import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
-
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import airbrake from '../utils/airbrake.js'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
-import { attachAirbrakeToHapi, initialise } from '../utils/airbrake.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 
@@ -25,7 +24,8 @@ export default async () => {
     throw new Error('Environment variables validation failed.')
   }
 
-  initialise()
+  airbrake.initialise()
+  logger.error = airbrake.attachAirbrakeToDebugLogger(logger.error)
 
   const server = Hapi.server({
     port: process.env.PORT || 5000,
@@ -39,8 +39,6 @@ export default async () => {
       }
     }
   })
-
-  attachAirbrakeToHapi(server)
 
   try {
     await sequelize.authenticate()
@@ -67,7 +65,7 @@ export default async () => {
 
   const shutdown = async (code) => {
     await server.stop()
-    //  await flush()
+    await airbrake.flush()
     process.exit(code)
   }
 
