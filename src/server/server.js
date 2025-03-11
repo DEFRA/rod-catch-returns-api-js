@@ -66,6 +66,8 @@ export default async () => {
   const shutdown = async (code) => {
     await server.stop()
     await airbrake.flush()
+
+    console.log(airbrake.flush)
     process.exit(code)
   }
 
