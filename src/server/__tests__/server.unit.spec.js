@@ -113,6 +113,10 @@ describe('server.unit', () => {
         method: 'PATCH',
         path: '/activities/{activityId}'
       }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/activities/{activityId}/submission'
+      }),
       expect.objectContaining({ method: 'POST', path: '/catches' }),
       expect.objectContaining({
         method: 'GET',
@@ -139,8 +143,20 @@ describe('server.unit', () => {
         path: '/catches/{catchId}'
       }),
       expect.objectContaining({ method: 'GET', path: '/catchments' }),
+      expect.objectContaining({
+        method: 'POST',
+        path: '/reporting/reference/grilse-probabilities/{season}/{gate}'
+      }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/reporting/reference/grilse-probabilities/{season}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/grilseWeightGates' }),
       expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/licence/full/{licence}'
+      }),
       expect.objectContaining({ method: 'GET', path: '/methods' }),
       expect.objectContaining({ method: 'GET', path: '/methods/{methodId}' }),
       expect.objectContaining({ method: 'GET', path: '/regions' }),
@@ -164,6 +180,10 @@ describe('server.unit', () => {
       }),
       expect.objectContaining({ method: 'GET', path: '/species' }),
       expect.objectContaining({ method: 'POST', path: '/submissions' }),
+      expect.objectContaining({
+        method: 'GET',
+        path: '/submissions/search/findByContactId'
+      }),
       expect.objectContaining({
         method: 'GET',
         path: '/submissions/search/getByContactIdAndSeason'

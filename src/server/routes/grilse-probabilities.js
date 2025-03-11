@@ -1,0 +1,161 @@
+import {
+  deleteGrilseProbabilitiesForSeasonAndGate,
+  generateCsvFromGrilseProbabilities,
+  getGrilseProbabilitiesBySeasonRange,
+  isGrilseProbabilityExistsForSeasonAndGate,
+  processGrilseProbabilities,
+  validateAndParseCsvFile
+} from '../../services/grilse-probabilities.service.js'
+import {
+  getGrilseProbabilityRequestParamSchema,
+  postGrilseProbabilityRequestParamSchema,
+  postGrilseProbabilityRequestQuerySchema
+} from '../../schemas/grilse-probabilities.schema.js'
+import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
+import { GrilseProbability } from '../../entities/index.js'
+import { GrilseValidationError } from '../../models/grilse-probability.model.js'
+import { StatusCodes } from 'http-status-codes'
+
+export default [
+  {
+    method: 'POST',
+    path: '/reporting/reference/grilse-probabilities/{season}/{gate}',
+    options: {
+      /**
+       * Upload a grilse probabilities csv file to the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.season - The year which the grilse probabilities file relates to
+       *     @param {string} request.params.gate - The gate which the grilse probabilities file relates to
+       *     @param {boolean} request.query.overwrite - A boolean to say whether the grilse probabilities for the specified season and gate should be overridden
+       *     @param {string} request.payload - The csv file
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing an empty body
+       */
+      handler: async (request, h) => {
+        try {
+          const { season, gate } = request.params
+          const { overwrite } = request.query
+
+          const records = await validateAndParseCsvFile(request.payload)
+
+          const exists = await isGrilseProbabilityExistsForSeasonAndGate(
+            season,
+            gate
+          )
+
+          if (exists) {
+            if (!overwrite) {
+              return h
+                .response({
+                  message:
+                    'Existing data found for the given season and gate but overwrite parameter not set'
+                })
+                .code(StatusCodes.CONFLICT)
+            }
+            await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
+          }
+
+          const grilseProbabilities = processGrilseProbabilities(
+            records,
+            season,
+            gate
+          )
+
+          // Bulk insert records if there are valid probabilities
+          if (grilseProbabilities.length > 0) {
+            await GrilseProbability.bulkCreate(grilseProbabilities)
+          }
+
+          return h.response().code(StatusCodes.CREATED)
+        } catch (error) {
+          if (error instanceof GrilseValidationError) {
+            return h
+              .response({
+                timestamp: new Date().toISOString(),
+                status: error.status,
+                message: error.message,
+                path: request.path,
+                ...(error.error && { error: error.error }),
+                ...(error.errors && { errors: error.errors })
+              })
+              .code(error.status)
+          }
+          return handleServerError(
+            'Error uploading grilse probabilities file',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: postGrilseProbabilityRequestParamSchema,
+        query: postGrilseProbabilityRequestQuerySchema
+      },
+      description: 'Upload a grilse probabilities csv file to the database',
+      notes: 'Upload a grilse probabilities csv file to the database',
+      tags: ['api', 'reporting']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/reporting/reference/grilse-probabilities/{season}',
+    options: {
+      /**
+       * Retrieve the grilse probabilities as a csv file from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.season - The year which the grilse probabilities relates to, either as a single year or range
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing an empty body
+       */
+      handler: async (request, h) => {
+        try {
+          const { season } = request.params
+
+          // Split the season if it's a range, otherwise set endSeason to startSeason
+          const [startSeason, endSeason] = season.includes('-')
+            ? season.split('-').map(Number)
+            : [Number(season), Number(season)]
+
+          const grilseProbabilities = await getGrilseProbabilitiesBySeasonRange(
+            startSeason,
+            endSeason
+          )
+
+          if (grilseProbabilities.length === 0) {
+            return handleNotFound(
+              `Grilse probabilities not found for ${season}`,
+              h
+            )
+          }
+
+          const csv = generateCsvFromGrilseProbabilities(grilseProbabilities)
+
+          return h
+            .response(csv)
+            .type('text/csv')
+            .header(
+              'Content-Disposition',
+              `attachment; filename="grilse-probabilities-${season}.csv"`
+            )
+            .code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error retrieving grilse probabilities file',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: getGrilseProbabilityRequestParamSchema
+      },
+      description:
+        'Retrieve the grilse probabilities as a csv file from the database',
+      notes:
+        'Retrieve the grilse probabilities as a csv file from the database',
+      tags: ['api', 'reporting']
+    }
+  }
+]

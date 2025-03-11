@@ -24,6 +24,9 @@ const [
     options: { handler: postSubmissionHandler }
   },
   {
+    options: { handler: getSubmissionsByContactIdHandler }
+  },
+  {
     options: { handler: getSubmissionByContactIdAndSeasonHandler }
   },
   {
@@ -208,6 +211,66 @@ describe('submissions.unit', () => {
       )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('GET /submissions/search/findByContactId', () => {
+    const getSubmissionRequest = () =>
+      getServerDetails({
+        query: {
+          contact_id: 'contact-identifier-111'
+        }
+      })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the submissions are found', async () => {
+      Submission.findAll.mockResolvedValueOnce([getFoundSubmission()])
+
+      const result = await getSubmissionsByContactIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return the found submissions in the response body', async () => {
+      Submission.findAll.mockResolvedValueOnce([getFoundSubmission()])
+
+      const result = await getSubmissionsByContactIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should return an empty array if no submissions are found', async () => {
+      Submission.findAll.mockResolvedValueOnce([])
+
+      const result = await getSubmissionsByContactIdHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call handleServerError if fetching a submission fails', async () => {
+      const error = new Error('Database error')
+      Submission.findAll.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getSubmissionsByContactIdHandler(getSubmissionRequest(), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error finding submissions',
+        error,
+        h
+      )
     })
   })
 

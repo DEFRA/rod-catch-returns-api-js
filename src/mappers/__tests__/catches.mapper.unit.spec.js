@@ -4,7 +4,7 @@ import {
   mapRequestToCatch
 } from '../catches.mapper.js'
 
-describe('activity.mapper.unit', () => {
+describe('catches.mapper.unit', () => {
   describe('mapRequestToCatch', () => {
     const getMockCatchRequest = () => ({
       activity: 'activities/402',

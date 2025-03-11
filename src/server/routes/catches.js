@@ -10,7 +10,7 @@ import {
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import { mapActivityToResponse } from '../../mappers/activity.mapper.js'
+import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
 
