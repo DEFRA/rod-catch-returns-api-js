@@ -246,6 +246,16 @@ describe('airbrake', () => {
       expect(mockFlush).toHaveBeenCalled()
       expect(mockClose).toHaveBeenCalled()
     })
+
+    it('should not flush and close Notifier, when airbrake is flushed, if it is not initialised', async () => {
+      delete process.env.AIRBRAKE_HOST
+      delete process.env.AIRBRAKE_PROJECT_KEY
+
+      await airbrake.flush()
+
+      expect(mockFlush).not.toHaveBeenCalled()
+      expect(mockClose).not.toHaveBeenCalled()
+    })
   })
 
   describe('attachAirbrakeToDebugLogger', () => {
