@@ -29,7 +29,9 @@ const reset = () => {
  * @returns {void}
  */
 const reportToAirbrake = (method, ...args) => {
-  if (!airbrake) return
+  if (!airbrake) {
+    return
+  }
 
   const error =
     args.find((arg) => arg instanceof Error) ??
