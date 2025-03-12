@@ -24,6 +24,7 @@ expect.extend({
 
 describe('airbrake', () => {
   const originalEnv = process.env
+  let mockNotify
 
   beforeEach(() => {
     process.env = {
@@ -31,6 +32,12 @@ describe('airbrake', () => {
     }
     jest.resetAllMocks()
     airbrake.reset()
+
+    // Mocking es6 class in jest.mock('@airbrake/node') does not work, this is a workaround
+    mockNotify = jest.fn()
+    Notifier.mockImplementation(() => ({
+      notify: mockNotify
+    }))
   })
 
   it('does not initialise airbrake if the required environment variables are missing', async () => {
@@ -49,10 +56,6 @@ describe('airbrake', () => {
   })
 
   it('intercepts console.error and reports to Airbrake', () => {
-    const mockNotify = jest.fn()
-    Notifier.mockImplementation(() => ({
-      notify: mockNotify
-    }))
     airbrake.initialise()
 
     const error = new Error('Test error')
@@ -72,16 +75,11 @@ describe('airbrake', () => {
   })
 
   it('intercepts console.warn and reports to Airbrake', () => {
-    const mockNotify = jest.fn()
-    Notifier.mockImplementation(() => ({
-      notify: mockNotify
-    }))
     airbrake.initialise()
     const warning = 'Test warning'
 
     console.warn(warning)
 
-    // Ensure the notify method was called with the correct parameters
     expect(mockNotify).toHaveBeenCalledWith(
       expect.objectContaining({
         error: expect.any(Error),
@@ -97,12 +95,7 @@ describe('airbrake', () => {
     )
   })
 
-  it('should output the request state in if it is present', () => {
-    const mockNotify = jest.fn()
-    Notifier.mockImplementation(() => ({
-      notify: mockNotify
-    }))
-
+  it('should output the request state if it is present', () => {
     airbrake.initialise()
 
     const requestDetail = { state: { sid: 'abc123' }, headers: {} }
