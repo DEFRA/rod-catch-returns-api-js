@@ -1,7 +1,6 @@
 # Rod Catch Returns API JS
 
 The JavaScript version of the Rod Catch Returns API.
-todo add env vars
 
 ## Prerequisites
 
