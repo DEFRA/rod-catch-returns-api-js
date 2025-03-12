@@ -171,6 +171,39 @@ describe('airbrake', () => {
       })
     })
 
+    it.each([
+      [['A single string'], 'A single string'],
+      [
+        ['A string with %d %s arguments', 2, 'formatting'],
+        'A string with 2 formatting arguments'
+      ],
+      [
+        ['Test', 'multiple', 'strings', 'with', 'no', 'format'],
+        'Test multiple strings with no format'
+      ],
+      [[new Error('Test error pos 1'), 'another string'], 'Test error pos 1'],
+      [['another string', new Error('Test error pos 2')], 'Test error pos 2']
+    ])(
+      'formats the error message in a consistent manner with the native console.error call: [%j] === %s',
+      async (input, output) => {
+        airbrake.initialise()
+
+        console.error(...input)
+
+        expect(mockNotify).toHaveBeenLastCalledWith({
+          error: expect.errorWithMessageMatching(expect.stringMatching(output)),
+          params: expect.objectContaining({
+            consoleInvocationDetails: {
+              arguments: expect.any(Object),
+              method: 'error'
+            }
+          }),
+          context: {},
+          environment: expect.any(Object)
+        })
+      }
+    )
+
     it('hooks the process for uncaughtExceptions', async () => {
       const processExitSpy = jest
         .spyOn(process, 'exit')
