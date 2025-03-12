@@ -25,6 +25,8 @@ expect.extend({
 describe('airbrake', () => {
   const originalEnv = process.env
   let mockNotify
+  let mockFlush
+  let mockClose
 
   beforeEach(() => {
     process.env = {
@@ -32,92 +34,244 @@ describe('airbrake', () => {
     }
     process.env.AIRBRAKE_HOST = 'https://test-airbrake.com'
     process.env.AIRBRAKE_PROJECT_KEY = '123'
-
-    jest.resetAllMocks()
     airbrake.reset()
 
     // Mocking es6 class in jest.mock('@airbrake/node') does not work, this is a workaround
     mockNotify = jest.fn()
+    mockFlush = jest.fn()
+    mockClose = jest.fn()
     Notifier.mockImplementation(() => ({
-      notify: mockNotify
+      notify: mockNotify,
+      flush: mockFlush,
+      close: mockClose
     }))
   })
 
-  it('does not initialise airbrake if the required environment variables are missing', async () => {
-    delete process.env.AIRBRAKE_HOST
-    delete process.env.AIRBRAKE_PROJECT_KEY
-
-    expect(airbrake.initialise()).toEqual(false)
-
-    expect(Notifier).not.toHaveBeenCalled()
+  afterEach(() => {
+    jest.clearAllMocks()
+    process.removeAllListeners('uncaughtExceptionMonitor')
+    process.removeAllListeners('uncaughtException')
+    process.removeAllListeners('unhandledRejection')
   })
 
-  it('initialises airbrake if the required environment variables are present', async () => {
-    expect(airbrake.initialise()).toEqual(true)
+  describe('initialise', () => {
+    it('does not initialise airbrake if the required environment variables are missing', async () => {
+      delete process.env.AIRBRAKE_HOST
+      delete process.env.AIRBRAKE_PROJECT_KEY
 
-    expect(Notifier).toHaveBeenCalled()
-  })
+      expect(airbrake.initialise()).toEqual(false)
 
-  it('intercepts console.error and reports to Airbrake', () => {
-    airbrake.initialise()
+      expect(Notifier).not.toHaveBeenCalled()
+    })
 
-    const error = new Error('Test error')
-    console.error(error)
+    it('initialises airbrake if the required environment variables are present', async () => {
+      expect(airbrake.initialise()).toEqual(true)
 
-    expect(mockNotify).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: expect.any(Error),
-        params: expect.objectContaining({
-          consoleInvocationDetails: expect.objectContaining({
-            method: 'error',
-            arguments: expect.arrayContaining([expect.any(String)])
+      expect(Notifier).toHaveBeenCalled()
+    })
+
+    it('intercepts console.error and reports to Airbrake', () => {
+      airbrake.initialise()
+
+      const error = new Error('Test error')
+      console.error(error)
+
+      expect(mockNotify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          params: expect.objectContaining({
+            consoleInvocationDetails: expect.objectContaining({
+              method: 'error',
+              arguments: expect.arrayContaining([expect.any(String)])
+            })
           })
         })
-      })
-    )
-  })
+      )
+    })
 
-  it('intercepts console.warn and reports to Airbrake', () => {
-    airbrake.initialise()
-    const warning = 'Test warning'
+    it('intercepts console.warn and reports to Airbrake', () => {
+      airbrake.initialise()
+      const warning = 'Test warning'
 
-    console.warn(warning)
+      console.warn(warning)
 
-    expect(mockNotify).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: expect.any(Error),
-        params: expect.objectContaining({
-          consoleInvocationDetails: expect.objectContaining({
-            method: 'warn',
-            arguments: expect.arrayContaining([
-              expect.stringContaining(warning)
-            ])
+      expect(mockNotify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          params: expect.objectContaining({
+            consoleInvocationDetails: expect.objectContaining({
+              method: 'warn',
+              arguments: expect.arrayContaining([
+                expect.stringContaining(warning)
+              ])
+            })
           })
         })
+      )
+    })
+
+    it('should output the request state if it is present', () => {
+      airbrake.initialise()
+
+      const requestDetail = { state: { sid: 'abc123' }, headers: {} }
+      console.error(
+        'Error processing request. Request: %j, Exception: %o',
+        requestDetail,
+        {}
+      )
+      expect(mockNotify).toHaveBeenLastCalledWith({
+        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
+        params: expect.objectContaining({
+          consoleInvocationDetails: {
+            arguments: expect.any(Object),
+            method: 'error'
+          }
+        }),
+        context: {},
+        session: { sid: 'abc123' },
+        environment: expect.any(Object)
       })
+    })
+
+    it('should output the request path in the context object if it is present', () => {
+      airbrake.initialise()
+
+      const requestDetail = { method: 'GET', path: '/path', headers: {} }
+      console.error(
+        'Error processing request. Request: %j, Exception: %o',
+        requestDetail,
+        {}
+      )
+      expect(mockNotify).toHaveBeenLastCalledWith({
+        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
+        params: expect.objectContaining({
+          consoleInvocationDetails: {
+            arguments: expect.any(Object),
+            method: 'error'
+          }
+        }),
+        context: {
+          action: 'GET /path'
+        },
+        environment: expect.any(Object)
+      })
+    })
+
+    it('should output the user agent in the context object if it is present', () => {
+      airbrake.initialise()
+
+      const requestDetail = { headers: { 'user-agent': 'chrome' } }
+      console.error(
+        'Error processing request. Request: %j, Exception: %o',
+        requestDetail,
+        {}
+      )
+
+      expect(mockNotify).toHaveBeenLastCalledWith({
+        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
+        params: expect.objectContaining({
+          consoleInvocationDetails: {
+            arguments: expect.any(Object),
+            method: 'error'
+          }
+        }),
+        context: {
+          userAgent: 'chrome'
+        },
+        environment: expect.any(Object)
+      })
+    })
+
+    it('hooks the process for uncaughtExceptions', async () => {
+      const processExitSpy = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(jest.fn())
+      airbrake.initialise()
+
+      const testError = new Error('Test error')
+      process.emit('uncaughtException', testError)
+
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(mockFlush).toHaveBeenCalled()
+      expect(processExitSpy).toHaveBeenCalledWith(1)
+    })
+
+    it.each([['uncaughtException'], ['unhandledRejection']])(
+      'hooks the process for %s',
+      async (event) => {
+        const processExitSpy = jest
+          .spyOn(process, 'exit')
+          .mockImplementation(jest.fn())
+        airbrake.initialise()
+
+        const testError = new Error('Test error')
+        process.emit(event, testError)
+
+        await new Promise((resolve) => setImmediate(resolve))
+
+        expect(mockFlush).toHaveBeenCalled()
+        expect(processExitSpy).toHaveBeenCalledWith(1)
+      }
     )
   })
 
-  it('should output the request state if it is present', () => {
-    airbrake.initialise()
+  describe('flush', () => {
+    it('should flush and close Notifier, when airbrake is flushed, if it is initialised', async () => {
+      airbrake.initialise()
+      await airbrake.flush()
 
-    const requestDetail = { state: { sid: 'abc123' }, headers: {} }
-    console.error(
-      'Error processing request. Request: %j, Exception: %o',
-      requestDetail,
-      {}
-    )
-    expect(mockNotify).toHaveBeenLastCalledWith({
-      error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
-      params: expect.objectContaining({
-        consoleInvocationDetails: {
-          arguments: expect.any(Object),
-          method: 'error'
-        }
-      }),
-      context: {},
-      session: { sid: 'abc123' },
-      environment: expect.any(Object)
+      expect(mockFlush).toHaveBeenCalled()
+      expect(mockClose).toHaveBeenCalled()
+    })
+  })
+
+  describe('attachAirbrakeToDebugLogger', () => {
+    it('returns the log function when airbrake is not available', () => {
+      const mockLogFunction = jest.fn()
+      const logFunction = airbrake.attachAirbrakeToDebugLogger(mockLogFunction)
+
+      logFunction('test message')
+
+      expect(mockLogFunction).toHaveBeenCalledWith('test message')
+      expect(mockNotify).not.toHaveBeenCalled()
+    })
+
+    it('attaches Airbrake reporting to the log function when airbrake is available', () => {
+      const mockLogFunction = jest.fn()
+      airbrake.initialise()
+      const logFunction = airbrake.attachAirbrakeToDebugLogger(mockLogFunction)
+
+      logFunction('test message')
+
+      expect(mockLogFunction).toHaveBeenCalledWith('test message')
+      expect(mockNotify).toHaveBeenCalled()
+    })
+
+    it('passes all arguments to both notify and the log function', () => {
+      const mockLogFunction = jest.fn()
+      mockLogFunction.namespace = 'testNamespace'
+      airbrake.initialise()
+      const logFunction = airbrake.attachAirbrakeToDebugLogger(mockLogFunction)
+
+      logFunction('test message', 123, { some: 'object' })
+
+      expect(mockLogFunction).toHaveBeenCalledWith('test message', 123, {
+        some: 'object'
+      })
+      expect(mockNotify).toHaveBeenCalledWith({
+        error: expect.errorWithMessageMatching(
+          expect.stringMatching('test message')
+        ),
+        params: expect.objectContaining({
+          consoleInvocationDetails: {
+            arguments: expect.any(Object),
+            method: 'testNamespace'
+          }
+        }),
+        context: {},
+        environment: {}
+      })
     })
   })
 })

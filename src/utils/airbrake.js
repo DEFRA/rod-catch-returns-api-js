@@ -109,7 +109,7 @@ const initialise = () => {
   // Override Airbrake's uncaughtException/unhandledRejection handlers to flush before exit
   const flushAndExit = async () => {
     await airbrake.flush()
-    process.exitCode = 1
+    process.exit(1)
   }
   process.on('uncaughtException', flushAndExit)
   process.on('unhandledRejection', flushAndExit)
