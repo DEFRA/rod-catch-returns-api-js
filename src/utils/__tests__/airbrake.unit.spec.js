@@ -110,57 +110,25 @@ describe('airbrake', () => {
       )
     })
 
-    it('should output the request state if it is present', () => {
+    it.each([
+      [
+        'should output the request state if it is present',
+        { state: { sid: 'abc123' }, headers: {} },
+        { session: { sid: 'abc123' }, context: {} }
+      ],
+      [
+        'should output the request path in the context object if it is present',
+        { method: 'GET', path: '/path', headers: {} },
+        { context: { action: 'GET /path' } }
+      ],
+      [
+        'should output the user agent in the context object if it is present',
+        { headers: { 'user-agent': 'chrome' } },
+        { context: { userAgent: 'chrome' } }
+      ]
+    ])('%s', (_, requestDetail, expectedContext) => {
       airbrake.initialise()
 
-      const requestDetail = { state: { sid: 'abc123' }, headers: {} }
-      console.error(
-        'Error processing request. Request: %j, Exception: %o',
-        requestDetail,
-        {}
-      )
-      expect(mockNotify).toHaveBeenLastCalledWith({
-        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
-        params: expect.objectContaining({
-          consoleInvocationDetails: {
-            arguments: expect.any(Object),
-            method: 'error'
-          }
-        }),
-        context: {},
-        session: { sid: 'abc123' },
-        environment: expect.any(Object)
-      })
-    })
-
-    it('should output the request path in the context object if it is present', () => {
-      airbrake.initialise()
-
-      const requestDetail = { method: 'GET', path: '/path', headers: {} }
-      console.error(
-        'Error processing request. Request: %j, Exception: %o',
-        requestDetail,
-        {}
-      )
-      expect(mockNotify).toHaveBeenLastCalledWith({
-        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
-        params: expect.objectContaining({
-          consoleInvocationDetails: {
-            arguments: expect.any(Object),
-            method: 'error'
-          }
-        }),
-        context: {
-          action: 'GET /path'
-        },
-        environment: expect.any(Object)
-      })
-    })
-
-    it('should output the user agent in the context object if it is present', () => {
-      airbrake.initialise()
-
-      const requestDetail = { headers: { 'user-agent': 'chrome' } }
       console.error(
         'Error processing request. Request: %j, Exception: %o',
         requestDetail,
@@ -175,10 +143,8 @@ describe('airbrake', () => {
             method: 'error'
           }
         }),
-        context: {
-          userAgent: 'chrome'
-        },
-        environment: expect.any(Object)
+        environment: expect.any(Object),
+        ...expectedContext
       })
     })
 
