@@ -1,6 +1,6 @@
 import { GrilseProbability, GrilseWeightGate } from '../entities/index.js'
 import { MONTH_NAMES, getMonthNumberFromName } from '../utils/date-utils.js'
-import { GrilseValidationError } from '../models/grilse-probability.model.js'
+import { GrilseValidationError } from '../models/grilse-validation-error.model.js'
 import { Op } from 'sequelize'
 import { StatusCodes } from 'http-status-codes'
 import { parse } from 'csv-parse'

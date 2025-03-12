@@ -13,8 +13,9 @@ import {
 } from '../../schemas/grilse-probabilities.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { GrilseProbability } from '../../entities/index.js'
-import { GrilseValidationError } from '../../models/grilse-probability.model.js'
+import { GrilseValidationError } from '../../models/grilse-validation-error.model.js'
 import { StatusCodes } from 'http-status-codes'
+import logger from '../../utils/logger-utils.js'
 
 export default [
   {
@@ -37,6 +38,11 @@ export default [
           const { season, gate } = request.params
           const { overwrite } = request.query
 
+          logger.info(
+            'Validating csv file with season:%s and gate:%s',
+            season,
+            gate
+          )
           const records = await validateAndParseCsvFile(request.payload)
 
           const exists = await isGrilseProbabilityExistsForSeasonAndGate(
@@ -46,6 +52,11 @@ export default [
 
           if (exists) {
             if (!overwrite) {
+              logger.info(
+                'Existing data found for season:%s and gate:%s',
+                season,
+                gate
+              )
               return h
                 .response({
                   message:
@@ -53,6 +64,11 @@ export default [
                 })
                 .code(StatusCodes.CONFLICT)
             }
+            logger.info(
+              'Deleting existing data for season:%s and gate:%s',
+              season,
+              gate
+            )
             await deleteGrilseProbabilitiesForSeasonAndGate(season, gate)
           }
 
@@ -66,6 +82,8 @@ export default [
           if (grilseProbabilities.length > 0) {
             await GrilseProbability.bulkCreate(grilseProbabilities)
           }
+
+          logger.info('Created data for season:%s and gate:%s', season, gate)
 
           return h.response().code(StatusCodes.CREATED)
         } catch (error) {

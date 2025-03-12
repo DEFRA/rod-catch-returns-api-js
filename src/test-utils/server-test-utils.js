@@ -10,11 +10,6 @@ export const getServerDetails = (overrides = {}) => ({
   ...overrides
 })
 
-export const getResponseToolkit = () => ({
-  response: jest.fn().mockReturnThis(),
-  code: jest.fn()
-})
-
 export const getMockResponseToolkit = () => ({
   response: jest.fn().mockImplementation((payload) => ({
     code: (statusCode) => ({ payload, statusCode })

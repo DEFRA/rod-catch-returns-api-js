@@ -1,6 +1,6 @@
 import { Catchment } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
-import logger from '../../utils/logger-utils.js'
+import { handleServerError } from '../../utils/server-utils.js'
 
 export default [
   {
@@ -26,10 +26,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          logger.error('Error fetching catchments:', error)
-          return h
-            .response({ error: 'Unable to fetch catchments' })
-            .code(StatusCodes.INTERNAL_SERVER_ERROR)
+          return handleServerError('Error fetching catchments', error, h)
         }
       },
       description: 'Retrieve all the catchments in the database',

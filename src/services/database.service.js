@@ -16,7 +16,8 @@ const sequelize = new Sequelize(
               require: true,
               rejectUnauthorized: false
             }
-          }
+          },
+          logging: false // disable SQL logs
         }
       : {})
   }

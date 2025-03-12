@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`catchments.unit GET /catchments should return all catchments if the call to fetch all catchments is successfull 1`] = `
+{
+  "_embedded": {
+    "catchments": [
+      {
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "2",
+        "name": "Adur",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+      },
+      {
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "6",
+        "name": "Annas",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+      },
+    ],
+  },
+}
+`;
