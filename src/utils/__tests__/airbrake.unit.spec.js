@@ -182,6 +182,29 @@ describe('airbrake', () => {
       })
     })
 
+    it('should output the environment if process.env.name is present', () => {
+      process.env.name = 'test'
+      airbrake.initialise()
+
+      console.error(
+        'Error processing request. Request: %j, Exception: %o',
+        {},
+        {}
+      )
+
+      expect(mockNotify).toHaveBeenLastCalledWith({
+        error: expect.errorWithMessageMatching(expect.stringMatching('Error')),
+        params: expect.objectContaining({
+          consoleInvocationDetails: {
+            arguments: expect.any(Object),
+            method: 'error'
+          }
+        }),
+        context: {},
+        environment: { name: 'test' }
+      })
+    })
+
     it('hooks the process for uncaughtExceptions', async () => {
       const processExitSpy = jest
         .spyOn(process, 'exit')
