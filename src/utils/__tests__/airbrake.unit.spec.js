@@ -30,6 +30,9 @@ describe('airbrake', () => {
     process.env = {
       ...originalEnv
     }
+    process.env.AIRBRAKE_HOST = 'https://test-airbrake.com'
+    process.env.AIRBRAKE_PROJECT_KEY = '123'
+
     jest.resetAllMocks()
     airbrake.reset()
 
