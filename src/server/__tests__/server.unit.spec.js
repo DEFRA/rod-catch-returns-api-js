@@ -50,18 +50,26 @@ jest.mock('@hapi/hapi', () => {
   return Hapi
 })
 
-afterEach(() => {
-  jest.restoreAllMocks()
-})
-
 describe('server.unit', () => {
   const originalEnv = process.env
+  let originalErrorMethod
 
   beforeEach(() => {
     jest.resetModules()
+    originalErrorMethod = logger.error
     process.env = {
       ...originalEnv
     }
+  })
+
+  afterEach(() => {
+    // logger.error doesn't reset properly, so have to do it manually
+    logger.error = originalErrorMethod
+
+    // Remove all listeners to prevent memory leaks in subsequent tests
+    process.removeAllListeners('SIGINT')
+    process.removeAllListeners('SIGTERM')
+    jest.restoreAllMocks()
   })
 
   it('should log a message saying the server has started successfully', async () => {
@@ -263,7 +271,6 @@ describe('server.unit', () => {
       // Wait for the next event loop cycle
       await new Promise((resolve) => setImmediate(resolve))
 
-      // Assert the server stopped and process.exit was called with the correct code
       expect(serverStopSpy).toHaveBeenCalled()
       expect(airbrake.flush).toHaveBeenCalled()
       expect(processStopSpy).toHaveBeenCalledWith(code)
@@ -274,6 +281,15 @@ describe('server.unit', () => {
     await initialiseServer()
 
     expect(airbrake.initialise).toHaveBeenCalled()
+  })
+
+  it('should attach airbrake to the logger', async () => {
+    const ATTACH_SYMBOL = Symbol('ATTACHED')
+    airbrake.attachAirbrakeToDebugLogger.mockReturnValueOnce(ATTACH_SYMBOL)
+
+    await initialiseServer()
+
+    expect(logger.error).toBe(ATTACH_SYMBOL)
   })
 
   it('should log and throw an error if a required environment variable is missing', async () => {
