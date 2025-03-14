@@ -103,11 +103,12 @@
     ****************************************************************
     -->
     <changeSet id="update-schema: associate catchments with grilse gate identifier" author="Defra">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="rcr_catchment" >
-            <column name="gate_id" afterColumn="region_id" type="bigint" value="1"/>
+            <column name="gate_id" type="bigint" value="1"/>
         </addColumn>
         <addColumn tableName="rcr_catchment_aud">
-            <column name="gate_id" afterColumn="region_id" type="bigint" value="1"/>
+            <column name="gate_id" type="bigint" value="1"/>
         </addColumn>
 
         <addForeignKeyConstraint baseTableName="rcr_catchment"
