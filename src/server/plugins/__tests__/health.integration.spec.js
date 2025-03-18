@@ -59,6 +59,11 @@ describe('health.integration', () => {
               expect.objectContaining({
                 connection: 'postgresql',
                 status: 'ok'
+              }),
+
+              expect.objectContaining({
+                connection: 'redis',
+                status: 'ok'
               })
             ])
           ])
