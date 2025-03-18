@@ -37,7 +37,9 @@ jest.mock('@hapi/hapi', () => {
         uri: 'http://localhost:5000'
       },
       register: jest.fn(),
-      realm: { modifiers: { route: {} } }
+      app: {},
+      realm: { modifiers: { route: {} } },
+      cache: jest.fn()
     }))
   }
   return Hapi
@@ -208,12 +210,7 @@ describe('server.unit', () => {
 
     const server = await initialiseServer()
 
-    expect(server.register).toHaveBeenCalledWith([
-      Inert,
-      Vision,
-      HealthCheck,
-      Swagger
-    ])
+    expect(server.register).toHaveBeenCalledWith([Inert, Vision, Swagger])
   })
 
   it('should log successful connection message when database connection is successful', async () => {
