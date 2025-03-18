@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
 import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
-import HealthCheck from './plugins/health.js'
+import registerHealthCheckPlugin from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
@@ -68,7 +68,8 @@ export default async () => {
 
   await server.register([Inert, Vision, Swagger])
 
-  await HealthCheck(server)
+  // register health check plugin separately, as it requires server
+  await registerHealthCheckPlugin(server)
 
   server.route(rootRoutes)
 

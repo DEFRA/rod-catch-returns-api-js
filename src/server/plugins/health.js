@@ -2,8 +2,6 @@ import HapiAndHealthy from 'hapi-and-healthy'
 import { dynamicsClient } from '@defra-fish/dynamics-lib'
 import { sequelize } from '../../services/database.service.js'
 
-// TODO rename this registerHealthCheck
-
 export default async (server) => {
   await server.register({
     plugin: HapiAndHealthy,
