@@ -3,6 +3,7 @@ import HealthCheck from '../plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from '../plugins/swagger.js'
 import Vision from '@hapi/vision'
+import airbrake from '../../utils/airbrake.js'
 import initialiseServer from '../server.js'
 import logger from '../../utils/logger-utils.js'
 import { sequelize } from '../../services/database.service.js'
@@ -24,6 +25,11 @@ jest.mock('../../services/database.service.js', () => ({
   }
 }))
 jest.mock('../../utils/logger-utils.js')
+jest.mock('../../utils/airbrake.js', () => ({
+  initialise: jest.fn(),
+  attachAirbrakeToDebugLogger: jest.fn(() => jest.fn()),
+  flush: jest.fn()
+}))
 jest.mock('../plugins/swagger.js')
 jest.mock('../plugins/health.js')
 jest.mock('@hapi/inert')
@@ -33,6 +39,7 @@ jest.mock('@hapi/hapi', () => {
     server: jest.fn(() => ({
       route: jest.fn(),
       start: jest.fn(),
+      stop: jest.fn(),
       info: {
         uri: 'http://localhost:5000'
       },
@@ -43,18 +50,26 @@ jest.mock('@hapi/hapi', () => {
   return Hapi
 })
 
-afterEach(() => {
-  jest.restoreAllMocks()
-})
-
 describe('server.unit', () => {
   const originalEnv = process.env
+  let originalErrorMethod
 
   beforeEach(() => {
     jest.resetModules()
+    originalErrorMethod = logger.error
     process.env = {
       ...originalEnv
     }
+  })
+
+  afterEach(() => {
+    // logger.error doesn't reset properly, so have to do it manually
+    logger.error = originalErrorMethod
+
+    // Remove all listeners to prevent memory leaks in subsequent tests
+    process.removeAllListeners('SIGINT')
+    process.removeAllListeners('SIGTERM')
+    jest.restoreAllMocks()
   })
 
   it('should log a message saying the server has started successfully', async () => {
@@ -239,20 +254,42 @@ describe('server.unit', () => {
     )
   })
 
-  it('should log an error and exit on unhandledRejection', async () => {
-    sequelize.authenticate.mockResolvedValueOnce()
-    const mError = new Error('Unexpected error')
-    jest.spyOn(process, 'on').mockImplementation((event, handler) => {
-      if (event === 'unhandledRejection') {
-        handler(mError)
-      }
-    })
-    const exitSpy = jest.spyOn(process, 'exit').mockReturnValueOnce()
+  it.each([
+    ['SIGINT', 130],
+    ['SIGTERM', 137]
+  ])(
+    'should stop the server and exit with code %d when receiving %s signal',
+    async (signal, code) => {
+      const server = await initialiseServer()
+      const serverStopSpy = jest.spyOn(server, 'stop').mockResolvedValueOnce()
+      const processStopSpy = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(jest.fn())
+
+      process.emit(signal)
+
+      // Wait for the next event loop cycle
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(serverStopSpy).toHaveBeenCalled()
+      expect(airbrake.flush).toHaveBeenCalled()
+      expect(processStopSpy).toHaveBeenCalledWith(code)
+    }
+  )
+
+  it('should initialise airbrake', async () => {
+    await initialiseServer()
+
+    expect(airbrake.initialise).toHaveBeenCalled()
+  })
+
+  it('should attach airbrake to the logger', async () => {
+    const ATTACH_SYMBOL = Symbol('ATTACHED')
+    airbrake.attachAirbrakeToDebugLogger.mockReturnValueOnce(ATTACH_SYMBOL)
 
     await initialiseServer()
 
-    expect(logger.error).toHaveBeenCalledWith(new Error('Unexpected error'))
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(logger.error).toBe(ATTACH_SYMBOL)
   })
 
   it('should log and throw an error if a required environment variable is missing', async () => {

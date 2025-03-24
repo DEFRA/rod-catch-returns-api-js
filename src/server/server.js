@@ -5,6 +5,7 @@ import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import airbrake from '../utils/airbrake.js'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
 import logger from '../utils/logger-utils.js'
@@ -22,6 +23,9 @@ export default async () => {
     })
     throw new Error('Environment variables validation failed.')
   }
+
+  airbrake.initialise()
+  logger.error = airbrake.attachAirbrakeToDebugLogger(logger.error)
 
   const server = Hapi.server({
     port: process.env.PORT || 5000,
@@ -59,10 +63,14 @@ export default async () => {
     server.info.uri
   )
 
-  process.on('unhandledRejection', (err) => {
-    logger.error(err)
-    process.exit(1)
-  })
+  const shutdown = async (code) => {
+    await server.stop()
+    await airbrake.flush()
+    process.exit(code)
+  }
+
+  process.on('SIGINT', () => shutdown(130))
+  process.on('SIGTERM', () => shutdown(137))
 
   return server
 }

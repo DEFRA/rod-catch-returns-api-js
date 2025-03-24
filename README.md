@@ -32,7 +32,9 @@ It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node
 | DYNAMICS_API_VERSION     | The version of the Dynamics API                                         | yes      |         |                                             | The version of the dynamics web api. e.g. 9.1                                                                 |
 | DYNAMICS_API_TIMEOUT     | The Dynamics API request timeout                                        | no       | 90000   |                                             | The time in milliseconds after which requests will timeout if Dynamics does not return a response, e.g. 90000 |
 | DYNAMICS_CACHE_TTL       | Default TTL for cached operations                                       | no       | 12 hrs  |                                             | The default TTL for cached operations. Specified in seconds.                                                  |
-| DEBUG                    | Use to enable output of debug information to the console                | yes      |         | \*, rcr-api:\*, rcr-api:info, rcr-api:error |                                                                                                               |
+| DEBUG                    | Use to enable output of debug information to the console                | yes      |         | \*, rcr-api:\*, rcr-api:info, rcr-api:error |
+| AIRBRAKE_HOST            | URL of airbrake host                                                    | no       |         |                                             |                                                                                                               |
+| AIRBRAKE_PROJECT_KEY     | Project key for airbrake logging                                        | no       |         |                                             |                                                                                                               |
 
 ## Installation
 
