@@ -25,6 +25,7 @@ export default [
             })
             .code(StatusCodes.OK)
         } catch (error) {
+          console.log(error)
           return handleServerError('Error fetching profile', error, h)
         }
       },
