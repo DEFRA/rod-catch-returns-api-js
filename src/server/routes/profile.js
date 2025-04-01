@@ -19,13 +19,13 @@ export default [
             method: route.method.toUpperCase(),
             path: route.path
           }))
+
           return h
             .response({
               urls
             })
             .code(StatusCodes.OK)
         } catch (error) {
-          console.log(error)
           return handleServerError('Error fetching profile', error, h)
         }
       },
