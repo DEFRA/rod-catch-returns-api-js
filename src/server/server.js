@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
+import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
@@ -30,6 +31,23 @@ export default async () => {
   const server = Hapi.server({
     port: process.env.PORT || 5000,
     host: '0.0.0.0',
+    cache: [
+      {
+        provider: {
+          constructor: CatboxRedis,
+          options: {
+            partition: 'rcr-js-api',
+            host: process.env.REDIS_HOST,
+            port: process.env.REDIS_PORT,
+            db: 0,
+            ...(process.env.REDIS_PASSWORD && {
+              password: process.env.REDIS_PASSWORD,
+              tls: {}
+            })
+          }
+        }
+      }
+    ],
     routes: {
       validate: {
         failAction,
@@ -47,7 +65,14 @@ export default async () => {
     logger.error('Unable to connect to the database:', error)
   }
 
-  await server.register([Inert, Vision, HealthCheck, Swagger])
+  server.app.cache = server.cache({
+    segment: 'default-cache',
+    expiresIn: 1000
+  })
+
+  await server.register([Inert, Vision, Swagger])
+
+  await server.register(HealthCheck(server))
 
   server.route(rootRoutes)
 

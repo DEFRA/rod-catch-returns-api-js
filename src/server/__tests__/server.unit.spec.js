@@ -1,3 +1,4 @@
+import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
 import HealthCheck from '../plugins/health.js'
 import Inert from '@hapi/inert'
@@ -44,7 +45,9 @@ jest.mock('@hapi/hapi', () => {
         uri: 'http://localhost:5000'
       },
       register: jest.fn(),
-      realm: { modifiers: { route: {} } }
+      app: {},
+      realm: { modifiers: { route: {} } },
+      cache: jest.fn()
     }))
   }
   return Hapi
@@ -218,17 +221,86 @@ describe('server.unit', () => {
     ])
   })
 
-  it('should configure server with correct plugins', async () => {
+  it('should configure the cache correctly', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
-    expect(server.register).toHaveBeenCalledWith([
-      Inert,
-      Vision,
-      HealthCheck,
-      Swagger
-    ])
+    expect(server.cache).toHaveBeenCalledWith({
+      segment: 'default-cache',
+      expiresIn: 1000
+    })
+  })
+
+  it('should configure CatboxRedis as the cache provider', async () => {
+    process.env.REDIS_HOST = 'redis-host'
+    process.env.REDIS_PORT = '6379'
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(Hapi.server).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: [
+          {
+            provider: {
+              constructor: CatboxRedis,
+              options: {
+                partition: 'rcr-js-api',
+                host: expect.any(String),
+                port: expect.any(String),
+                db: 0
+              }
+            }
+          }
+        ]
+      })
+    )
+  })
+
+  it('should add the redis password if it is present to the cache provider', async () => {
+    process.env.REDIS_HOST = 'redis-host'
+    process.env.REDIS_PORT = '6379'
+    process.env.REDIS_PASSWORD = 'abc123'
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(Hapi.server).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: [
+          {
+            provider: {
+              constructor: CatboxRedis,
+              options: {
+                partition: 'rcr-js-api',
+                host: expect.any(String),
+                port: expect.any(String),
+                db: 0,
+                password: expect.any(String),
+                tls: {}
+              }
+            }
+          }
+        ]
+      })
+    )
+  })
+
+  it('should configure server with Inert, Vision and Swagger plugins', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.register).toHaveBeenNthCalledWith(1, [Inert, Vision, Swagger])
+  })
+
+  it('should configure server with HealthCheck plugin', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.register).toHaveBeenNthCalledWith(2, HealthCheck(server))
   })
 
   it('should log successful connection message when database connection is successful', async () => {
