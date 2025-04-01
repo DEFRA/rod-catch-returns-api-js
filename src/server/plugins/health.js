@@ -2,7 +2,7 @@ import HapiAndHealthy from 'hapi-and-healthy'
 import { dynamicsClient } from '@defra-fish/dynamics-lib'
 import { sequelize } from '../../services/database.service.js'
 
-export default {
+export default (server) => ({
   plugin: HapiAndHealthy,
   options: {
     id: process.env.npm_package_name,
@@ -29,8 +29,18 @@ export default {
             status: 'ok',
             ...(await sequelize.authenticate())
           }
+        },
+        async () => {
+          const result = await server.app.cache.isReady()
+          if (!result) {
+            throw new Error('Redis connection is not ready')
+          }
+          return {
+            connection: 'redis',
+            status: 'ok'
+          }
         }
       ]
     }
   }
-}
+})
