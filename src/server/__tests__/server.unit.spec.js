@@ -97,7 +97,7 @@ describe('server.unit', () => {
     ])
   })
 
-  it('should configure server with correct plugins', async () => {
+  it('should configure the cache correctly', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
