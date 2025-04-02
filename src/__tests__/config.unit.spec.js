@@ -30,13 +30,11 @@ describe('config', () => {
       expect(error).toBeUndefined()
     })
 
-    it('should fail validation if NODE_ENV is invalid', () => {
-      validEnv.NODE_ENV = 'invalid_env'
+    it('should fail validation if NODE_ENV is not a string', () => {
+      validEnv.NODE_ENV = 2
       const { error } = envSchema.validate(validEnv)
       expect(error).toBeDefined()
-      expect(error.details[0].message).toContain(
-        '"NODE_ENV" must be one of [development, test, production]'
-      )
+      expect(error.details[0].message).toContain('"NODE_ENV" must be a string')
     })
 
     it('should allow unknown fields in the schema', () => {
