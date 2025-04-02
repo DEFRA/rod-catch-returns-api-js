@@ -8,5 +8,8 @@ export default async () => {
   // the tests run in parallel, which can cause conflicts when multiple instances of the server are started for integration tests
   // setting the port to 0 tells your machine to choose the first randomly available port that it finds
   process.env.PORT = 0
+
+  // running tests with NODE_ENV as development
+  process.env.NODE_ENV = 'development'
   logger.info('\nDatabase host set to localhost')
 }
