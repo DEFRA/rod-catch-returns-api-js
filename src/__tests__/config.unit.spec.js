@@ -33,7 +33,6 @@ describe('config', () => {
     it('should fail validation if NODE_ENV is not a string', () => {
       validEnv.NODE_ENV = 2
       const { error } = envSchema.validate(validEnv)
-      expect(error).toBeDefined()
       expect(error.details[0].message).toContain('"NODE_ENV" must be a string')
     })
 
