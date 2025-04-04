@@ -5,6 +5,7 @@ import GrilseProbabilities from './grilse-probabilities.js'
 import GrilseWeightGate from './grilse-weight-gates.js'
 import Licences from './licences.js'
 import Method from './methods.js'
+import Profile from './profile.js'
 import Region from './regions.js'
 import Rivers from './rivers.js'
 import SmallCatches from './small-catches.js'
@@ -20,6 +21,7 @@ export const apiPrefixRoutes = [].concat(
   GrilseWeightGate,
   Licences,
   Method,
+  Profile,
   Region,
   Rivers,
   SmallCatches,
