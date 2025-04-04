@@ -12,8 +12,8 @@ describe('database.unit', () => {
       jest.resetModules()
     })
 
-    it('should include SSL options when NODE_ENV is production', () => {
-      process.env.NODE_ENV = 'production'
+    it('should include SSL options when NODE_ENV is not development', () => {
+      process.env.NODE_ENV = 'rcr-prd'
 
       const { sequelize } = require('../database.service.js')
 
@@ -26,7 +26,7 @@ describe('database.unit', () => {
       })
     })
 
-    it('should not include SSL options when NODE_ENV is not production', () => {
+    it('should not include SSL options when NODE_ENV is development', () => {
       process.env.NODE_ENV = 'development'
 
       const { sequelize } = require('../database.service.js')
