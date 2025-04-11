@@ -15,7 +15,7 @@ import {
   handleServerError
 } from '../../../utils/server-utils.js'
 import { GrilseProbability } from '../../../entities/index.js'
-import { GrilseValidationError } from '../../../models/grilse-probability.model.js'
+import { GrilseValidationError } from '../../../models/grilse-validation-error.model.js'
 
 import routes from '../grilse-probabilities.js'
 

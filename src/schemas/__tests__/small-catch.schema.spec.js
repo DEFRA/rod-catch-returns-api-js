@@ -559,8 +559,6 @@ describe('smallCatch.schema.unit', () => {
         getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
         const payload = getValidPayload({ counts: undefined })
 
-        console.log(payload)
-
         await expect(
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).resolves.toStrictEqual(payload)

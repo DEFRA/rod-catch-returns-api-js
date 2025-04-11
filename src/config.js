@@ -1,24 +1,10 @@
 import joi from 'joi'
 
-export const ENVIRONMENTS = {
-  development: 'development',
-  production: 'production',
-  test: 'test'
-}
-
-export const IS_DEV = process.env.NODE_ENV === ENVIRONMENTS.development
-export const IS_PROD = process.env.NODE_ENV === ENVIRONMENTS.production
-export const IS_TEST = process.env.NODE_ENV === ENVIRONMENTS.test
+export const IS_DEV = process.env.NODE_ENV === 'development'
 
 export const envSchema = joi
   .object({
-    NODE_ENV: joi
-      .string()
-      .valid(
-        ENVIRONMENTS.development,
-        ENVIRONMENTS.test,
-        ENVIRONMENTS.production
-      ),
+    NODE_ENV: joi.string(),
     PORT: joi.number(),
     DATABASE_HOST: joi.string().required(),
     DATABASE_NAME: joi.string().required(),

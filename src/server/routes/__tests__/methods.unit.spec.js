@@ -10,7 +10,6 @@ import { Method } from '../../../entities/index.js'
 import routes from '../methods.js'
 
 jest.mock('../../../entities/index.js')
-jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
 
 const [

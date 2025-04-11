@@ -1,0 +1,228 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`methods.integration GET /api/profile should return a list of all the urls available in the api 1`] = `
+{
+  "urls": [
+    {
+      "method": "GET",
+      "path": "/documentation",
+    },
+    {
+      "method": "GET",
+      "path": "/service-status",
+    },
+    {
+      "method": "GET",
+      "path": "/swagger.json",
+    },
+    {
+      "method": "GET",
+      "path": "/{param*}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/catchments",
+    },
+    {
+      "method": "GET",
+      "path": "/api/grilseWeightGates",
+    },
+    {
+      "method": "GET",
+      "path": "/api/methods",
+    },
+    {
+      "method": "GET",
+      "path": "/api/profile",
+    },
+    {
+      "method": "GET",
+      "path": "/api/regions",
+    },
+    {
+      "method": "GET",
+      "path": "/api/rivers",
+    },
+    {
+      "method": "GET",
+      "path": "/api/species",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/extend.js",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/favicon-16x16.png",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/favicon-32x32.png",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/index.html",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/oauth2-redirect.html",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui-bundle.js",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui-bundle.js.map",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui-standalone-preset.js",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui-standalone-preset.js.map",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui.css",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui.css.map",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui.js",
+    },
+    {
+      "method": "GET",
+      "path": "/swaggerui/swagger-ui.js.map",
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/catches/{catchId}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/licence/{licence}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/methods/{methodId}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/smallCatches/{smallCatchId}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/{submissionId}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}/smallCatches",
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}/river",
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}/catches",
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}/submission",
+    },
+    {
+      "method": "GET",
+      "path": "/api/catches/{catchId}/method",
+    },
+    {
+      "method": "GET",
+      "path": "/api/catches/{catchId}/activity",
+    },
+    {
+      "method": "GET",
+      "path": "/api/catches/{catchId}/species",
+    },
+    {
+      "method": "GET",
+      "path": "/api/licence/full/{licence}",
+    },
+    {
+      "method": "GET",
+      "path": "/api/smallCatches/{smallCatchId}/activity",
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/search/findByContactId",
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/search/getByContactIdAndSeason",
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/{submissionId}/activities",
+    },
+    {
+      "method": "GET",
+      "path": "/api/reporting/reference/grilse-probabilities/{season}",
+    },
+    {
+      "method": "POST",
+      "path": "/api/activities",
+    },
+    {
+      "method": "POST",
+      "path": "/api/catches",
+    },
+    {
+      "method": "POST",
+      "path": "/api/smallCatches",
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions",
+    },
+    {
+      "method": "POST",
+      "path": "/api/reporting/reference/grilse-probabilities/{season}/{gate}",
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/activities/{activityId}",
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/catches/{catchId}",
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/smallCatches/{smallCatchId}",
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/activities/{activityId}",
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/catches/{catchId}",
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/smallCatches/{smallCatchId}",
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/submissions/{submissionId}",
+    },
+  ],
+}
+`;

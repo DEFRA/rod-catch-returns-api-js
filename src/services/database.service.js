@@ -1,4 +1,4 @@
-import { IS_PROD } from '../config.js'
+import { IS_DEV } from '../config.js'
 import { Sequelize } from 'sequelize'
 
 const sequelize = new Sequelize(
@@ -9,16 +9,17 @@ const sequelize = new Sequelize(
     dialect: 'postgres',
     host: process.env.DATABASE_HOST,
     port: process.env.DATABASE_PORT || 5432,
-    ...(IS_PROD
-      ? {
+    ...(IS_DEV
+      ? {}
+      : {
           dialectOptions: {
             ssl: {
               require: true,
               rejectUnauthorized: false
             }
-          }
-        }
-      : {})
+          },
+          logging: false // disable SQL logs
+        })
   }
 )
 

@@ -1,8 +1,10 @@
+import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
 import HealthCheck from '../plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from '../plugins/swagger.js'
 import Vision from '@hapi/vision'
+import airbrake from '../../utils/airbrake.js'
 import initialiseServer from '../server.js'
 import logger from '../../utils/logger-utils.js'
 import { sequelize } from '../../services/database.service.js'
@@ -24,6 +26,11 @@ jest.mock('../../services/database.service.js', () => ({
   }
 }))
 jest.mock('../../utils/logger-utils.js')
+jest.mock('../../utils/airbrake.js', () => ({
+  initialise: jest.fn(),
+  attachAirbrakeToDebugLogger: jest.fn(() => jest.fn()),
+  flush: jest.fn()
+}))
 jest.mock('../plugins/swagger.js')
 jest.mock('../plugins/health.js')
 jest.mock('@hapi/inert')
@@ -33,28 +40,39 @@ jest.mock('@hapi/hapi', () => {
     server: jest.fn(() => ({
       route: jest.fn(),
       start: jest.fn(),
+      stop: jest.fn(),
       info: {
         uri: 'http://localhost:5000'
       },
       register: jest.fn(),
-      realm: { modifiers: { route: {} } }
+      app: {},
+      realm: { modifiers: { route: {} } },
+      cache: jest.fn()
     }))
   }
   return Hapi
 })
 
-afterEach(() => {
-  jest.restoreAllMocks()
-})
-
 describe('server.unit', () => {
   const originalEnv = process.env
+  let originalErrorMethod
 
   beforeEach(() => {
     jest.resetModules()
+    originalErrorMethod = logger.error
     process.env = {
       ...originalEnv
     }
+  })
+
+  afterEach(() => {
+    // logger.error doesn't reset properly, so have to do it manually
+    logger.error = originalErrorMethod
+
+    // Remove all listeners to prevent memory leaks in subsequent tests
+    process.removeAllListeners('SIGINT')
+    process.removeAllListeners('SIGTERM')
+    jest.restoreAllMocks()
   })
 
   it('should log a message saying the server has started successfully', async () => {
@@ -79,141 +97,86 @@ describe('server.unit', () => {
     ])
   })
 
-  it('should configure the /api routes correctly', async () => {
+  it('should configure the cache correctly', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
-    expect(server.route).toHaveBeenCalledWith([
-      expect.objectContaining({
-        method: 'POST',
-        path: '/activities'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/activities/{activityId}/river'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/activities/{activityId}/smallCatches'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/activities/{activityId}/catches'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/activities/{activityId}'
-      }),
-      expect.objectContaining({
-        method: 'DELETE',
-        path: '/activities/{activityId}'
-      }),
-      expect.objectContaining({
-        method: 'PATCH',
-        path: '/activities/{activityId}'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/activities/{activityId}/submission'
-      }),
-      expect.objectContaining({ method: 'POST', path: '/catches' }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/catches/{catchId}/activity'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/catches/{catchId}/species'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/catches/{catchId}/method'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/catches/{catchId}'
-      }),
-      expect.objectContaining({
-        method: 'DELETE',
-        path: '/catches/{catchId}'
-      }),
-      expect.objectContaining({
-        method: 'PATCH',
-        path: '/catches/{catchId}'
-      }),
-      expect.objectContaining({ method: 'GET', path: '/catchments' }),
-      expect.objectContaining({
-        method: 'POST',
-        path: '/reporting/reference/grilse-probabilities/{season}/{gate}'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/reporting/reference/grilse-probabilities/{season}'
-      }),
-      expect.objectContaining({ method: 'GET', path: '/grilseWeightGates' }),
-      expect.objectContaining({ method: 'GET', path: '/licence/{licence}' }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/licence/full/{licence}'
-      }),
-      expect.objectContaining({ method: 'GET', path: '/methods' }),
-      expect.objectContaining({ method: 'GET', path: '/methods/{methodId}' }),
-      expect.objectContaining({ method: 'GET', path: '/regions' }),
-      expect.objectContaining({ method: 'GET', path: '/rivers' }),
-      expect.objectContaining({ method: 'POST', path: '/smallCatches' }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/smallCatches/{smallCatchId}/activity'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/smallCatches/{smallCatchId}'
-      }),
-      expect.objectContaining({
-        method: 'DELETE',
-        path: '/smallCatches/{smallCatchId}'
-      }),
-      expect.objectContaining({
-        method: 'PATCH',
-        path: '/smallCatches/{smallCatchId}'
-      }),
-      expect.objectContaining({ method: 'GET', path: '/species' }),
-      expect.objectContaining({ method: 'POST', path: '/submissions' }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/submissions/search/findByContactId'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/submissions/search/getByContactIdAndSeason'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/submissions/{submissionId}/activities'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/submissions/{submissionId}'
-      }),
-      expect.objectContaining({
-        method: 'PATCH',
-        path: '/submissions/{submissionId}'
-      })
-    ])
+    expect(server.cache).toHaveBeenCalledWith({
+      segment: 'default-cache',
+      expiresIn: 1000
+    })
   })
 
-  it('should configure server with correct plugins', async () => {
+  it('should configure CatboxRedis as the cache provider', async () => {
+    process.env.REDIS_HOST = 'redis-host'
+    process.env.REDIS_PORT = '6379'
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(Hapi.server).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: [
+          {
+            provider: {
+              constructor: CatboxRedis,
+              options: {
+                partition: 'rcr-js-api',
+                host: expect.any(String),
+                port: expect.any(String),
+                db: 0
+              }
+            }
+          }
+        ]
+      })
+    )
+  })
+
+  it('should add the redis password if it is present to the cache provider', async () => {
+    process.env.REDIS_HOST = 'redis-host'
+    process.env.REDIS_PORT = '6379'
+    process.env.REDIS_PASSWORD = 'abc123'
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    await initialiseServer()
+
+    expect(Hapi.server).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: [
+          {
+            provider: {
+              constructor: CatboxRedis,
+              options: {
+                partition: 'rcr-js-api',
+                host: expect.any(String),
+                port: expect.any(String),
+                db: 0,
+                password: expect.any(String),
+                tls: {}
+              }
+            }
+          }
+        ]
+      })
+    )
+  })
+
+  it('should configure server with Inert, Vision and Swagger plugins', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
-    expect(server.register).toHaveBeenCalledWith([
-      Inert,
-      Vision,
-      HealthCheck,
-      Swagger
-    ])
+    expect(server.register).toHaveBeenNthCalledWith(1, [Inert, Vision, Swagger])
+  })
+
+  it('should configure server with HealthCheck plugin', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.register).toHaveBeenNthCalledWith(2, HealthCheck(server))
   })
 
   it('should log successful connection message when database connection is successful', async () => {
@@ -239,20 +202,42 @@ describe('server.unit', () => {
     )
   })
 
-  it('should log an error and exit on unhandledRejection', async () => {
-    sequelize.authenticate.mockResolvedValueOnce()
-    const mError = new Error('Unexpected error')
-    jest.spyOn(process, 'on').mockImplementation((event, handler) => {
-      if (event === 'unhandledRejection') {
-        handler(mError)
-      }
-    })
-    const exitSpy = jest.spyOn(process, 'exit').mockReturnValueOnce()
+  it.each([
+    ['SIGINT', 130],
+    ['SIGTERM', 137]
+  ])(
+    'should stop the server and exit with code %d when receiving %s signal',
+    async (signal, code) => {
+      const server = await initialiseServer()
+      const serverStopSpy = jest.spyOn(server, 'stop').mockResolvedValueOnce()
+      const processStopSpy = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(jest.fn())
+
+      process.emit(signal)
+
+      // Wait for the next event loop cycle
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(serverStopSpy).toHaveBeenCalled()
+      expect(airbrake.flush).toHaveBeenCalled()
+      expect(processStopSpy).toHaveBeenCalledWith(code)
+    }
+  )
+
+  it('should initialise airbrake', async () => {
+    await initialiseServer()
+
+    expect(airbrake.initialise).toHaveBeenCalled()
+  })
+
+  it('should attach airbrake to the logger', async () => {
+    const ATTACH_SYMBOL = Symbol('ATTACHED')
+    airbrake.attachAirbrakeToDebugLogger.mockReturnValueOnce(ATTACH_SYMBOL)
 
     await initialiseServer()
 
-    expect(logger.error).toHaveBeenCalledWith(new Error('Unexpected error'))
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(logger.error).toBe(ATTACH_SYMBOL)
   })
 
   it('should log and throw an error if a required environment variable is missing', async () => {

@@ -1,10 +1,12 @@
 import 'dotenv/config'
 import { apiPrefixRoutes, rootRoutes } from './routes/index.js'
+import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import Hapi from '@hapi/hapi'
 import HealthCheck from './plugins/health.js'
 import Inert from '@hapi/inert'
 import Swagger from './plugins/swagger.js'
 import Vision from '@hapi/vision'
+import airbrake from '../utils/airbrake.js'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
 import logger from '../utils/logger-utils.js'
@@ -23,9 +25,29 @@ export default async () => {
     throw new Error('Environment variables validation failed.')
   }
 
+  airbrake.initialise()
+  logger.error = airbrake.attachAirbrakeToDebugLogger(logger.error)
+
   const server = Hapi.server({
     port: process.env.PORT || 5000,
     host: '0.0.0.0',
+    cache: [
+      {
+        provider: {
+          constructor: CatboxRedis,
+          options: {
+            partition: 'rcr-js-api',
+            host: process.env.REDIS_HOST,
+            port: process.env.REDIS_PORT,
+            db: 0,
+            ...(process.env.REDIS_PASSWORD && {
+              password: process.env.REDIS_PASSWORD,
+              tls: {}
+            })
+          }
+        }
+      }
+    ],
     routes: {
       validate: {
         failAction,
@@ -43,7 +65,14 @@ export default async () => {
     logger.error('Unable to connect to the database:', error)
   }
 
-  await server.register([Inert, Vision, HealthCheck, Swagger])
+  server.app.cache = server.cache({
+    segment: 'default-cache',
+    expiresIn: 1000
+  })
+
+  await server.register([Inert, Vision, Swagger])
+
+  await server.register(HealthCheck(server))
 
   server.route(rootRoutes)
 
@@ -59,10 +88,14 @@ export default async () => {
     server.info.uri
   )
 
-  process.on('unhandledRejection', (err) => {
-    logger.error(err)
-    process.exit(1)
-  })
+  const shutdown = async (code) => {
+    await server.stop()
+    await airbrake.flush()
+    process.exit(code)
+  }
+
+  process.on('SIGINT', () => shutdown(130))
+  process.on('SIGTERM', () => shutdown(137))
 
   return server
 }

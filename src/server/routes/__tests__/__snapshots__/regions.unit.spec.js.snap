@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`regions.unit GET /regions should return all regions with a 200 status code if the call to fetch all regions is successful 1`] = `
+{
+  "_embedded": {
+    "regions": [
+      {
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "1",
+        "name": "Anglian",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+      },
+      {
+        "createdAt": "2018-11-07T10:00:00.000Z",
+        "id": "2",
+        "name": "Midlands",
+        "updatedAt": "2018-11-07T10:00:00.000Z",
+      },
+    ],
+  },
+}
+`;

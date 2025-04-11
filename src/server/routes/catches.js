@@ -10,6 +10,7 @@ import {
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
+import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
@@ -278,6 +279,7 @@ export default [
         const catchId = request.params.catchId
 
         try {
+          logger.info('Deleting catch with id:%s', catchId)
           const catchesDestroyed = await Catch.destroy({
             where: { id: catchId }
           })
@@ -286,6 +288,7 @@ export default [
             return handleNotFound(`Catch not found for ID: ${catchId}`, h)
           }
 
+          logger.info('Deleted catch with id:%s', catchId)
           return h.response().code(StatusCodes.NO_CONTENT)
         } catch (error) {
           return handleServerError('Error deleting catch', error, h)

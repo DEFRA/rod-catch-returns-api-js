@@ -1,19 +1,26 @@
+import {
+  getMockResponseToolkit,
+  getServerDetails
+} from '../../../test-utils/server-test-utils.js'
 import { Catchment } from '../../../entities/index.js'
-import logger from '../../../utils/logger-utils.js'
+import { handleServerError } from '../../../utils/server-utils.js'
 import routes from '../catchments.js'
 
 jest.mock('../../../entities/index.js')
-jest.mock('../../../utils/logger-utils.js')
+jest.mock('../../../utils/server-utils.js')
+
+const [
+  {
+    options: { handler: getAllCatchmentsHandler }
+  }
+] = routes
+
+const SERVER_ERROR_SYMBOL = Symbol('SERVER_ERROR')
+
+handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('catchments.unit', () => {
   describe('GET /catchments', () => {
-    const getCatchmentsHandler = routes[0].options.handler
-
-    const getResponseToolkit = () => ({
-      response: jest.fn().mockReturnThis(),
-      code: jest.fn()
-    })
-
     const getCatchmentData = () => [
       {
         id: '2',
@@ -35,68 +42,50 @@ describe('catchments.unit', () => {
 
     it('should return a 200 status code if the call to fetch all catchments is successful', async () => {
       Catchment.findAll.mockResolvedValueOnce(getCatchmentData())
-      const h = getResponseToolkit()
 
-      await getCatchmentsHandler({}, h)
+      const result = await getAllCatchmentsHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.code).toHaveBeenCalledWith(200)
+      expect(result.statusCode).toBe(200)
     })
 
     it('should return all catchments if the call to fetch all catchments is successfull', async () => {
-      const catchmentData = getCatchmentData()
-      Catchment.findAll.mockResolvedValueOnce(catchmentData)
-      const h = getResponseToolkit()
+      Catchment.findAll.mockResolvedValueOnce(getCatchmentData())
 
-      await getCatchmentsHandler({}, h)
+      const result = await getAllCatchmentsHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
 
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          _embedded: {
-            catchments: catchmentData
-          }
-        })
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call handleServerError if an error occurs while fetching the catchments', async () => {
+      const error = new Error('Database error')
+      Catchment.findAll.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getAllCatchmentsHandler(getServerDetails(), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching catchments',
+        error,
+        h
       )
     })
 
-    it('should log an error if an error occurs while fetching catchments', async () => {
+    it('should return the error response if an error occurs while fetching the catchments', async () => {
       const error = new Error('Database error')
       Catchment.findAll.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
 
-      await getCatchmentsHandler({}, h)
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching catchments:',
-        error
+      const result = await getAllCatchmentsHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
       )
-    })
 
-    it('should return 500 if an error occurs while fetching catchments', async () => {
-      const error = new Error('Database error')
-      Catchment.findAll.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
-
-      await getCatchmentsHandler({}, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable to fetch catchments'
-        })
-      )
-    })
-
-    it('should return the error response in the body if an error occurs while fetching catchments', async () => {
-      const error = new Error('Database error')
-      Catchment.findAll.mockRejectedValueOnce(error)
-      const h = getResponseToolkit()
-
-      await getCatchmentsHandler({}, h)
-
-      expect(h.response).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Unable to fetch catchments'
-        })
-      )
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
   })
 })

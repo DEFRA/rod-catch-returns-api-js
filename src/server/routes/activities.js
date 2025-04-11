@@ -16,7 +16,7 @@ import {
 } from '../../utils/entity-utils.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { StatusCodes } from 'http-status-codes'
-
+import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapCatchToResponse } from '../../mappers/catches.mapper.js'
 import { mapRiverToResponse } from '../../mappers/river.mapper.js'
@@ -298,6 +298,10 @@ export default [
 
         try {
           // Find IDs of all SmallCatch records associated with the Activity
+          logger.info(
+            'Deleting activity with id:%s and related records',
+            activityId
+          )
           const smallCatchIds = (
             await SmallCatch.findAll({
               attributes: ['id'],
@@ -337,6 +341,11 @@ export default [
 
           // Commit transaction
           await transaction.commit()
+
+          logger.info(
+            'Deleted activity with id: %s and related records',
+            activityId
+          )
           return h.response().code(StatusCodes.NO_CONTENT)
         } catch (error) {
           await transaction.rollback()
