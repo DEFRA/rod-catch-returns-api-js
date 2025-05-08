@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getSystemUser } from './system-users.service.js'
+import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 
@@ -47,7 +47,7 @@ export const tokenService = async (request, h) => {
         .takeover()
     }
 
-    const userDetails = await getSystemUser(decoded.oid)
+    const userDetails = await getSystemUserByOid(decoded.oid)
 
     const hasFmtOrAdminRole = !!userDetails?.roles.find(
       (role) =>

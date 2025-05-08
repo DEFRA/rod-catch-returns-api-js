@@ -2,29 +2,13 @@ import {
   Role,
   SystemUser,
   SystemUserRole,
-  findByExample,
-  retrieveMultipleAsMap
+  findByExample
 } from '@defra-fish/dynamics-lib'
+import { getReferenceDataForEntity } from './reference-data.service'
 
 export const ENTITY_TYPES = [Role]
 
-export async function getReferenceData() {
-  return retrieveMultipleAsMap(...ENTITY_TYPES).cached()
-}
-
-/**
- * Retrieve all reference data records for the given entity type
- *
- * @template T
- * @param {typeof T} entityType
- * @returns {Promise<Array<T>>}
- */
-export async function getReferenceDataForEntity(entityType) {
-  const data = await getReferenceData()
-  return data[entityType.definition.localCollection]
-}
-
-export const getSystemUser = async (oid) => {
+export const getSystemUserByOid = async (oid) => {
   const matchedUsers = await findByExample(
     Object.assign(new SystemUser(), { oid })
   )
@@ -38,6 +22,8 @@ export const getSystemUser = async (oid) => {
   )
 
   const roles = await getReferenceDataForEntity(Role)
+
+  console.log(user)
 
   return {
     ...user.toJSON(),
