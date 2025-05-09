@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes'
 import axios from 'axios'
 import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
@@ -21,12 +22,14 @@ export const tokenService = async (request, h) => {
   try {
     // get jwks uri
     const openIdConfigDocument = await getOpenIdConfigDocument()
-    const client = jwksClient({ jwksUri: openIdConfigDocument.data.jwks_uri })
+    const client = jwksClient({ jwksUri: openIdConfigDocument?.data?.jwks_uri })
 
     // Decode token header to get `kid`
     const decodedHeader = jwt.decode(token, { complete: true })
     if (!decodedHeader || !decodedHeader.header.kid) {
-      return h.response({ error: 'Invalid token header' }).code(401)
+      return h
+        .response({ error: 'Invalid token header' })
+        .code(StatusCodes.UNAUTHORIZED)
     }
 
     // Get signing key for `kid`
@@ -56,11 +59,17 @@ export const tokenService = async (request, h) => {
     )
 
     if (!userDetails || userDetails.isDisabled) {
-      return h.response({ error: 'Account disabled' }).code(403).takeover()
+      return h
+        .response({ error: 'Account disabled' })
+        .code(StatusCodes.FORBIDDEN)
+        .takeover()
     }
 
     if (!hasFmtOrAdminRole) {
-      return h.response({ error: 'Account disabled' }).code(403).takeover()
+      return h
+        .response({ error: 'Incorrect role' })
+        .code(StatusCodes.FORBIDDEN)
+        .takeover()
     }
 
     let role = null
@@ -77,6 +86,9 @@ export const tokenService = async (request, h) => {
     return h.continue
   } catch (err) {
     console.error(err)
-    return h.response({ error: 'Invalid token' }).code(401).takeover()
+    return h
+      .response({ error: 'Invalid token' })
+      .code(StatusCodes.UNAUTHORIZED)
+      .takeover()
   }
 }
