@@ -102,7 +102,7 @@ describe('token.service.unit', () => {
     it('should return 401 if token has no OID', async () => {
       jwksClient.mockReturnValue({
         getSigningKey: jest.fn().mockResolvedValue({
-          publicKey: 'mock-public-key'
+          rsaPublicKey: 'mock-rsa-key'
         })
       })
       jwt.decode.mockReturnValue({ header: { kid: 'abc' } })
