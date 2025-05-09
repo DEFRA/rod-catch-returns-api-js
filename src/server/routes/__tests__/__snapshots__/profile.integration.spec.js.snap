@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`methods.integration GET /api/profile should return a list of all the urls available in the api 1`] = `
+exports[`profile.integration GET /api/profile should return a list of all the urls available in the api 1`] = `
 {
   "urls": [
     {

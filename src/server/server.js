@@ -11,6 +11,7 @@ import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
 import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
+import { tokenService } from '../services/token.service.js'
 
 export default async () => {
   const envValidationResult = envSchema.validate(process.env, {
@@ -57,6 +58,8 @@ export default async () => {
       }
     }
   })
+
+  server.ext('onPreAuth', tokenService)
 
   try {
     await sequelize.authenticate()
