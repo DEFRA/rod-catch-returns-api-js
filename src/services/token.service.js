@@ -3,6 +3,7 @@ import axios from 'axios'
 import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
+import logger from '../utils/logger-utils.js'
 
 export const ROLES = Object.freeze({
   ADMIN: 'RcrAdminUser',
@@ -26,7 +27,7 @@ export const tokenService = async (request, h) => {
 
     // Decode token header to get `kid`
     const decodedHeader = jwt.decode(token, { complete: true })
-    if (!decodedHeader || !decodedHeader.header.kid) {
+    if (!decodedHeader?.header?.kid) {
       return h
         .response({ error: 'Invalid token header' })
         .code(StatusCodes.UNAUTHORIZED)
@@ -46,28 +47,15 @@ export const tokenService = async (request, h) => {
     if (!decoded.oid) {
       return h
         .response({ error: 'OID not found in token' })
-        .code(401)
+        .code(StatusCodes.UNAUTHORIZED)
         .takeover()
     }
 
     const userDetails = await getSystemUserByOid(decoded.oid)
 
-    const hasFmtOrAdminRole = !!userDetails?.roles.find(
-      (role) =>
-        role.name === 'System Administrator' ||
-        role.name === 'RCR CRM Integration User'
-    )
-
     if (!userDetails || userDetails.isDisabled) {
       return h
         .response({ error: 'Account disabled' })
-        .code(StatusCodes.FORBIDDEN)
-        .takeover()
-    }
-
-    if (!hasFmtOrAdminRole) {
-      return h
-        .response({ error: 'Incorrect role' })
         .code(StatusCodes.FORBIDDEN)
         .takeover()
     }
@@ -79,13 +67,18 @@ export const tokenService = async (request, h) => {
       userDetails.roles.some((r) => r.name === 'RCR CRM Integration User')
     ) {
       role = ROLES.FMT
+    } else {
+      return h
+        .response({ error: 'Incorrect role' })
+        .code(StatusCodes.FORBIDDEN)
+        .takeover()
     }
 
-    // Attach OID to request
+    // Attach role to request
     request.auth = { role }
     return h.continue
-  } catch (err) {
-    console.error(err)
+  } catch (error) {
+    logger.error('Invalid token', error)
     return h
       .response({ error: 'Invalid token' })
       .code(StatusCodes.UNAUTHORIZED)
