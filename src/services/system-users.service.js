@@ -13,7 +13,7 @@ export const getSystemUserByOid = async (oid) => {
     Object.assign(new SystemUser(), { oid })
   )
   if (matchedUsers.length !== 1) {
-    throw new Error('Unable to fetch system users')
+    throw new Error(`Unable to fetch system user ${oid}`)
   }
 
   const user = matchedUsers[0]
@@ -22,8 +22,6 @@ export const getSystemUserByOid = async (oid) => {
   )
 
   const roles = await getReferenceDataForEntity(Role)
-
-  console.log(user)
 
   return {
     ...user.toJSON(),

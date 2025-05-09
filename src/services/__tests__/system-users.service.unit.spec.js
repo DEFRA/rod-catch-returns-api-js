@@ -62,5 +62,49 @@ describe('system-users.service.unit', () => {
         ]
       })
     })
+
+    it('should handle users with no roles', async () => {
+      findByExample.mockResolvedValueOnce([
+        {
+          toJSON: jest.fn().mockReturnValue({
+            id: '26449770-5e67-e911-a988-000d3ab9df39',
+            oid: 'e4661642-0a25-4d49-b7bd-8178699e0161',
+            lastName: 'Gardner-Dell',
+            firstName: 'Sam',
+            isDisabled: false
+          })
+        }
+      ])
+
+      findByExample.mockResolvedValueOnce([])
+
+      getReferenceDataForEntity.mockResolvedValueOnce([
+        { id: 'role1', name: 'Test role 1' },
+        { id: 'role2', name: 'Test role 2' }
+      ])
+
+      const systemUser = await getSystemUserByOid(
+        'e4661642-0a25-4d49-b7bd-8178699e0161'
+      )
+
+      expect(systemUser).toStrictEqual({
+        id: '26449770-5e67-e911-a988-000d3ab9df39',
+        oid: 'e4661642-0a25-4d49-b7bd-8178699e0161',
+        lastName: 'Gardner-Dell',
+        firstName: 'Sam',
+        isDisabled: false,
+        roles: []
+      })
+    })
+
+    it('should return an error if it could not find a user', async () => {
+      findByExample.mockResolvedValueOnce([])
+
+      await expect(
+        getSystemUserByOid('26449770-5e67-e911-a988-000d3ab9df39')
+      ).rejects.toThrow(
+        'Unable to fetch system user 26449770-5e67-e911-a988-000d3ab9df39'
+      )
+    })
   })
 })
