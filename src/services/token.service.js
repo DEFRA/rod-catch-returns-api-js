@@ -46,9 +46,9 @@ export const tokenService = async (request, h) => {
     // Get signing key and verify token
     const key = await client.getSigningKey(decodedHeader.header.kid)
     const signingKey = key.publicKey || key.rsaPublicKey
+
     const decoded = jwt.verify(token, signingKey, {
-      algorithms: ['RS256'],
-      audience: process.env.OIDC_CLIENT_ID
+      algorithms: ['RS256']
     })
 
     // Validate OID exists in token

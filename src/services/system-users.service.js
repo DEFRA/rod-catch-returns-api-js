@@ -4,7 +4,7 @@ import {
   SystemUserRole,
   findByExample
 } from '@defra-fish/dynamics-lib'
-import { getReferenceDataForEntity } from './reference-data.service'
+import { getReferenceDataForEntity } from './reference-data.service.js'
 
 export const ENTITY_TYPES = [Role]
 
