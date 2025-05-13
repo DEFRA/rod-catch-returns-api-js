@@ -62,19 +62,11 @@ describe('token.service.unit', () => {
       expect(result).toBe(h.continue)
     })
 
-    it('should return 401 and an error message if token header is invalid', async () => {
-      jwt.decode.mockReturnValue(null)
-      const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
-        getMockResponseToolkitTakeover()
-      )
-
-      expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token header' })
-    })
-
-    it('should return 401 if token header has no kid', async () => {
-      jwt.decode.mockReturnValue({ header: {} })
+    it.each([
+      ['token header is invalid', null],
+      ['token header has no kid', { header: {} }]
+    ])('should return 401 if %s', async (_, value) => {
+      jwt.decode.mockReturnValue(value)
 
       const result = await tokenService(
         getServerDetails({ headers: { token: 'abc123' } }),
@@ -82,7 +74,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token header' })
+      expect(result.payload).toStrictEqual({ error: 'Invalid token' })
     })
 
     it('should return 401 if token verification fails', async () => {
@@ -96,7 +88,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token header' })
+      expect(result.payload).toStrictEqual({ error: 'Invalid token' })
     })
 
     it('should return 401 if token has no OID', async () => {

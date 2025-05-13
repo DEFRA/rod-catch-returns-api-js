@@ -16,12 +16,41 @@ const ROLE_MAP = Object.freeze({
   'RCR CRM Integration User': ROLES.FMT
 })
 
-export const getOpenIdConfigDocument = () => {
+const getOpenIdConfigDocument = () => {
   return axios.get(process.env.OIDC_WELL_KNOWN_URL)
 }
 
 const createErrorResponse = (h, message, statusCode) => {
   return h.response({ error: message }).code(statusCode).takeover()
+}
+
+const getJwksClient = (jwksUri) => {
+  return jwksClient({ jwksUri })
+}
+
+const isValidHeader = (decodedHeader) => {
+  return !!decodedHeader?.header?.kid
+}
+
+const isUserDetailsValid = (userDetails) => {
+  return userDetails && !userDetails.isDisabled
+}
+
+const verifyToken = async (token, client) => {
+  // Decode and validate token header
+  const decodedHeader = jwt.decode(token, { complete: true })
+  if (!isValidHeader(decodedHeader)) {
+    throw new Error('Invalid token header')
+  }
+
+  // Get signing key
+  const key = await client.getSigningKey(decodedHeader.header.kid)
+  const signingKey = key.publicKey || key.rsaPublicKey
+
+  // Verify token
+  return jwt.verify(token, signingKey, {
+    algorithms: ['RS256']
+  })
 }
 
 export const tokenService = async (request, h) => {
@@ -31,25 +60,12 @@ export const tokenService = async (request, h) => {
   }
 
   try {
-    // Get OpenID configuration and create JWKS client
+    // Get OpenID configuration
     const openIdConfigDocument = await getOpenIdConfigDocument()
-    const client = jwksClient({ jwksUri: openIdConfigDocument?.data?.jwks_uri })
+    const client = getJwksClient(openIdConfigDocument?.data?.jwks_uri)
 
-    // Decode and validate token header
-    const decodedHeader = jwt.decode(token, { complete: true })
-    if (!decodedHeader?.header?.kid) {
-      return h
-        .response({ error: 'Invalid token header' })
-        .code(StatusCodes.UNAUTHORIZED)
-    }
-
-    // Get signing key and verify token
-    const key = await client.getSigningKey(decodedHeader.header.kid)
-    const signingKey = key.publicKey || key.rsaPublicKey
-
-    const decoded = jwt.verify(token, signingKey, {
-      algorithms: ['RS256']
-    })
+    // Verify token
+    const decoded = await verifyToken(token, client)
 
     // Validate OID exists in token
     if (!decoded.oid) {
@@ -62,7 +78,7 @@ export const tokenService = async (request, h) => {
 
     // Get user details and validate account status
     const userDetails = await getSystemUserByOid(decoded.oid)
-    if (!userDetails || userDetails.isDisabled) {
+    if (!isUserDetailsValid(userDetails)) {
       return createErrorResponse(h, 'Account disabled', StatusCodes.FORBIDDEN)
     }
 
