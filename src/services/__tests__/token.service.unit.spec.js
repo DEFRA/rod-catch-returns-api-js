@@ -150,7 +150,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(403)
-      expect(result.payload).toStrictEqual({ error: 'ACCOUNT_INCORRECT_ROLE' })
+      expect(result.payload).toStrictEqual({ error: 'ACCOUNT_ROLE_REQUIRED' })
     })
 
     it('should return 401 if there is any other error', async () => {

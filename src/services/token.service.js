@@ -87,7 +87,7 @@ export const tokenService = async (request, h) => {
     if (!userRole) {
       return createErrorResponse(
         h,
-        'ACCOUNT_INCORRECT_ROLE',
+        'ACCOUNT_ROLE_REQUIRED',
         StatusCodes.FORBIDDEN
       )
     }

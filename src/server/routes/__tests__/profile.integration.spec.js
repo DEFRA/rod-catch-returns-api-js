@@ -91,7 +91,7 @@ describe('profile.integration', () => {
 
       expect(result.statusCode).toBe(403)
       expect(JSON.parse(result.payload)).toStrictEqual({
-        error: 'ACCOUNT_INCORRECT_ROLE'
+        error: 'ACCOUNT_ROLE_REQUIRED'
       })
     })
 

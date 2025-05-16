@@ -39,7 +39,7 @@ It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node
 
 ## Installation
 
-Copy the example environment file and replace the relevant variables.
+Copy the example environment file and replace the relevant variables. The values cans be obtained from the GitLab repo fish/rod-catch-returns-env-vars repo, in the rod-catch-returns-api-js/.env file.
 
 ```shell script
 cp .env.example .env
