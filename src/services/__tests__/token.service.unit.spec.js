@@ -74,7 +74,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token' })
+      expect(result.payload).toStrictEqual({ error: 'INVALID_TOKEN' })
     })
 
     it('should return 401 if token verification fails', async () => {
@@ -88,7 +88,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token' })
+      expect(result.payload).toStrictEqual({ error: 'INVALID_TOKEN' })
     })
 
     it('should return 401 if token has no OID', async () => {
@@ -128,7 +128,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(403)
-      expect(result.payload).toStrictEqual({ error: 'Account disabled' })
+      expect(result.payload).toStrictEqual({ error: 'ACCOUNT_DISABLED' })
     })
 
     it('should return 403 if user has no admin or FMT role', async () => {
@@ -150,7 +150,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(403)
-      expect(result.payload).toStrictEqual({ error: 'Incorrect role' })
+      expect(result.payload).toStrictEqual({ error: 'ACCOUNT_INCORRECT_ROLE' })
     })
 
     it('should return 401 if there is any other error', async () => {
@@ -167,7 +167,7 @@ describe('token.service.unit', () => {
       )
 
       expect(result.statusCode).toBe(401)
-      expect(result.payload).toStrictEqual({ error: 'Invalid token' })
+      expect(result.payload).toStrictEqual({ error: 'INVALID_TOKEN' })
     })
 
     it('should set admin role if user has System Administrator role', async () => {

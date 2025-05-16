@@ -71,7 +71,7 @@ describe('profile.integration', () => {
 
       expect(result.statusCode).toBe(403)
       expect(JSON.parse(result.payload)).toStrictEqual({
-        error: 'Account disabled'
+        error: 'ACCOUNT_DISABLED'
       })
     })
 
@@ -91,7 +91,7 @@ describe('profile.integration', () => {
 
       expect(result.statusCode).toBe(403)
       expect(JSON.parse(result.payload)).toStrictEqual({
-        error: 'Incorrect role'
+        error: 'ACCOUNT_INCORRECT_ROLE'
       })
     })
 
