@@ -20,15 +20,11 @@ export const failAction = (request, h, err) => {
 
   const formattedErrors =
     err?.details?.map((detail) => {
-      const detailPath = detail?.path?.length > 0 ? detail.path[0] : undefined
-      const value =
-        err._original && detailPath ? err._original[detailPath] : undefined
-
       return {
         entity,
         message: detail.message,
-        property: detailPath,
-        value
+        property: detail.context.label,
+        value: detail.context.value
       }
     }) || err
 

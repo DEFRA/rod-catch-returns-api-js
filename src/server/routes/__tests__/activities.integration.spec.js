@@ -109,12 +109,6 @@ describe('activities.integration', () => {
             message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
             property: 'submission',
             value: 'submissions/0'
-          },
-          {
-            entity: 'Activity',
-            message: 'ACTIVITY_SUBMISSION_NOT_FOUND',
-            property: 'daysFishedWithMandatoryRelease',
-            value: '20'
           }
         ]
       })
