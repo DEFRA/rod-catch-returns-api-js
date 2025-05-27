@@ -20,7 +20,7 @@ export default [
           const foundRivers = await River.findAll()
 
           const mappedRivers = foundRivers.map((river) =>
-            mapRiverToResponse(request, river)
+            mapRiverToResponse(river)
           )
 
           return h

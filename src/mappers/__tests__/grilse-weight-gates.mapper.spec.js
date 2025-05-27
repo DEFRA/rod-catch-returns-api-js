@@ -40,13 +40,13 @@ describe('grilse-weight-gates.mapper.mapper.unit', () => {
         updatedAt: '2018-11-07T10:00:00.000+0000',
         _links: {
           self: {
-            href: 'http://localhost:3000/api/grilseWeightGates/2'
+            href: 'http://localhost:5000/api/grilseWeightGates/2'
           },
           grilseWeightGate: {
-            href: 'http://localhost:3000/api/grilseWeightGates/2'
+            href: 'http://localhost:5000/api/grilseWeightGates/2'
           },
           catchments: {
-            href: 'http://localhost:3000/api/grilseWeightGates/2/catchments'
+            href: 'http://localhost:5000/api/grilseWeightGates/2/catchments'
           }
         }
       })

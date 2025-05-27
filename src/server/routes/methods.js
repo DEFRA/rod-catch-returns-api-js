@@ -20,7 +20,7 @@ export default [
           const methods = await Method.findAll()
 
           const mappedMethods = methods.map((method) =>
-            mapMethodToResponse(request, method.toJSON())
+            mapMethodToResponse(method.toJSON())
           )
 
           return h
@@ -59,7 +59,7 @@ export default [
             return handleNotFound(`Method not found for id ${methodId}`, h)
           }
 
-          const mappedMethod = mapMethodToResponse(request, method.toJSON())
+          const mappedMethod = mapMethodToResponse(method.toJSON())
 
           return h.response(mappedMethod).code(StatusCodes.OK)
         } catch (error) {

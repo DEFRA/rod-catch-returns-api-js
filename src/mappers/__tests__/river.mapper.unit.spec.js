@@ -2,24 +2,6 @@ import { mapRiverToResponse } from '../river.mapper.js'
 
 describe('river.mapper.unit', () => {
   describe('mapRiverToResponse', () => {
-    const mockRequest = {
-      url: {
-        host: 'localhost:3000',
-        protocol: 'http'
-      },
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
-      headers: {
-        'x-forwarded-proto': 'http'
-      }
-    }
-
     const mockRiver = {
       id: 3,
       internal: false,
@@ -30,7 +12,7 @@ describe('river.mapper.unit', () => {
     }
 
     it('should map a River to a response object with correct links', () => {
-      const result = mapRiverToResponse(mockRequest, mockRiver)
+      const result = mapRiverToResponse(mockRiver)
 
       expect(result).toEqual({
         id: 3,
@@ -41,13 +23,13 @@ describe('river.mapper.unit', () => {
         version: 1,
         _links: {
           self: {
-            href: 'http://localhost:3000/api/rivers/3'
+            href: 'http://localhost:5000/api/rivers/3'
           },
           river: {
-            href: 'http://localhost:3000/api/rivers/3'
+            href: 'http://localhost:5000/api/rivers/3'
           },
           catchment: {
-            href: 'http://localhost:3000/api/rivers/3/catchment'
+            href: 'http://localhost:5000/api/rivers/3/catchment'
           }
         }
       })

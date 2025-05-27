@@ -20,7 +20,7 @@ export default [
           const foundSpecies = await Species.findAll()
 
           const mappedSpecies = foundSpecies.map((species) =>
-            mapSpeciesToResponse(request, species)
+            mapSpeciesToResponse(species)
           )
 
           return h

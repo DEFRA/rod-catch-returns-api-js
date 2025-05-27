@@ -123,13 +123,13 @@ describe('submissions.unit', () => {
         version: '2024-10-10T13:13:11.000Z',
         _links: {
           activities: {
-            href: 'http://localhost:3000/api/submissions/1/activities'
+            href: 'http://localhost:5000/api/submissions/1/activities'
           },
           self: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           },
           submission: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           }
         }
       })
@@ -402,13 +402,13 @@ describe('submissions.unit', () => {
         version: '2024-10-10T13:13:11.000Z',
         _links: {
           activities: {
-            href: 'http://localhost:3000/api/submissions/1/activities'
+            href: 'http://localhost:5000/api/submissions/1/activities'
           },
           self: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           },
           submission: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           }
         }
       })
@@ -519,22 +519,22 @@ describe('submissions.unit', () => {
               version: '2024-10-10T13:13:11.000Z',
               _links: {
                 self: {
-                  href: 'http://localhost:3000/api/activities/1'
+                  href: 'http://localhost:5000/api/activities/1'
                 },
                 activity: {
-                  href: 'http://localhost:3000/api/activities/1'
+                  href: 'http://localhost:5000/api/activities/1'
                 },
                 submission: {
-                  href: 'http://localhost:3000/api/activities/1/submission'
+                  href: 'http://localhost:5000/api/activities/1/submission'
                 },
                 catches: {
-                  href: 'http://localhost:3000/api/activities/1/catches'
+                  href: 'http://localhost:5000/api/activities/1/catches'
                 },
                 river: {
-                  href: 'http://localhost:3000/api/activities/1/river'
+                  href: 'http://localhost:5000/api/activities/1/river'
                 },
                 smallCatches: {
-                  href: 'http://localhost:3000/api/activities/1/smallCatches'
+                  href: 'http://localhost:5000/api/activities/1/smallCatches'
                 }
               }
             }

@@ -124,7 +124,7 @@ export function mapCatchToResponse(request, catchEntity) {
     version
   } = catchEntity
 
-  const baseUrl = getBaseUrl(request)
+  const baseUrl = getBaseUrl()
   const catchUrl = `${baseUrl}/api/catches/${id}`
 
   return {

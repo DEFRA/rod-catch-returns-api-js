@@ -4,23 +4,23 @@ exports[`smallCatches.unit GET /smallCatches/{smallCatchId} should return a 200 
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/smallCatches/33551/activity",
+      "href": "http://localhost:5000/api/smallCatches/33551/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/133750",
+      "href": "http://localhost:5000/api/activities/133750",
     },
     "self": {
-      "href": "http://localhost:3000/api/smallCatches/33551",
+      "href": "http://localhost:5000/api/smallCatches/33551",
     },
     "smallCatch": {
-      "href": "http://localhost:3000/api/smallCatches/33551",
+      "href": "http://localhost:5000/api/smallCatches/33551",
     },
   },
   "counts": [
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/1",
+          "href": "http://localhost:5000/api/methods/1",
         },
       },
       "count": 2,
@@ -28,7 +28,7 @@ exports[`smallCatches.unit GET /smallCatches/{smallCatchId} should return a 200 
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/3",
+          "href": "http://localhost:5000/api/methods/3",
         },
       },
       "count": 2,
@@ -49,22 +49,22 @@ exports[`smallCatches.unit GET /smallCatches/{smallCatchId}/activity should retu
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/activities/3",
+      "href": "http://localhost:5000/api/activities/3",
     },
     "catches": {
-      "href": "http://localhost:3000/api/activities/3/catches",
+      "href": "http://localhost:5000/api/activities/3/catches",
     },
     "river": {
-      "href": "http://localhost:3000/api/activities/3/river",
+      "href": "http://localhost:5000/api/activities/3/river",
     },
     "self": {
-      "href": "http://localhost:3000/api/activities/3",
+      "href": "http://localhost:5000/api/activities/3",
     },
     "smallCatches": {
-      "href": "http://localhost:3000/api/activities/3/smallCatches",
+      "href": "http://localhost:5000/api/activities/3/smallCatches",
     },
     "submission": {
-      "href": "http://localhost:3000/api/activities/3/submission",
+      "href": "http://localhost:5000/api/activities/3/submission",
     },
   },
   "createdAt": "2024-10-10T13:26:30.344Z",
@@ -80,23 +80,23 @@ exports[`smallCatches.unit PATCH /smallCatches/{smallCatchId} should return the 
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/smallCatches/33551/activity",
+      "href": "http://localhost:5000/api/smallCatches/33551/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/133750",
+      "href": "http://localhost:5000/api/activities/133750",
     },
     "self": {
-      "href": "http://localhost:3000/api/smallCatches/33551",
+      "href": "http://localhost:5000/api/smallCatches/33551",
     },
     "smallCatch": {
-      "href": "http://localhost:3000/api/smallCatches/33551",
+      "href": "http://localhost:5000/api/smallCatches/33551",
     },
   },
   "counts": [
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/1",
+          "href": "http://localhost:5000/api/methods/1",
         },
       },
       "count": 2,
@@ -104,7 +104,7 @@ exports[`smallCatches.unit PATCH /smallCatches/{smallCatchId} should return the 
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/2",
+          "href": "http://localhost:5000/api/methods/2",
         },
       },
       "count": 2,
@@ -125,23 +125,23 @@ exports[`smallCatches.unit POST /smallCatches should return the created small ca
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/smallCatches/1/activity",
+      "href": "http://localhost:5000/api/smallCatches/1/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/3",
+      "href": "http://localhost:5000/api/activities/3",
     },
     "self": {
-      "href": "http://localhost:3000/api/smallCatches/1",
+      "href": "http://localhost:5000/api/smallCatches/1",
     },
     "smallCatch": {
-      "href": "http://localhost:3000/api/smallCatches/1",
+      "href": "http://localhost:5000/api/smallCatches/1",
     },
   },
   "counts": [
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/1",
+          "href": "http://localhost:5000/api/methods/1",
         },
       },
       "count": 3,
@@ -149,7 +149,7 @@ exports[`smallCatches.unit POST /smallCatches should return the created small ca
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/2",
+          "href": "http://localhost:5000/api/methods/2",
         },
       },
       "count": 2,
@@ -157,7 +157,7 @@ exports[`smallCatches.unit POST /smallCatches should return the created small ca
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/3",
+          "href": "http://localhost:5000/api/methods/3",
         },
       },
       "count": 1,

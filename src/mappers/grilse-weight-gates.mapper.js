@@ -10,7 +10,7 @@ import { getBaseUrl } from '../utils/url-utils.js'
 export function mapGrilseWeightGateToResponse(request, grilseWeightGate) {
   const { id, name, updatedAt, createdAt } = grilseWeightGate
 
-  const baseUrl = getBaseUrl(request)
+  const baseUrl = getBaseUrl()
   const grilseWeightGateUrl = `${baseUrl}/api/grilseWeightGates/${id}`
 
   return {

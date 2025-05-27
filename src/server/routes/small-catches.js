@@ -44,7 +44,6 @@ export default [
           })
 
           const smallCatchResponse = mapSmallCatchToResponse(
-            request,
             smallCatch.toJSON()
           )
 
@@ -98,7 +97,7 @@ export default [
           }
 
           const foundActivity = smallCatchWithActivity.toJSON().Activity
-          const response = mapActivityToResponse(request, foundActivity)
+          const response = mapActivityToResponse(foundActivity)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -145,10 +144,7 @@ export default [
             )
           }
 
-          const mappedSmallCatch = mapSmallCatchToResponse(
-            request,
-            smallCatch.toJSON()
-          )
+          const mappedSmallCatch = mapSmallCatchToResponse(smallCatch.toJSON())
 
           return h.response(mappedSmallCatch).code(StatusCodes.OK)
         } catch (error) {
@@ -282,7 +278,7 @@ export default [
 
           await transaction.commit()
 
-          const mappedSmallCatch = mapSmallCatchToResponse(request, {
+          const mappedSmallCatch = mapSmallCatchToResponse({
             ...updatedSmallCatch.toJSON(),
             countRecords
           })

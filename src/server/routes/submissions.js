@@ -58,10 +58,7 @@ export default [
             )
           }
 
-          const response = mapSubmissionToResponse(
-            request,
-            createdSubmission.toJSON()
-          )
+          const response = mapSubmissionToResponse(createdSubmission.toJSON())
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -102,7 +99,7 @@ export default [
           let response = []
           if (foundSubmissions.length > 0) {
             response = foundSubmissions.map((foundSubmission) =>
-              mapSubmissionToResponse(request, foundSubmission.toJSON())
+              mapSubmissionToResponse(foundSubmission.toJSON())
             )
           }
 
@@ -147,10 +144,7 @@ export default [
           })
 
           if (foundSubmission) {
-            const response = mapSubmissionToResponse(
-              request,
-              foundSubmission.toJSON()
-            )
+            const response = mapSubmissionToResponse(foundSubmission.toJSON())
             return h.response(response).code(StatusCodes.OK)
           }
           return handleNotFound(
@@ -215,7 +209,7 @@ export default [
           }
 
           const response = foundActivities.map((activity) =>
-            mapActivityToResponse(request, activity.toJSON())
+            mapActivityToResponse(activity.toJSON())
           )
 
           return h
@@ -260,10 +254,7 @@ export default [
           })
 
           if (foundSubmission) {
-            const response = mapSubmissionToResponse(
-              request,
-              foundSubmission.toJSON()
-            )
+            const response = mapSubmissionToResponse(foundSubmission.toJSON())
             return h.response(response).code(StatusCodes.OK)
           }
           return handleNotFound(`Submission not found ${submissionId}`, h)
@@ -336,7 +327,6 @@ export default [
           }
 
           const mappedSubmission = mapSubmissionToResponse(
-            request,
             updatedSubmission.toJSON()
           )
 

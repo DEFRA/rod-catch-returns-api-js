@@ -104,7 +104,7 @@ export default [
           }
 
           const foundActivity = catchWithActivity.toJSON().Activity
-          const response = mapActivityToResponse(request, foundActivity)
+          const response = mapActivityToResponse(foundActivity)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -160,7 +160,7 @@ export default [
           }
 
           const foundSpecies = catchWithSpecies.toJSON().Species
-          const response = mapSpeciesToResponse(request, foundSpecies)
+          const response = mapSpeciesToResponse(foundSpecies)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -212,7 +212,7 @@ export default [
           }
 
           const foundMethod = catchWithMethod.toJSON().Method
-          const response = mapMethodToResponse(request, foundMethod)
+          const response = mapMethodToResponse(foundMethod)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
