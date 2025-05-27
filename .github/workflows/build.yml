@@ -61,7 +61,7 @@ jobs:
             DYNAMICS_API_PATH=/api/path\n\
             DYNAMICS_API_VERSION=v9.0\n\
             OIDC_WELL_KNOWN_URL=http://wellknown.url\n\
-            BASE_URL=http://localhost:5000\n\" > .env
+            BASE_URL=http://localhost:5000" > .env
       - name: Run migrations
         run: npm run migrate:build && npm run migrate:up
       - name: Run tests
