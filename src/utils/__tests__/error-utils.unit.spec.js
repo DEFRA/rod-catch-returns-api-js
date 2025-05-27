@@ -1,6 +1,5 @@
 import { failAction } from '../error-utils.js'
 
-// TODO fix these
 describe('error-utils.unit', () => {
   describe('failAction', () => {
     const getMockH = () => ({

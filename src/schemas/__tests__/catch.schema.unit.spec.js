@@ -103,6 +103,18 @@ describe('catch.schema.unit', () => {
         )
       })
 
+      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is null, noDateRecorded is false and onlyMonthRecorded is false', async () => {
+        const payload = getValidPayload({
+          dateCaught: null,
+          noDateRecorded: false,
+          onlyMonthRecorded: false
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
+      })
+
       it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
         setupMocks({ season: 2022 })
         const payload = getValidPayload({

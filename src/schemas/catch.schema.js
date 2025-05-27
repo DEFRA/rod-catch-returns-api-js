@@ -180,7 +180,6 @@ export const createCatchSchema = Joi.object({
     .messages({
       'string.base': 'CATCH_DATE_REQUIRED'
     }),
-  // TODO add unit test for this, it is when dateCaught is null
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField.required().external(validateSpecies),
