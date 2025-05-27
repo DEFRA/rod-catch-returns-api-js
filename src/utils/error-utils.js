@@ -22,9 +22,9 @@ export const failAction = (request, h, err) => {
     err?.details?.map((detail) => {
       return {
         entity,
-        message: detail.message,
-        property: detail.context.label,
-        value: detail.context.value
+        message: detail?.message,
+        property: detail?.context?.label,
+        value: detail?.context?.value
       }
     }) || err
 

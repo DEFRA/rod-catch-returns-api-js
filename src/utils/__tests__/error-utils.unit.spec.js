@@ -2,7 +2,7 @@ import { failAction } from '../error-utils.js'
 
 // TODO fix these
 describe('error-utils.unit', () => {
-  describe.skip('failAction', () => {
+  describe('failAction', () => {
     const getMockH = () => ({
       response: jest.fn().mockReturnThis(),
       code: jest.fn().mockReturnThis(),
@@ -23,17 +23,19 @@ describe('error-utils.unit', () => {
       details: [
         {
           message: '"name" is required',
-          path: ['name']
+          context: {
+            label: 'name',
+            value: ''
+          }
         },
         {
           message: '"age" must be a number',
-          path: ['age']
+          context: {
+            label: 'age',
+            value: 'not-a-number'
+          }
         }
-      ],
-      _original: {
-        name: '',
-        age: 'not-a-number'
-      }
+      ]
     })
 
     it('should format Joi validation errors correctly', () => {
@@ -121,8 +123,7 @@ describe('error-utils.unit', () => {
     it('should handle empty error details gracefully', () => {
       const mockH = getMockH()
       const mockError = {
-        details: [],
-        _original: {}
+        details: []
       }
 
       failAction({}, mockH, mockError)
@@ -130,64 +131,27 @@ describe('error-utils.unit', () => {
       expect(mockH.response).toHaveBeenCalledWith({ errors: [] })
     })
 
-    it('should handle missing original value for properties', () => {
-      const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            entity: 'Unknown',
-            message: '"age" is required',
-            path: ['age']
-          }
-        ],
-        _original: {}
-      }
-
-      failAction({}, mockH, mockError)
-
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: [
-          {
-            entity: 'Unknown',
-            message: '"age" is required',
-            property: 'age',
-            value: undefined
-          }
-        ]
-      })
-    })
-
     it('should handle errors with no details', () => {
       const mockH = getMockH()
-      const mockError = {
-        _original: {
-          name: 'John Doe'
-        }
-      }
+      const mockError = {}
 
       failAction({}, mockH, mockError)
 
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: {
-          _original: {
-            name: 'John Doe'
-          }
-        }
-      })
+      expect(mockH.response).toHaveBeenCalledWith({ errors: {} })
     })
 
-    it('should handle missing path gracefully', () => {
+    it('should handle missing label gracefully', () => {
       const mockH = getMockH()
       const mockError = {
         details: [
           {
+            entity: 'Unknown',
             message: '"age" must be a number',
-            path: undefined
+            context: {
+              value: 'not-a-number'
+            }
           }
-        ],
-        _original: {
-          age: 'not-a-number'
-        }
+        ]
       }
 
       failAction({}, mockH, mockError)
@@ -198,19 +162,22 @@ describe('error-utils.unit', () => {
             entity: 'Unknown',
             message: '"age" must be a number',
             property: undefined,
-            value: undefined
+            value: 'not-a-number'
           }
         ]
       })
     })
 
-    it('should handle missing original input gracefully', () => {
+    it('should handle missing value gracefully', () => {
       const mockH = getMockH()
       const mockError = {
         details: [
           {
+            entity: 'Unknown',
             message: '"name" is required',
-            path: ['name']
+            context: {
+              label: 'name'
+            }
           }
         ]
       }
@@ -232,49 +199,15 @@ describe('error-utils.unit', () => {
     it('should handle err.details that are undefined', () => {
       const mockH = getMockH()
       const mockError = {
-        details: undefined,
-        _original: {
-          age: 'not-a-number'
-        }
+        details: undefined
       }
 
       failAction({}, mockH, mockError)
 
       expect(mockH.response).toHaveBeenCalledWith({
         errors: {
-          details: undefined,
-          _original: {
-            age: 'not-a-number'
-          }
+          details: undefined
         }
-      })
-    })
-
-    it('should handle err.details where path is an empty array', () => {
-      const mockH = getMockH()
-      const mockError = {
-        details: [
-          {
-            message: '"name" is required',
-            path: []
-          }
-        ],
-        _original: {
-          name: ''
-        }
-      }
-
-      failAction({}, mockH, mockError)
-
-      expect(mockH.response).toHaveBeenCalledWith({
-        errors: [
-          {
-            entity: 'Unknown',
-            message: '"name" is required',
-            property: undefined,
-            value: undefined
-          }
-        ]
       })
     })
   })
