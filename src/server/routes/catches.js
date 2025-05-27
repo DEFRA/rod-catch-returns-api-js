@@ -47,10 +47,7 @@ export default [
 
           const createdCatch = await Catch.create(catchData)
 
-          const catchResponse = mapCatchToResponse(
-            request,
-            createdCatch.toJSON()
-          )
+          const catchResponse = mapCatchToResponse(createdCatch.toJSON())
 
           return h.response(catchResponse).code(StatusCodes.CREATED)
         } catch (error) {
@@ -251,7 +248,7 @@ export default [
             return handleNotFound(`Catch not found for ID: ${catchId}`, h)
           }
 
-          const mappedCatch = mapCatchToResponse(request, foundCatch.toJSON())
+          const mappedCatch = mapCatchToResponse(foundCatch.toJSON())
 
           return h.response(mappedCatch).code(StatusCodes.OK)
         } catch (error) {
@@ -345,7 +342,7 @@ export default [
           // if a value is undefined, it is not updated by Sequelize
           const updatedCatch = await foundCatch.update(catchData)
 
-          const mappedCatch = mapCatchToResponse(request, updatedCatch.toJSON())
+          const mappedCatch = mapCatchToResponse(updatedCatch.toJSON())
 
           return h.response(mappedCatch).code(StatusCodes.OK)
         } catch (error) {

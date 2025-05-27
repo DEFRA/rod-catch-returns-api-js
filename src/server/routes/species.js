@@ -15,7 +15,7 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Species}
        */
-      handler: async (request, h) => {
+      handler: async (_request, h) => {
         try {
           const foundSpecies = await Species.findAll()
 

@@ -3,11 +3,10 @@ import { getBaseUrl } from '../utils/url-utils.js'
 /**
  * Maps a GrilseWeightGate entity to a response object.
  *
- * @param {import('@hapi/hapi').Request} request - The Hapi request object
  * @param {import('../entities/index.js').Species} grilseWeightGate - The GrilseWeightGate entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
-export function mapGrilseWeightGateToResponse(request, grilseWeightGate) {
+export function mapGrilseWeightGateToResponse(grilseWeightGate) {
   const { id, name, updatedAt, createdAt } = grilseWeightGate
 
   const baseUrl = getBaseUrl()

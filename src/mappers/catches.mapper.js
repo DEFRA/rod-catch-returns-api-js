@@ -108,7 +108,7 @@ export const mapRequestToCatch = ({
  * @param {import('../entities/index.js').Catch} catchEntity - The Catch entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
-export function mapCatchToResponse(request, catchEntity) {
+export function mapCatchToResponse(catchEntity) {
   const {
     id,
     dateCaught,

@@ -213,7 +213,7 @@ export default [
           }
 
           const mappedCatches = (activityWithCatches.Catches || []).map(
-            (catchEntity) => mapCatchToResponse(request, catchEntity)
+            (catchEntity) => mapCatchToResponse(catchEntity)
           )
 
           return h

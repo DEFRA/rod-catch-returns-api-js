@@ -2,24 +2,6 @@ import { mapGrilseWeightGateToResponse } from '../grilse-weight-gates.mapper.js'
 
 describe('grilse-weight-gates.mapper.mapper.unit', () => {
   describe('mapGrilseWeightGateToResponse', () => {
-    const mockRequest = {
-      url: {
-        host: 'localhost:3000',
-        protocol: 'http'
-      },
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
-      headers: {
-        'x-forwarded-proto': 'http'
-      }
-    }
-
     const mockGrilseWeightGate = {
       id: '2',
       name: 'Tamar',
@@ -28,10 +10,7 @@ describe('grilse-weight-gates.mapper.mapper.unit', () => {
     }
 
     it('should map a grilse weight gate to a response object with correct links', () => {
-      const result = mapGrilseWeightGateToResponse(
-        mockRequest,
-        mockGrilseWeightGate
-      )
+      const result = mapGrilseWeightGateToResponse(mockGrilseWeightGate)
 
       expect(result).toEqual({
         id: '2',

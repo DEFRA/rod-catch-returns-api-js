@@ -21,7 +21,7 @@ export default [
 
           const mappedGrilseWeightGates = grilseWeightGates.map(
             (grilseWeightGate) =>
-              mapGrilseWeightGateToResponse(request, grilseWeightGate)
+              mapGrilseWeightGateToResponse(grilseWeightGate)
           )
 
           return h

@@ -125,24 +125,6 @@ describe('catches.mapper.unit', () => {
   })
 
   describe('mapCatchToResponse', () => {
-    const mockRequest = {
-      url: {
-        host: 'localhost:3000',
-        protocol: 'http'
-      },
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
-      headers: {
-        'x-forwarded-proto': 'http'
-      }
-    }
-
     const mockCatchEnity = {
       id: '1600',
       activity_id: '404',
@@ -163,7 +145,7 @@ describe('catches.mapper.unit', () => {
     }
 
     it('should map a Catch entity to a response object with correct links', () => {
-      const result = mapCatchToResponse(mockRequest, mockCatchEnity)
+      const result = mapCatchToResponse(mockCatchEnity)
 
       expect(result).toStrictEqual({
         createdAt: '2024-11-18T11:22:36.438Z',
