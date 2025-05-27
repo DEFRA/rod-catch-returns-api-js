@@ -59,7 +59,9 @@ jobs:
             OAUTH_TENANT=tenant_id\n\
             OAUTH_SCOPE=scope\n\
             DYNAMICS_API_PATH=/api/path\n\
-            DYNAMICS_API_VERSION=v9.0" > .env
+            DYNAMICS_API_VERSION=v9.0\n\
+            OIDC_WELL_KNOWN_URL=http://wellknown.url\n\
+            BASE_URL=http://localhost:5000\n\" > .env
       - name: Run migrations
         run: npm run migrate:build && npm run migrate:up
       - name: Run tests
