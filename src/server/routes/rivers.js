@@ -15,12 +15,12 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link River}
        */
-      handler: async (request, h) => {
+      handler: async (_request, h) => {
         try {
           const foundRivers = await River.findAll()
 
           const mappedRivers = foundRivers.map((river) =>
-            mapRiverToResponse(request, river)
+            mapRiverToResponse(river)
           )
 
           return h

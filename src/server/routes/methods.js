@@ -15,12 +15,12 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Method}
        */
-      handler: async (request, h) => {
+      handler: async (_request, h) => {
         try {
           const methods = await Method.findAll()
 
           const mappedMethods = methods.map((method) =>
-            mapMethodToResponse(request, method.toJSON())
+            mapMethodToResponse(method.toJSON())
           )
 
           return h
@@ -59,7 +59,7 @@ export default [
             return handleNotFound(`Method not found for id ${methodId}`, h)
           }
 
-          const mappedMethod = mapMethodToResponse(request, method.toJSON())
+          const mappedMethod = mapMethodToResponse(method.toJSON())
 
           return h.response(mappedMethod).code(StatusCodes.OK)
         } catch (error) {

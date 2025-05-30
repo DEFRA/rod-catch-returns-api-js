@@ -140,10 +140,10 @@ describe('methods.unit', () => {
       expect(result.payload).toStrictEqual({
         _links: {
           method: {
-            href: 'http://localhost:3000/api/methods/1'
+            href: 'http://localhost:5000/api/methods/1'
           },
           self: {
-            href: 'http://localhost:3000/api/methods/1'
+            href: 'http://localhost:5000/api/methods/1'
           }
         },
         createdAt: expect.any(String),

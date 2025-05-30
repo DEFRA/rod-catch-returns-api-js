@@ -186,13 +186,13 @@ describe('activities.unit', () => {
         version: '2024-10-10T13:13:11.000Z',
         _links: {
           catchment: {
-            href: 'http://localhost:3000/api/rivers/2/catchment'
+            href: 'http://localhost:5000/api/rivers/2/catchment'
           },
           river: {
-            href: 'http://localhost:3000/api/rivers/2'
+            href: 'http://localhost:5000/api/rivers/2'
           },
           self: {
-            href: 'http://localhost:3000/api/rivers/2'
+            href: 'http://localhost:5000/api/rivers/2'
           }
         }
       })

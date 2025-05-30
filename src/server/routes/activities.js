@@ -62,10 +62,7 @@ export default [
             version: Date.now()
           })
 
-          const response = mapActivityToResponse(
-            request,
-            createdActivity.toJSON()
-          )
+          const response = mapActivityToResponse(createdActivity.toJSON())
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -113,10 +110,7 @@ export default [
             )
           }
 
-          const mappedRiver = mapRiverToResponse(
-            request,
-            activity.River.toJSON()
-          )
+          const mappedRiver = mapRiverToResponse(activity.River.toJSON())
 
           return h.response(mappedRiver).code(StatusCodes.OK)
         } catch (error) {
@@ -171,7 +165,7 @@ export default [
 
           const mappedSmallCatches = (
             activityWithCatches.SmallCatches || []
-          ).map((smallCatch) => mapSmallCatchToResponse(request, smallCatch))
+          ).map((smallCatch) => mapSmallCatchToResponse(smallCatch))
 
           return h
             .response({
@@ -219,7 +213,7 @@ export default [
           }
 
           const mappedCatches = (activityWithCatches.Catches || []).map(
-            (catchEntity) => mapCatchToResponse(request, catchEntity)
+            (catchEntity) => mapCatchToResponse(catchEntity)
           )
 
           return h
@@ -263,10 +257,7 @@ export default [
             return handleNotFound(`Activity not found for ID: ${activityId}`, h)
           }
 
-          const mappedActivity = mapActivityToResponse(
-            request,
-            activity.toJSON()
-          )
+          const mappedActivity = mapActivityToResponse(activity.toJSON())
 
           return h.response(mappedActivity).code(StatusCodes.OK)
         } catch (error) {
@@ -391,10 +382,7 @@ export default [
             version: new Date()
           })
 
-          const mappedActivity = mapActivityToResponse(
-            request,
-            updatedActivity.toJSON()
-          )
+          const mappedActivity = mapActivityToResponse(updatedActivity.toJSON())
 
           return h.response(mappedActivity).code(StatusCodes.OK)
         } catch (error) {
@@ -443,7 +431,6 @@ export default [
           }
 
           const mappedSubmission = mapSubmissionToResponse(
-            request,
             activity.Submission.toJSON()
           )
 

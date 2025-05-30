@@ -7,13 +7,13 @@ exports[`rivers.unit GET /rivers should return all rivers with a 200 status code
       {
         "_links": {
           "catchment": {
-            "href": "http://localhost:3000/api/rivers/1/catchment",
+            "href": "http://localhost:5000/api/rivers/1/catchment",
           },
           "river": {
-            "href": "http://localhost:3000/api/rivers/1",
+            "href": "http://localhost:5000/api/rivers/1",
           },
           "self": {
-            "href": "http://localhost:3000/api/rivers/1",
+            "href": "http://localhost:5000/api/rivers/1",
           },
         },
         "createdAt": "2018-11-07T10:00:00.000Z",
@@ -26,13 +26,13 @@ exports[`rivers.unit GET /rivers should return all rivers with a 200 status code
       {
         "_links": {
           "catchment": {
-            "href": "http://localhost:3000/api/rivers/2/catchment",
+            "href": "http://localhost:5000/api/rivers/2/catchment",
           },
           "river": {
-            "href": "http://localhost:3000/api/rivers/2",
+            "href": "http://localhost:5000/api/rivers/2",
           },
           "self": {
-            "href": "http://localhost:3000/api/rivers/2",
+            "href": "http://localhost:5000/api/rivers/2",
           },
         },
         "createdAt": "2018-11-07T10:00:00.000Z",

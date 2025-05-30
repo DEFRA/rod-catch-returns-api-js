@@ -739,8 +739,7 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_MASS_TYPE_REQUIRED',
-            property: 'mass',
-            value: {}
+            property: 'mass.type'
           }
         ]
       })

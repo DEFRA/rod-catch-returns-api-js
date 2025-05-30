@@ -4,5 +4,4 @@
  * @param {import('@hapi/hapi').Request request - The Hapi request object
  * @returns {string} - the base url
  */
-export const getBaseUrl = (request) =>
-  `${request.server.info.protocol}://${request.info.host}`
+export const getBaseUrl = () => process.env.BASE_URL

@@ -154,28 +154,32 @@ export const createCatchSchema = Joi.object({
       'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
     })
     .description('The activity associated with this catch'),
-  dateCaught: dateCaughtField.external(async (value, helper) => {
-    const activityId = extractActivityId(helper.state.ancestors[0].activity)
+  dateCaught: dateCaughtField
+    .external(async (value, helper) => {
+      const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
-    const submission = await getSubmissionByActivityId(activityId)
+      const submission = await getSubmissionByActivityId(activityId)
 
-    const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
-    const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
+      const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
+      const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
 
-    try {
-      checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
-      validateDateCaughtRequired({
-        dateCaught: value,
-        noDateRecorded,
-        onlyMonthRecorded
-      })
-      validateDateCaughtYear(value, submission?.season)
-    } catch (error) {
-      logger.error(error)
-      return helper.message(error.message)
-    }
-    return value
-  }),
+      try {
+        checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
+        validateDateCaughtRequired({
+          dateCaught: value,
+          noDateRecorded,
+          onlyMonthRecorded
+        })
+        validateDateCaughtYear(value, submission?.season)
+      } catch (error) {
+        logger.error(error)
+        return helper.message(error.message)
+      }
+      return value
+    })
+    .messages({
+      'string.base': 'CATCH_DATE_REQUIRED'
+    }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField.required().external(validateSpecies),

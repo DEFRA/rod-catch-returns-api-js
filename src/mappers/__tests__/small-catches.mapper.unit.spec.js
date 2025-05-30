@@ -6,24 +6,6 @@ import {
 } from '../small-catches.mapper.js'
 
 describe('small-catches.mapper.unit', () => {
-  const getMockRequest = () => ({
-    url: {
-      host: 'localhost:3000',
-      protocol: 'http'
-    },
-    info: {
-      host: 'localhost:3000'
-    },
-    server: {
-      info: {
-        protocol: 'http'
-      }
-    },
-    headers: {
-      'x-forwarded-proto': 'http'
-    }
-  })
-
   describe('mapSmallCatchToResponse', () => {
     it('should map a SmallCatch to a response object with correct links', () => {
       const mockSmallCatch = {
@@ -52,7 +34,7 @@ describe('small-catches.mapper.unit', () => {
         version: '2024-10-11T09:30:57.463+0000'
       }
 
-      const result = mapSmallCatchToResponse(getMockRequest(), mockSmallCatch)
+      const result = mapSmallCatchToResponse(mockSmallCatch)
 
       expect(result).toMatchSnapshot()
     })
@@ -65,13 +47,10 @@ describe('small-catches.mapper.unit', () => {
         method_id: 3
       }
 
-      const result = mapSmallCatchCountToResponse(
-        getMockRequest(),
-        mockSmallCatchCount
-      )
+      const result = mapSmallCatchCountToResponse(mockSmallCatchCount)
 
       expect(result).toEqual({
-        _links: { method: { href: 'http://localhost:3000/api/methods/3' } },
+        _links: { method: { href: 'http://localhost:5000/api/methods/3' } },
         count: 1
       })
     })

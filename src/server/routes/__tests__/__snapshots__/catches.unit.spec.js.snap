@@ -4,22 +4,22 @@ exports[`catches.unit GET /catches/{catchId} should return a 200 status code and
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/catches/1/activity",
+      "href": "http://localhost:5000/api/catches/1/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/404",
+      "href": "http://localhost:5000/api/activities/404",
     },
     "catch": {
-      "href": "http://localhost:3000/api/catches/1",
+      "href": "http://localhost:5000/api/catches/1",
     },
     "method": {
-      "href": "http://localhost:3000/api/catches/1/method",
+      "href": "http://localhost:5000/api/catches/1/method",
     },
     "self": {
-      "href": "http://localhost:3000/api/catches/1",
+      "href": "http://localhost:5000/api/catches/1",
     },
     "species": {
-      "href": "http://localhost:3000/api/catches/1/species",
+      "href": "http://localhost:5000/api/catches/1/species",
     },
   },
   "createdAt": "2024-11-06T14:25:47.950Z",
@@ -43,22 +43,22 @@ exports[`catches.unit GET /catches/{catchId}/activity should return a 200 status
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/activities/404",
+      "href": "http://localhost:5000/api/activities/404",
     },
     "catches": {
-      "href": "http://localhost:3000/api/activities/404/catches",
+      "href": "http://localhost:5000/api/activities/404/catches",
     },
     "river": {
-      "href": "http://localhost:3000/api/activities/404/river",
+      "href": "http://localhost:5000/api/activities/404/river",
     },
     "self": {
-      "href": "http://localhost:3000/api/activities/404",
+      "href": "http://localhost:5000/api/activities/404",
     },
     "smallCatches": {
-      "href": "http://localhost:3000/api/activities/404/smallCatches",
+      "href": "http://localhost:5000/api/activities/404/smallCatches",
     },
     "submission": {
-      "href": "http://localhost:3000/api/activities/404/submission",
+      "href": "http://localhost:5000/api/activities/404/submission",
     },
   },
   "createdAt": "2024-10-18T10:01:25.957Z",
@@ -74,10 +74,10 @@ exports[`catches.unit GET /catches/{catchId}/method should return a 200 status c
 {
   "_links": {
     "method": {
-      "href": "http://localhost:3000/api/methods/1",
+      "href": "http://localhost:5000/api/methods/1",
     },
     "self": {
-      "href": "http://localhost:3000/api/methods/1",
+      "href": "http://localhost:5000/api/methods/1",
     },
   },
   "createdAt": "2018-11-07T10:00:00.000Z",
@@ -92,10 +92,10 @@ exports[`catches.unit GET /catches/{catchId}/species should return a 200 status 
 {
   "_links": {
     "self": {
-      "href": "http://localhost:3000/api/species/1",
+      "href": "http://localhost:5000/api/species/1",
     },
     "species": {
-      "href": "http://localhost:3000/api/species/1",
+      "href": "http://localhost:5000/api/species/1",
     },
   },
   "createdAt": "2018-11-07T10:00:00.000Z",
@@ -110,22 +110,22 @@ exports[`catches.unit PATCH /catches/{catchId} should return the updated catch i
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/catches/4/activity",
+      "href": "http://localhost:5000/api/catches/4/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/404",
+      "href": "http://localhost:5000/api/activities/404",
     },
     "catch": {
-      "href": "http://localhost:3000/api/catches/4",
+      "href": "http://localhost:5000/api/catches/4",
     },
     "method": {
-      "href": "http://localhost:3000/api/catches/4/method",
+      "href": "http://localhost:5000/api/catches/4/method",
     },
     "self": {
-      "href": "http://localhost:3000/api/catches/4",
+      "href": "http://localhost:5000/api/catches/4",
     },
     "species": {
-      "href": "http://localhost:3000/api/catches/4/species",
+      "href": "http://localhost:5000/api/catches/4/species",
     },
   },
   "createdAt": "2024-11-06T14:45:55.782Z",
@@ -149,22 +149,22 @@ exports[`catches.unit POST /catches should return the created catch if the call 
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/catches/1600/activity",
+      "href": "http://localhost:5000/api/catches/1600/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/404",
+      "href": "http://localhost:5000/api/activities/404",
     },
     "catch": {
-      "href": "http://localhost:3000/api/catches/1600",
+      "href": "http://localhost:5000/api/catches/1600",
     },
     "method": {
-      "href": "http://localhost:3000/api/catches/1600/method",
+      "href": "http://localhost:5000/api/catches/1600/method",
     },
     "self": {
-      "href": "http://localhost:3000/api/catches/1600",
+      "href": "http://localhost:5000/api/catches/1600",
     },
     "species": {
-      "href": "http://localhost:3000/api/catches/1600/species",
+      "href": "http://localhost:5000/api/catches/1600/species",
     },
   },
   "createdAt": "2024-11-18T11:22:36.438Z",

@@ -53,7 +53,7 @@ export default async () => {
       validate: {
         failAction,
         options: {
-          abortEarly: false // Return all validation errors
+          abortEarly: true // Return on first validation error
         }
       }
     }

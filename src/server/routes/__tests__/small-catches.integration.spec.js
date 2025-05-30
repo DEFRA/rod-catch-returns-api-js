@@ -159,11 +159,11 @@ describe('small-catches.integration', () => {
             value: [
               {
                 method: 'methods/1',
-                count: '3'
+                count: 3
               },
               {
                 method: 'methods/1',
-                count: '2'
+                count: 2
               }
             ]
           }
@@ -242,11 +242,11 @@ describe('small-catches.integration', () => {
             value: [
               {
                 method: 'methods/1',
-                count: '3'
+                count: 3
               },
               {
                 method: 'methods/4',
-                count: '2'
+                count: 2
               }
             ]
           }
