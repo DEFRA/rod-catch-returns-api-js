@@ -1,13 +1,5 @@
-import axios from 'axios'
-import { getSystemUserByOid } from '../../../services/system-users.service.js'
+import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
-import jwksClient from 'jwks-rsa'
-import jwt from 'jsonwebtoken'
-
-jest.mock('axios')
-jest.mock('jsonwebtoken')
-jest.mock('jwks-rsa')
-jest.mock('../../../services/system-users.service.js')
 
 describe('profile.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
@@ -20,29 +12,6 @@ describe('profile.integration', () => {
   afterAll(async () => {
     await server.stop()
   })
-
-  const getMockAuthAndUser = (userOverrides) => {
-    axios.get.mockResolvedValue({
-      data: {
-        jwks_uri: 'https://example.com/jwks'
-      }
-    })
-
-    jwksClient.mockReturnValue({
-      getSigningKey: jest.fn().mockResolvedValue({
-        publicKey: 'mock-public-key'
-      })
-    })
-
-    jwt.decode.mockReturnValue({ header: { kid: 'abc' } })
-    jwt.verify.mockReturnValue({ oid: 'abc12345' })
-
-    getSystemUserByOid.mockResolvedValue({
-      isDisabled: false,
-      roles: [],
-      ...userOverrides
-    })
-  }
 
   describe('GET /api/profile', () => {
     it('should return a list of all the urls available in the api', async () => {
