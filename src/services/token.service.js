@@ -79,20 +79,24 @@ export const tokenService = async (request, h) => {
     // Get user details and validate account status
     const userDetails = await getSystemUserByOid(decoded.oid)
     if (!isUserDetailsValid(userDetails)) {
-      return createErrorResponse(h, 'Account disabled', StatusCodes.FORBIDDEN)
+      return createErrorResponse(h, 'ACCOUNT_DISABLED', StatusCodes.FORBIDDEN)
     }
 
     // Determine user role
     const userRole = userDetails.roles.find((r) => r.name in ROLE_MAP)
     if (!userRole) {
-      return createErrorResponse(h, 'Incorrect role', StatusCodes.FORBIDDEN)
+      return createErrorResponse(
+        h,
+        'ACCOUNT_ROLE_REQUIRED',
+        StatusCodes.FORBIDDEN
+      )
     }
 
     // Attach role to request
     request.auth = { role: ROLE_MAP[userRole.name] }
     return h.continue
   } catch (error) {
-    logger.error('Invalid token', error)
-    return createErrorResponse(h, 'Invalid token', StatusCodes.UNAUTHORIZED)
+    logger.error('INVALID_TOKEN', error)
+    return createErrorResponse(h, 'INVALID_TOKEN', StatusCodes.UNAUTHORIZED)
   }
 }
