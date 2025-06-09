@@ -1,20 +1,10 @@
+import { ROLE_MAP } from '../utils/auth-utils.js'
 import { StatusCodes } from 'http-status-codes'
 import axios from 'axios'
 import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import logger from '../utils/logger-utils.js'
-
-export const ROLES = Object.freeze({
-  ADMIN: 'RcrAdminUser',
-  FMT: 'RcrFMTUser'
-})
-
-// Map of role names to their corresponding ROLES enum value
-const ROLE_MAP = Object.freeze({
-  'System Administrator': ROLES.ADMIN,
-  'RCR CRM Integration User': ROLES.FMT
-})
 
 const getOpenIdConfigDocument = () => {
   return axios.get(process.env.OIDC_WELL_KNOWN_URL)

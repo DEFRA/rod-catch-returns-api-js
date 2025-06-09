@@ -1,12 +1,13 @@
-import { ROLES, tokenService } from '../token.service.js'
 import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../test-utils/server-test-utils.js'
+import { ROLES } from '../../utils/auth-utils.js'
 import axios from 'axios'
 import { getSystemUserByOid } from '../system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
+import { tokenService } from '../token.service.js'
 
 jest.mock('axios')
 jest.mock('jsonwebtoken')
