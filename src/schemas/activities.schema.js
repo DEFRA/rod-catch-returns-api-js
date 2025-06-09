@@ -57,7 +57,7 @@ const validateRiver = async (value, helper) => {
   try {
     const riverId = extractRiverId(value)
     const riverInternal = await isRiverInternal(riverId)
-    const fmtOrAdmin = isFMTOrAdmin(helper.prefs.context.auth.role)
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
     if (riverInternal && !fmtOrAdmin) {
       return helper.message('ACTIVITY_RIVER_FORBIDDEN')

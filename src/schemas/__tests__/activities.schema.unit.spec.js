@@ -10,11 +10,13 @@ import {
   getSubmissionByActivityId,
   isActivityExists
 } from '../../services/activities.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/rivers.service.js')
 jest.mock('../../services/submissions.service.js')
+jest.mock('../../utils/auth-utils.js')
 
 describe('activities.schema.unit', () => {
   describe('createActivitySchema', () => {
@@ -38,12 +40,14 @@ describe('activities.schema.unit', () => {
       season = 2024,
       submissionExists = true,
       riverInternal = false,
-      activityExists = false
+      activityExists = false,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmission.mockResolvedValue({ season })
       isSubmissionExists.mockResolvedValue(submissionExists)
       isRiverInternal.mockResolvedValue(riverInternal)
       isActivityExists.mockResolvedValue(activityExists)
+      isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
     it('should validate successfully when all fields are provided and valid', async () => {
@@ -130,13 +134,22 @@ describe('activities.schema.unit', () => {
         ).rejects.toThrow('ACTIVITY_RIVER_PATTERN_INVALID')
       })
 
-      it('should return an error if river is restricted', async () => {
+      it('should return an error if river is restricted and the user is not an admin or fmt', async () => {
         setupMocks({ riverInternal: true })
         const payload = getDefaultPayload()
 
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_RIVER_FORBIDDEN')
+      })
+
+      it('should continue if river is restricted and the user is an admin or fmt', async () => {
+        setupMocks({ riverInternal: true, fmtOrAdmin: true })
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
       })
 
       it('should return an error if the river could not be found', async () => {
