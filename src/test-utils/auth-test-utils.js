@@ -1,18 +1,19 @@
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { getSystemUserByOid } from '../services/system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 
-jest.mock('axios')
 jest.mock('jsonwebtoken')
 jest.mock('jwks-rsa')
 jest.mock('../services/system-users.service.js')
 
 export const getMockAuthAndUser = (userOverrides) => {
-  axios.get.mockResolvedValueOnce({
-    data: {
-      jwks_uri: 'https://example.com/jwks'
-    }
+  fetch.mockResolvedValueOnce({
+    json: () =>
+      Promise.resolve({
+        jwks_uri: 'https://example.com/jwks'
+      }),
+    ok: true
   })
 
   jwksClient.mockReturnValueOnce({
@@ -23,8 +24,6 @@ export const getMockAuthAndUser = (userOverrides) => {
 
   jwt.decode.mockReturnValueOnce({ header: { kid: 'abc' } })
   jwt.verify.mockReturnValueOnce({ oid: 'abc12345' })
-
-  console.log(jwt)
 
   getSystemUserByOid.mockResolvedValueOnce({
     isDisabled: false,

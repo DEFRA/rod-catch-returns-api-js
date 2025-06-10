@@ -3,13 +3,12 @@ import {
   getServerDetails
 } from '../../test-utils/server-test-utils.js'
 import { ROLES } from '../../utils/auth-utils.js'
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { getSystemUserByOid } from '../system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import { tokenService } from '../token.service.js'
 
-jest.mock('axios')
 jest.mock('jsonwebtoken')
 jest.mock('jwks-rsa')
 jest.mock('../system-users.service.js')
@@ -18,10 +17,12 @@ describe('token.service.unit', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    axios.get.mockResolvedValue({
-      data: {
-        jwks_uri: 'https://example.com/jwks'
-      }
+    fetch.mockResolvedValue({
+      json: () =>
+        Promise.resolve({
+          jwks_uri: 'https://example.com/jwks'
+        }),
+      ok: true
     })
 
     process.env.OIDC_WELL_KNOWN_URL =
