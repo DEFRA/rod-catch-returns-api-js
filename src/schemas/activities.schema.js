@@ -12,7 +12,7 @@ import {
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
-
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
 
 const validateDaysFished = (daysFishedOther, helper) => {
@@ -57,9 +57,13 @@ const validateRiver = async (value, helper) => {
   try {
     const riverId = extractRiverId(value)
     const riverInternal = await isRiverInternal(riverId)
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
-    // If the river is internal, return a validation error
-    return riverInternal ? helper.message('ACTIVITY_RIVER_FORBIDDEN') : value
+    if (riverInternal && !fmtOrAdmin) {
+      return helper.message('ACTIVITY_RIVER_FORBIDDEN')
+    }
+
+    return value
   } catch (error) {
     // Handle the case where the river does not exist
     if (error.message === 'RIVER_NOT_FOUND') {

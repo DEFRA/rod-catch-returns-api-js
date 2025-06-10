@@ -7,6 +7,7 @@ import {
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('activities.integration', () => {
@@ -114,7 +115,36 @@ describe('activities.integration', () => {
       })
     })
 
-    it('should return a 400 status code and error if the river is internal', async () => {
+    it('should successfully create an activity if the river is internal and the user is an admin or fmt', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      getMockAuthAndUser({
+        isDisabled: false,
+        roles: [{ name: 'System Administrator' }]
+      })
+
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '20',
+          daysFishedOther: '10',
+          river: 'rivers/229' // This river is internal (Unknown Anglian)
+        },
+        headers: {
+          token: 'abc123'
+        }
+      })
+
+      expect(activity.statusCode).toBe(201)
+    })
+
+    it('should return a 400 status code and error if the river is internal and the user is not an admin or fmt', async () => {
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_ACTIVITY

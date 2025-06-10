@@ -1,23 +1,18 @@
+import { ROLE_MAP } from '../utils/auth-utils.js'
 import { StatusCodes } from 'http-status-codes'
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import logger from '../utils/logger-utils.js'
 
-export const ROLES = Object.freeze({
-  ADMIN: 'RcrAdminUser',
-  FMT: 'RcrFMTUser'
-})
-
-// Map of role names to their corresponding ROLES enum value
-const ROLE_MAP = Object.freeze({
-  'System Administrator': ROLES.ADMIN,
-  'RCR CRM Integration User': ROLES.FMT
-})
-
-const getOpenIdConfigDocument = () => {
-  return axios.get(process.env.OIDC_WELL_KNOWN_URL)
+const getOpenIdConfigDocument = async () => {
+  const response = await fetch(process.env.OIDC_WELL_KNOWN_URL)
+  if (!response.ok) {
+    throw new Error(`HTTP error status: ${response.status}`)
+  }
+  const data = await response.json()
+  return data
 }
 
 const createErrorResponse = (h, message, statusCode) => {
@@ -62,7 +57,7 @@ export const tokenService = async (request, h) => {
   try {
     // Get OpenID configuration
     const openIdConfigDocument = await getOpenIdConfigDocument()
-    const client = getJwksClient(openIdConfigDocument?.data?.jwks_uri)
+    const client = getJwksClient(openIdConfigDocument?.jwks_uri)
 
     // Verify token
     const decoded = await verifyToken(token, client)
