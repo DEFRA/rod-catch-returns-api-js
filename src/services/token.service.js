@@ -9,7 +9,7 @@ import logger from '../utils/logger-utils.js'
 const getOpenIdConfigDocument = async () => {
   const response = await fetch(process.env.OIDC_WELL_KNOWN_URL)
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
+    throw new Error(`HTTP error status: ${response.status}`)
   }
   const data = await response.json()
   return data

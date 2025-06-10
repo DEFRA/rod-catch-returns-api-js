@@ -64,6 +64,22 @@ describe('token.service.unit', () => {
       expect(result).toBe(h.continue)
     })
 
+    it('should throw an error if it is unable to fetch the openid config document', async () => {
+      fetch.mockResolvedValue({
+        json: () => Promise.reject(new Error('error')),
+        ok: false,
+        status: 500
+      })
+
+      const result = await tokenService(
+        getServerDetails({ headers: { token: 'abc123' } }),
+        getMockResponseToolkitTakeover()
+      )
+
+      expect(result.statusCode).toBe(401)
+      expect(result.payload).toStrictEqual({ error: 'INVALID_TOKEN' })
+    })
+
     it.each([
       ['token header is invalid', null],
       ['token header has no kid', { header: {} }]
