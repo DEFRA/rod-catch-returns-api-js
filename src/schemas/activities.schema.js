@@ -29,10 +29,6 @@ const validateDaysFished = (daysFishedOther, helper) => {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
 
-  if (fmtOrAdmin && daysFishedOther < 0 && daysFishedWithMandatoryRelease < 0) {
-    return helper.message('ACTIVITY_DAYS_FISHED_LESS_THAN_ZERO')
-  }
-
   return daysFishedOther
 }
 

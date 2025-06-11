@@ -36,7 +36,7 @@ describe('activities.integration', () => {
         await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_CREATE_ACTIVITY)
     )
 
-    it('should successfully create a activity for a submission with a valid request', async () => {
+    it('should successfully create an activity for a submission with a valid request', async () => {
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_ACTIVITY
@@ -173,6 +173,65 @@ describe('activities.integration', () => {
           }
         ]
       })
+    })
+
+    it('should return a 400 status code and error if daysFishedWithMandatoryRelease is 0 and daysFishedOther is 0, if the user is not an admin or fmt', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '0',
+          daysFishedOther: '0',
+          river: 'rivers/3'
+        }
+      })
+
+      expect(JSON.parse(activity.payload)).toEqual({
+        errors: [
+          {
+            entity: 'Activity',
+            message: 'ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO',
+            property: 'daysFishedOther',
+            value: 0
+          }
+        ]
+      })
+      expect(activity.statusCode).toBe(400)
+    })
+
+    it('successfully create an activity if daysFishedWithMandatoryRelease is 0 and daysFishedOther is 0, if the user is an admin or fmt', async () => {
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_CREATE_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      getMockAuthAndUser({
+        isDisabled: false,
+        roles: [{ name: 'System Administrator' }]
+      })
+
+      const activity = await server.inject({
+        method: 'POST',
+        url: '/api/activities',
+        payload: {
+          submission: `submissions/${submissionId}`,
+          daysFishedWithMandatoryRelease: '0',
+          daysFishedOther: '0',
+          river: 'rivers/3'
+        },
+        headers: {
+          token: 'abc123'
+        }
+      })
+
+      expect(activity.statusCode).toBe(201)
     })
 
     it('should return a 400 status code and error if the river has already been added', async () => {
