@@ -9,6 +9,7 @@ import { convertKgtoOz } from '../utils/mass-utils.js'
 import { getCatchById } from '../services/catches.service.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { getSubmissionByCatchId } from '../services/submissions.service.js'
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodInternal } from '../services/methods.service.js'
 import { isSpeciesExists } from '../services/species.service.js'
 import logger from '../utils/logger-utils.js'
@@ -20,7 +21,13 @@ const MIN_FISH_MASS = 0
 const validateMethod = async (value, helper) => {
   const methodId = extractMethodId(value)
   const methodInternal = await isMethodInternal(methodId)
-  return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+  if (!fmtOrAdmin && methodInternal) {
+    return helper.message('CATCH_METHOD_FORBIDDEN')
+  }
+
+  return value
 }
 
 const validateSpecies = async (value, helper) => {
