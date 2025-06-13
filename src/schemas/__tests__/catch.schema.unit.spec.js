@@ -6,6 +6,7 @@ import {
 import { getCatchById } from '../../services/catches.service.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { getSubmissionByCatchId } from '../../services/submissions.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 import { isSpeciesExists } from '../../services/species.service.js'
 
@@ -14,6 +15,7 @@ jest.mock('../../services/catches.service.js')
 jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
 jest.mock('../../services/species.service.js')
+jest.mock('../../utils/auth-utils.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -37,11 +39,13 @@ describe('catch.schema.unit', () => {
     const setupMocks = ({
       season = 2024,
       methodInternal = false,
-      speciesExists = true
+      speciesExists = true,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValue(methodInternal)
       isSpeciesExists.mockResolvedValueOnce(speciesExists)
+      isFMTOrAdmin.mockReturnValueOnce(fmtOrAdmin)
     }
 
     afterEach(() => {
@@ -334,13 +338,22 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return an error if "method" is restricted', async () => {
+      it('should return an error if "method" is restricted and the user is not an admin or fmt', async () => {
         setupMocks({ methodInternal: true })
         const payload = getValidPayload({ method: 'methods/4' })
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_METHOD_FORBIDDEN'
         )
+      })
+
+      it('should validate successfully if "method" is restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodInternal: true, fmtOrAdmin: true })
+        const payload = getValidPayload({ method: 'methods/4' })
+
+        await expect(
+          createCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
       })
     })
 
@@ -459,7 +472,8 @@ describe('catch.schema.unit', () => {
       onlyMonthRecorded = true,
       noDateRecorded = false,
       dateCaught = '2024-08-02T00:00:00+01:00',
-      speciesExists = true
+      speciesExists = true,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmissionByCatchId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValueOnce(methodInternal)
@@ -469,6 +483,7 @@ describe('catch.schema.unit', () => {
         dateCaught
       })
       isSpeciesExists.mockResolvedValueOnce(speciesExists)
+      isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
     afterEach(() => {
@@ -694,6 +709,24 @@ describe('catch.schema.unit', () => {
       it('should validate successfully if "method" is valid', async () => {
         setupMocks()
         const payload = { method: 'methods/1' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
+
+      it('should return an error if "method" is restricted and the user is not an admin or fmt', async () => {
+        setupMocks({ methodInternal: true })
+        const payload = { method: 'methods/4' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_METHOD_FORBIDDEN')
+      })
+
+      it('should validate successfully if "method" is restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodInternal: true, fmtOrAdmin: true })
+        const payload = { method: 'methods/4' }
 
         await expect(
           updateCatchSchema.validateAsync(payload, getDefaultContext())
