@@ -105,7 +105,8 @@ export const createCatch = (
     released = true,
     onlyMonthRecorded = false,
     noDateRecorded = false
-  } = {}
+  } = {},
+  headers = {}
 ) => {
   return server.inject({
     method: 'POST',
@@ -119,6 +120,7 @@ export const createCatch = (
       released,
       onlyMonthRecorded,
       noDateRecorded
-    }
+    },
+    headers
   })
 }

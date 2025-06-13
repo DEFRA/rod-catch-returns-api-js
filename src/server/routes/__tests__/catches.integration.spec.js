@@ -6,6 +6,7 @@ import {
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('catches.integration', () => {
@@ -115,7 +116,7 @@ describe('catches.integration', () => {
       expect(createdCatch.statusCode).toBe(400)
     })
 
-    it('should throw an error if the "method" is internal', async () => {
+    it('should throw an error if the "method" is internal and the user is not an admin or fmt', async () => {
       const activityId = await setupSubmissionAndActivity(
         CONTACT_IDENTIFIER_CREATE_CATCH
       )
@@ -135,6 +136,29 @@ describe('catches.integration', () => {
         ]
       })
       expect(createdCatch.statusCode).toBe(400)
+    })
+
+    it('should validate succesfully if the "method" is internal and the user is an admin or fmt', async () => {
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_CREATE_CATCH
+      )
+      getMockAuthAndUser({
+        isDisabled: false,
+        roles: [{ name: 'System Administrator' }]
+      })
+
+      const createdCatch = await createCatch(
+        server,
+        activityId,
+        {
+          method: 'methods/4' // this method name is Unknown and is internal
+        },
+        {
+          token: 'abc123'
+        }
+      )
+
+      expect(createdCatch.statusCode).toBe(201)
     })
 
     it('should throw an error if the "species" does not exist', async () => {
