@@ -12,6 +12,7 @@ import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
 
@@ -57,8 +58,9 @@ const validateCounts = async (value, helper) => {
 
   const methodIds = methods.map((method) => extractMethodId(method))
 
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
   const methodInternal = await isMethodsInternal(methodIds)
-  if (methodInternal) {
+  if (!fmtOrAdmin && methodInternal) {
     return helper.message('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
   }
 

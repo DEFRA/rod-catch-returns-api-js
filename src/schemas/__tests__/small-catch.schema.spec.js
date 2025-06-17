@@ -9,11 +9,13 @@ import {
 } from '../../services/small-catch.service.js'
 import { getMonthNameFromNumber } from '../../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isMethodsInternal } from '../../services/methods.service.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/small-catch.service.js')
 jest.mock('../../services/methods.service.js')
+jest.mock('../../utils/auth-utils.js')
 
 describe('smallCatch.schema.unit', () => {
   const mockCurrentDate = new Date()
@@ -37,9 +39,14 @@ describe('smallCatch.schema.unit', () => {
       ...overrides
     })
 
-    const setupMocks = ({ season = 2024, methodsInternal = false } = {}) => {
+    const setupMocks = ({
+      season = 2024,
+      methodsInternal = false,
+      fmtOrAdmin = false
+    } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
       isMethodsInternal.mockResolvedValueOnce(methodsInternal)
+      isFMTOrAdmin.mockReturnValueOnce(fmtOrAdmin)
     }
 
     it('should validate successfully when the submission season is the current year and the month is less than or equal to the current month', async () => {
@@ -314,7 +321,7 @@ describe('smallCatch.schema.unit', () => {
         ).rejects.toThrow('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
       })
 
-      it('should return an error if any of the methods are restricted', async () => {
+      it('should return an error if any of the methods are restricted and the user is not an admin or fmt', async () => {
         setupMocks({ methodsInternal: true })
         const payload = getValidPayload({
           counts: [{ method: 'methods/4', count: 1 }]
@@ -323,6 +330,17 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
+      })
+
+      it('should validate successfully if any of the methods are restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodsInternal: true, fmtOrAdmin: true })
+        const payload = getValidPayload({
+          counts: [{ method: 'methods/4', count: 1 }]
+        })
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
       })
     })
 
@@ -392,7 +410,8 @@ describe('smallCatch.schema.unit', () => {
       activityId = '123',
       month = 1,
       released = 1,
-      methodsInternal = false
+      methodsInternal = false,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
       getSmallCatchById.mockResolvedValue({
@@ -401,6 +420,7 @@ describe('smallCatch.schema.unit', () => {
         released
       })
       isMethodsInternal.mockResolvedValueOnce(methodsInternal)
+      isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
     const getDefaultContext = () => ({
@@ -652,15 +672,26 @@ describe('smallCatch.schema.unit', () => {
         ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
       })
 
-      it('should return an error if any of the methods are restricted', async () => {
+      it('should return an error if any of the methods are restricted and the user is not an admin or fmt', async () => {
         setupMocks({ methodsInternal: true })
         const payload = {
           counts: [{ method: 'methods/4', count: 1 }]
         }
 
         await expect(
-          updateSmallCatchSchema.validateAsync(payload)
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
+      })
+
+      it('should validate successfully if any of the methods are restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodsInternal: true, fmtOrAdmin: true })
+        const payload = {
+          counts: [{ method: 'methods/4', count: 1 }]
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
       })
     })
 
