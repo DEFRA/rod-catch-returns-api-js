@@ -583,7 +583,7 @@ describe('activities.schema.unit', () => {
           ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER')
         })
 
-        it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is an admin or fmt', async () => {
+        it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is not an admin or fmt', async () => {
           setupMocks()
           const payload = getDefaultPayload({
             daysFishedWithMandatoryRelease: 0,
