@@ -16,10 +16,16 @@ import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
 
 const validateDaysFished = (daysFishedOther, helper) => {
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
   const daysFishedWithMandatoryRelease =
     helper.state.ancestors[0].daysFishedWithMandatoryRelease
 
-  if (daysFishedOther < 1 && daysFishedWithMandatoryRelease < 1) {
+  if (
+    !fmtOrAdmin &&
+    daysFishedOther < 1 &&
+    daysFishedWithMandatoryRelease < 1
+  ) {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
 

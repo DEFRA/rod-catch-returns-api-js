@@ -340,7 +340,7 @@ describe('activities.schema.unit', () => {
         ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER')
       })
 
-      it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0', async () => {
+      it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is not an admin or fmt', async () => {
         setupMocks()
         const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 0,
@@ -350,6 +350,18 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
+      })
+
+      it('should validate successfully if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is an admin or fmt', async () => {
+        setupMocks({ fmtOrAdmin: true })
+        const payload = getDefaultPayload({
+          daysFishedWithMandatoryRelease: 0,
+          daysFishedOther: 0
+        })
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
       })
     })
   })
@@ -383,13 +395,15 @@ describe('activities.schema.unit', () => {
         submissionExists = true,
         riverInternal = false,
         activityExists = false,
-        submission = { id: '1', season }
+        submission = { id: '1', season },
+        fmtOrAdmin = false
       } = {}) => {
         getSubmission.mockResolvedValue({ season })
         isSubmissionExists.mockResolvedValue(submissionExists)
         isRiverInternal.mockResolvedValue(riverInternal)
         isActivityExists.mockResolvedValue(activityExists)
         getSubmissionByActivityId.mockResolvedValue(submission)
+        isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
       }
 
       it('should validate successfully when all fields are provided and valid', async () => {
@@ -569,7 +583,7 @@ describe('activities.schema.unit', () => {
           ).rejects.toThrow('ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER')
         })
 
-        it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0', async () => {
+        it('should return an error if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is not an admin or fmt', async () => {
           setupMocks()
           const payload = getDefaultPayload({
             daysFishedWithMandatoryRelease: 0,
@@ -580,6 +594,18 @@ describe('activities.schema.unit', () => {
             updateActivitySchema.validateAsync(payload, getDefaultContext())
           ).rejects.toThrow('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
         })
+      })
+
+      it('should validate successfully if "daysFishedWithMandatoryRelease" is 0 and "daysFishedOther" is 0, if the user is an admin or fmt', async () => {
+        setupMocks({ fmtOrAdmin: true })
+        const payload = getDefaultPayload({
+          daysFishedWithMandatoryRelease: 0,
+          daysFishedOther: 0
+        })
+
+        await expect(
+          updateActivitySchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
       })
     })
   })
