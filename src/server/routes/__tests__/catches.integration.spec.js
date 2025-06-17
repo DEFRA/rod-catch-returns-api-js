@@ -138,28 +138,31 @@ describe('catches.integration', () => {
       expect(createdCatch.statusCode).toBe(400)
     })
 
-    it('should validate succesfully if the "method" is internal and the user is an admin or fmt', async () => {
-      const activityId = await setupSubmissionAndActivity(
-        CONTACT_IDENTIFIER_CREATE_CATCH
-      )
-      getMockAuthAndUser({
-        isDisabled: false,
-        roles: [{ name: 'System Administrator' }]
-      })
+    it.each(['System Administrator', 'RCR CRM Integration User'])(
+      'should validate succesfully if the "method" is internal and the user is %s',
+      async (roleName) => {
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_CREATE_CATCH
+        )
+        getMockAuthAndUser({
+          isDisabled: false,
+          roles: [{ name: roleName }]
+        })
 
-      const createdCatch = await createCatch(
-        server,
-        activityId,
-        {
-          method: 'methods/4' // this method name is Unknown and is internal
-        },
-        {
-          token: 'abc123'
-        }
-      )
+        const createdCatch = await createCatch(
+          server,
+          activityId,
+          {
+            method: 'methods/4' // this method name is Unknown and is internal
+          },
+          {
+            token: 'abc123'
+          }
+        )
 
-      expect(createdCatch.statusCode).toBe(201)
-    })
+        expect(createdCatch.statusCode).toBe(201)
+      }
+    )
 
     it('should throw an error if the "species" does not exist', async () => {
       const activityId = await setupSubmissionAndActivity(
