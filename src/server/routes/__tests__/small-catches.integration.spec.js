@@ -256,44 +256,47 @@ describe('small-catches.integration', () => {
       expect(smallCatch.statusCode).toBe(400)
     })
 
-    it('should validate successfully when creating small catch with a method that is internal and the user is an admin or fmt', async () => {
-      const submission = await createSubmission(
-        server,
-        CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
-      )
-      const submissionId = JSON.parse(submission.payload).id
+    it.each(['System Administrator', 'RCR CRM Integration User'])(
+      'should validate successfully when creating small catch with a method that is internal and the user is %s',
+      async (roleName) => {
+        const submission = await createSubmission(
+          server,
+          CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+        )
+        const submissionId = JSON.parse(submission.payload).id
 
-      const activity = await createActivity(server, submissionId)
-      const activityId = JSON.parse(activity.payload).id
+        const activity = await createActivity(server, submissionId)
+        const activityId = JSON.parse(activity.payload).id
 
-      getMockAuthAndUser({
-        isDisabled: false,
-        roles: [{ name: 'System Administrator' }]
-      })
+        getMockAuthAndUser({
+          isDisabled: false,
+          roles: [{ name: roleName }]
+        })
 
-      const smallCatch = await createSmallCatch(
-        server,
-        activityId,
-        {
-          released: 1,
-          counts: [
-            {
-              method: 'methods/1',
-              count: '3'
-            },
-            {
-              method: 'methods/4', // methods/4 is internal
-              count: '2'
-            }
-          ]
-        },
-        {
-          token: 'abc123'
-        }
-      )
+        const smallCatch = await createSmallCatch(
+          server,
+          activityId,
+          {
+            released: 1,
+            counts: [
+              {
+                method: 'methods/1',
+                count: '3'
+              },
+              {
+                method: 'methods/4', // methods/4 is internal
+                count: '2'
+              }
+            ]
+          },
+          {
+            token: 'abc123'
+          }
+        )
 
-      expect(smallCatch.statusCode).toBe(201)
-    })
+        expect(smallCatch.statusCode).toBe(201)
+      }
+    )
 
     it('should throw an error if small catch month is in the future', async () => {
       jest
