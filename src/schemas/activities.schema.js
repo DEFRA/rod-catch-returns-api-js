@@ -201,7 +201,6 @@ export const updateActivitySchema = Joi.object({
     })
 }).unknown()
 
-// TODO add unit test
 export const activityIdSchema = Joi.object({
   activityId: Joi.number().required().description('The id of the activity')
 })
