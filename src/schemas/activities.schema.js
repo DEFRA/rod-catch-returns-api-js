@@ -1,8 +1,4 @@
-import {
-  extractActivityId,
-  extractRiverId,
-  extractSubmissionId
-} from '../utils/entity-utils.js'
+import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
 import {
   getSubmission,
   isSubmissionExists
@@ -166,10 +162,8 @@ export const updateActivitySchema = Joi.object({
       if (value === undefined) {
         return value
       }
-      // Get activityId from the request context
-      const activityId = extractActivityId(
-        helper.prefs.context.params.activityId
-      )
+
+      const activityId = helper.prefs.context.params.activityId
       const submission = await getSubmissionByActivityId(activityId)
       return validateDaysFishedWithMandatoryRelease(value, helper, submission)
     }),
@@ -206,3 +200,7 @@ export const updateActivitySchema = Joi.object({
       return value
     })
 }).unknown()
+
+export const activityIdSchema = Joi.object({
+  activityId: Joi.number().required().description('The id of the activity')
+})

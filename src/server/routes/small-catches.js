@@ -153,6 +153,9 @@ export default [
           return handleServerError('Error fetching small catch by ID', error, h)
         }
       },
+      validate: {
+        params: smallCatchIdSchema
+      },
       description: 'Retrieve a small catch by its ID',
       notes: 'Retrieve a small catch from the database by its ID',
       tags: ['api', 'smallCatches']
@@ -211,6 +214,9 @@ export default [
           await transaction.rollback()
           return handleServerError('Error deleting small catch', error, h)
         }
+      },
+      validate: {
+        params: smallCatchIdSchema
       },
       description: 'Delete a small catch by ID',
       notes: 'Deletes a small catch from the database by its ID',
@@ -297,6 +303,7 @@ export default [
         }
       },
       validate: {
+        params: smallCatchIdSchema,
         payload: updateSmallCatchSchema,
         options: { entity: 'SmallCatch' }
       },

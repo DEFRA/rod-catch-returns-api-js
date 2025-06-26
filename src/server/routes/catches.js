@@ -257,6 +257,9 @@ export default [
           return handleServerError('Error fetching catch by ID', error, h)
         }
       },
+      validate: {
+        params: catchIdSchema
+      },
       description: 'Retrieve a catch by its ID',
       notes: 'Retrieve a catch from the database by its ID',
       tags: ['api', 'catches']
@@ -292,6 +295,9 @@ export default [
         } catch (error) {
           return handleServerError('Error deleting catch', error, h)
         }
+      },
+      validate: {
+        params: catchIdSchema
       },
       description: 'Delete a catch by ID',
       notes: 'Deletes a catch from the database by its ID',
@@ -354,6 +360,7 @@ export default [
         }
       },
       validate: {
+        params: catchIdSchema,
         payload: updateCatchSchema,
         options: { entity: 'Catch' }
       },

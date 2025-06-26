@@ -2,6 +2,7 @@ import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { Method } from '../../entities/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
+import { methodIdSchema } from '../../schemas/method.schema.js'
 
 export default [
   {
@@ -65,6 +66,9 @@ export default [
         } catch (error) {
           return handleServerError('Error fetching method', error, h)
         }
+      },
+      validate: {
+        params: methodIdSchema
       },
       description: 'Retreive a fishing method by ID from the database',
       notes: 'Retreive a fishing method by ID from the database',
