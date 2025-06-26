@@ -35,7 +35,7 @@ export default [
 
         try {
           logger.info(
-            'Fetching contact with licence ending:%s and postcode%s',
+            'Fetching contact with licence ending:%s and postcode:%s',
             permissionReferenceNumberLast6Characters,
             licenseePostcode
           )
@@ -54,7 +54,7 @@ export default [
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
             logger.info(
-              'Contact found with licence ending:%s and postcode%s with contact id:%s',
+              'Contact found with licence ending:%s and postcode:%s with contact id:%s',
               permissionReferenceNumberLast6Characters,
               licenseePostcode,
               result.ContactId

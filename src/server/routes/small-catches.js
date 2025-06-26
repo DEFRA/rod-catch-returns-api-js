@@ -11,7 +11,7 @@ import {
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import loggerUtils from '../../utils/logger-utils.js'
+import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
@@ -38,6 +38,8 @@ export default [
       handler: async (request, h) => {
         try {
           const smallCatchData = mapRequestToSmallCatch(request.payload)
+
+          logger.info('Creating small catch with details', smallCatchData)
 
           const smallCatch = await SmallCatch.create(smallCatchData, {
             include: [{ association: SmallCatch.associations.counts }]
@@ -175,7 +177,7 @@ export default [
         const transaction = await sequelize.transaction()
 
         try {
-          loggerUtils.info(
+          logger.info(
             `Deleting small catches with id:%s and related records`,
             smallCatchId
           )
@@ -200,7 +202,7 @@ export default [
           // Commit transaction
           await transaction.commit()
 
-          loggerUtils.info(
+          logger.info(
             `Deleted small catches with id:%s and related records`,
             smallCatchId
           )
@@ -253,6 +255,11 @@ export default [
             noMonthRecorded,
             reportingExclude
           })
+
+          logger.info(
+            `Updating small catch ${smallCatchId} with details`,
+            smallCatchData
+          )
 
           // if a value is undefined, it is not updated by Sequelize
           const updatedSmallCatch = await foundSmallCatch.update(

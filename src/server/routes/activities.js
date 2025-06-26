@@ -51,16 +51,17 @@ export default [
             river
           } = request.payload
 
-          const submissionId = extractSubmissionId(submission)
-          const riverId = extractRiverId(river)
-
-          const createdActivity = await Activity.create({
-            daysFishedOther,
+          const activityData = {
+            submission_id: extractSubmissionId(submission),
+            river_id: extractRiverId(river),
             daysFishedWithMandatoryRelease,
-            submission_id: submissionId,
-            river_id: riverId,
-            version: Date.now()
-          })
+            daysFishedOther,
+            version: new Date()
+          }
+
+          logger.info('Creating activity with details', activityData)
+
+          const createdActivity = await Activity.create(activityData)
 
           const response = mapActivityToResponse(createdActivity.toJSON())
 
@@ -372,15 +373,20 @@ export default [
             return handleNotFound(`Activity not found for ${activityId}`, h)
           }
 
-          const riverId = river ? extractRiverId(river) : undefined
-
-          // if a value is undefined, it is not updated by Sequelize
-          const updatedActivity = await activity.update({
+          const activityData = {
+            river_id: river ? extractRiverId(river) : undefined,
             daysFishedWithMandatoryRelease,
             daysFishedOther,
-            river_id: riverId,
             version: new Date()
-          })
+          }
+
+          logger.info(
+            `Updating activity ${activityId} with details`,
+            activityData
+          )
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedActivity = await activity.update(activityData)
 
           const mappedActivity = mapActivityToResponse(updatedActivity.toJSON())
 

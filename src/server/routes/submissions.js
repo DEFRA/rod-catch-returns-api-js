@@ -30,14 +30,18 @@ export default [
         const { contactId, season, status, source, reportingExclude } =
           request.payload
         try {
-          const createdSubmission = await Submission.create({
+          const submissionData = {
             contactId,
             season,
             status,
             source,
             reportingExclude,
-            version: Date.now()
-          })
+            version: new Date()
+          }
+
+          logger.info('Creating submission with details', submissionData)
+
+          const createdSubmission = await Submission.create(submissionData)
 
           logger.info('Creating CRM activity with request:', contactId, season)
 
@@ -293,12 +297,19 @@ export default [
             return handleNotFound(`Submission not found for ${submissionId}`, h)
           }
 
-          // if a value is undefined, it is not updated by Sequelize
-          const updatedSubmission = await submission.update({
+          const submissionData = {
             status,
             reportingExclude,
             version: new Date()
-          })
+          }
+
+          logger.info(
+            `Updating submission ${submissionId} with details`,
+            submissionData
+          )
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedSubmission = await submission.update(submissionData)
 
           // Update CRM Activity if status is SUBMITTED
           if (status === STATUSES.SUBMITTED) {

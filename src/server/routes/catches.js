@@ -45,6 +45,8 @@ export default [
         try {
           const catchData = mapRequestToCatch(request.payload)
 
+          logger.info('Creating catch with details', catchData)
+
           const createdCatch = await Catch.create(catchData)
 
           const catchResponse = mapCatchToResponse(createdCatch.toJSON())
@@ -338,6 +340,8 @@ export default [
             noDateRecorded,
             reportingExclude
           })
+
+          logger.info(`Updating catch ${catchId} with details`, catchData)
 
           // if a value is undefined, it is not updated by Sequelize
           const updatedCatch = await foundCatch.update(catchData)
