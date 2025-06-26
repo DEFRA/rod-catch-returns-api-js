@@ -54,7 +54,7 @@ export default [
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
             logger.info(
-              'Contact found with licence ending:%s and postcode%s with contact id:%s',
+              'Contact found with licence ending:%s, postcode:%s and contact id:%s',
               permissionReferenceNumberLast6Characters,
               licenseePostcode,
               result.ContactId
@@ -99,6 +99,10 @@ export default [
             permissionForFullReferenceNumber(fullLicenceNumber)
           )
           try {
+            if (!Array.isArray(result) || result.length === 0) {
+              logger.info(`Permission not found for ${fullLicenceNumber}`)
+              return h.response().code(StatusCodes.FORBIDDEN)
+            }
             const mappedResult = mapCRMPermissionToLicence(result)
             return h.response(mappedResult).code(StatusCodes.OK)
           } catch (mapperError) {

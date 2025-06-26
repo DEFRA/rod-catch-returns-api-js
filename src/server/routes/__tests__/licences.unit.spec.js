@@ -177,19 +177,16 @@ describe('licences.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result.payload).toStrictEqual({
-        message: 'Invalid permission data: Expected a non-empty array.'
-      })
       expect(result.statusCode).toBe(403)
     })
 
-    it('should log an error when no licence is found', async () => {
+    it('should log when no licence is found', async () => {
       executeQuery.mockResolvedValueOnce(null)
 
       await getFullLicenceHandler(getLicenceRequest(), getMockResponseToolkit())
 
-      expect(logger.error).toHaveBeenCalledWith(
-        new Error('Invalid permission data: Expected a non-empty array.')
+      expect(logger.info).toHaveBeenCalledWith(
+        'Permission not found for 11100420-2WT1SFT-B7A111'
       )
     })
 
