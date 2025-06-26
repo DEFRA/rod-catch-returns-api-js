@@ -8,7 +8,7 @@
     "start": "node src/index.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.js",
+    "lint": "eslint",
     "lint:fix": "npm run lint -- --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
@@ -66,12 +66,12 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.8",
-    "babel-jest": "^29.7.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-standard": "^17.1.0",
+    "babel-jest": "^30.0.2",
+    "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.1",
     "husky": "^9.1.1",
     "jest": "^29.7.0",
+    "neostandard": "^0.12.1",
     "prettier": "^3.3.3"
   },
   "babel": {
@@ -99,25 +99,6 @@
       "^@hapi/catbox-redis$": "<rootDir>/src/__mocks__/catbox-redis.js",
       "^@airbrake/node$": "<rootDir>/src/__mocks__/airbrake.js",
       "^node-fetch$": "<rootDir>/src/__mocks__/node-fetch.js"
-    }
-  },
-  "eslintConfig": {
-    "extends": [
-      "standard",
-      "prettier"
-    ],
-    "env": {
-      "node": true,
-      "jest": true
-    },
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    },
-    "rules": {
-      "sort-imports": [
-        "error"
-      ]
     }
   },
   "prettier": {
