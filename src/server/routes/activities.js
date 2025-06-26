@@ -7,6 +7,7 @@ import {
   Submission
 } from '../../entities/index.js'
 import {
+  activityIdSchema,
   createActivitySchema,
   updateActivitySchema
 } from '../../schemas/activities.schema.js'
@@ -121,6 +122,9 @@ export default [
           )
         }
       },
+      validate: {
+        params: activityIdSchema
+      },
       description:
         'Retrieve the river associated with an activity in the database',
       notes: 'Retrieve river associated with an activity in the database',
@@ -178,6 +182,9 @@ export default [
           return handleServerError('Error fetching small catches', error, h)
         }
       },
+      validate: {
+        params: activityIdSchema
+      },
       description:
         'Retrieve the small catches associated with an activity in the database',
       notes: 'Retrieve small catches with an activity in the database',
@@ -227,6 +234,9 @@ export default [
           return handleServerError('Error fetching catches', error, h)
         }
       },
+      validate: {
+        params: activityIdSchema
+      },
       description:
         'Retrieve the catches (salmon and large sea trout) associated with an activity in the database',
       notes:
@@ -263,6 +273,9 @@ export default [
         } catch (error) {
           return handleServerError('Error fetching activity by ID', error, h)
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description: 'Retrieve an activity by its ID',
       notes: 'Retrieve an activity from the database by its ID',
@@ -343,6 +356,9 @@ export default [
           return handleServerError('Error deleting activity', error, h)
         }
       },
+      validate: {
+        params: activityIdSchema
+      },
       description: 'Delete an activity by ID',
       notes: 'Deletes an activity from the database by its ID',
       tags: ['api', 'activities']
@@ -390,6 +406,7 @@ export default [
         }
       },
       validate: {
+        params: activityIdSchema,
         payload: updateActivitySchema,
         options: { entity: 'Activity' }
       },
@@ -442,6 +459,9 @@ export default [
             h
           )
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description:
         'Retrieve the submission associated with an activity in the database',

@@ -336,6 +336,7 @@ export default [
         }
       },
       validate: {
+        params: getBySubmissionIdSchema,
         payload: updateSubmissionSchema,
         options: { entity: 'Submission' }
       },
