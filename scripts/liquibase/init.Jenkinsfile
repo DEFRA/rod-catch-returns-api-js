@@ -20,7 +20,14 @@ pipeline {
         stage('Run Liquibase Migration') {
             steps {
                 script {
-                    def envString = env.getEnvironment().collect { k, v -> "-e ${k}=\"${v}\"" }.join(' ')                    
+                    def envVars = [
+                        "DATABASE_HOST=${env.DATABASE_HOST}",
+                        "DATABASE_PORT=${env.DATABASE_PORT}",
+                        "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
+                        "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
+                    //    "ACTION=${env.ACTION}"
+                    ]
+                    def envString = envVars.collect { "-e ${it}" }.join(' ')                 
                     docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
                     // sh """
                     //     docker run ${envString}" "${IMAGE_NAME}:${TAG}"
