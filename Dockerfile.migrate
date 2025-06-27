@@ -16,7 +16,7 @@ ENV DATABASE_PORT=5432
 ENV DATABASE_HOST=""
 
 # Copy the bash script and change the permission to make it executable
-COPY --chmod=755 scripts/docker/migrate.sh /migrate.sh
+COPY --chmod=755 scripts/liquibase/migrate.sh /migrate.sh
 
 # Use the script as the entry point
 ENTRYPOINT ["/migrate.sh"]
