@@ -21,7 +21,10 @@ pipeline {
             steps {
                 script {
                     def envString = env.getEnvironment().collect { k, v -> "-e ${k}=\"${v}\"" }.join(' ')                    
-                    docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
+//                    docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
+                    sh """
+                        docker run ${envString}" "${IMAGE_NAME}:${TAG}"
+                    """
                 }
             }
         }
