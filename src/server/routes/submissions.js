@@ -151,10 +151,9 @@ export default [
             const response = mapSubmissionToResponse(foundSubmission.toJSON())
             return h.response(response).code(StatusCodes.OK)
           }
-          return handleNotFound(
-            `Submission not found for ${contactId} and ${season}`,
-            h
-          )
+
+          logger.info(`Submission not found for ${contactId} and ${season}`)
+          return h.response().code(StatusCodes.NOT_FOUND)
         } catch (error) {
           return handleServerError('Error finding submission', error, h)
         }
