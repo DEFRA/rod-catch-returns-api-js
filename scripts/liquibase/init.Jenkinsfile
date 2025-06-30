@@ -31,11 +31,10 @@ pipeline {
                     ]
                     def envString = envVars.collect { "-e ${it}" }.join(' ')
 
-                    //sh """
-                    //    docker run ${envString} ${IMAGE_NAME}:${TAG}
-                    //"""
-
-                    docker.image("${IMAGE_NAME}:${TAG}").withRun(envString)
+                    sh """
+                        docker run ${envString} ${IMAGE_NAME}:${TAG}
+                    """
+                }
             }
         }
 
