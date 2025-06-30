@@ -28,10 +28,10 @@ pipeline {
                     //    "ACTION=${env.ACTION}"
                     ]
                     def envString = envVars.collect { "-e ${it}" }.join(' ')                 
-                    docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
-                    // sh """
-                    //     docker run ${envString}" "${IMAGE_NAME}:${TAG}"
-                    // """
+                    //docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
+                    sh """
+                        docker run ${envString}" "${IMAGE_NAME}:${TAG}"
+                    """
                 }
             }
         }
