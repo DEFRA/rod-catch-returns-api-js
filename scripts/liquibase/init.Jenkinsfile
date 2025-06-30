@@ -14,7 +14,7 @@ pipeline {
             steps {
                 script {
                     def userInput = input(
-                        message: 'Are you sure yoy want to proceed? This will DROP ALL TABLES and initialise empty tables!'
+                        message: 'Are you sure you want to proceed? This will DROP ALL TABLES and initialise empty tables!'
                     )
                 }
             }
