@@ -1,4 +1,6 @@
 #!/usr/bin/env groovy
+def utils = load 'utils.groovy'
+
 pipeline {
     agent any
 
