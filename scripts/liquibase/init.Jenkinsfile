@@ -11,7 +11,7 @@ pipeline {
         stage('Build Liquibase Image') {
             steps {
                 script {                   
-                    def buildArgs = ". --no-cache"
+                    def buildArgs = "-f Dockerfile.migrate . --no-cache"
                     docker.build("${IMAGE_NAME}:${TAG}", buildArgs)
                    
                 }
