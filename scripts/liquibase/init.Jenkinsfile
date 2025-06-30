@@ -47,7 +47,7 @@ pipeline {
                         "DATABASE_NAME=${env.DATABASE_NAME}",
                         "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
                         "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
-                        "ACTION='dropAll --requireForce=true --force=true'"
+                        "ACTION=\"dropAll --requireForce=true --force=true\""
                     ]
                     def envString = envVars.collect { "-e ${it}" }.join(' ')                 
 
