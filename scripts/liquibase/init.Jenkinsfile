@@ -6,8 +6,8 @@ pipeline {
         IMAGE_NAME = 'defra/rod-catch-returns-liquibase-migrator'
         TAG = 'latest'
     }
+
     
-    def utils = load 'utils.groovy'
 
     stages {
         stage('Build Liquibase Image') {
@@ -36,6 +36,7 @@ pipeline {
                     // sh """
                     //     docker run ${envString} ${IMAGE_NAME}:${TAG}
                     // """
+                    def utils = load "utils.groovy"
                     utils.runLiquibaseAction("dropAll --requireForce=true --force=true")
                 }
             }
