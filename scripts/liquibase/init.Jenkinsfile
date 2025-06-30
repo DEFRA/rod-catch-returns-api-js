@@ -14,19 +14,8 @@ pipeline {
             steps {
                 script {
                     def userInput = input(
-                        id: 'userConfirmation', message: 'Are you sure you want to proceed?',
-                        parameters: [
-                            choice(
-                                choices: ['No', 'Yes'],
-                                description: 'This will DROP ALL TABLES and initialise empty tables!',
-                                name: 'Confirm'
-                            )
-                        ]
+                    message: 'Would you like to skip the next step?'
                     )
-
-                    if (userInput != 'Yes') {
-                        error("Aborting pipeline as per user input.")
-                    }
                 }
             }
         }
