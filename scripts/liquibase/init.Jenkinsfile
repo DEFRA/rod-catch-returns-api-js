@@ -9,13 +9,32 @@ pipeline {
         TAG = 'latest'
     }
 
-    
-
     stages {
+        stage('Confirm Database Reset') {
+            steps {
+                script {
+                    def userInput = input(
+                        id: 'userConfirmation', message: 'Are you sure you want to proceed?',
+                        parameters: [
+                            choice(
+                                choices: ['No', 'Yes'],
+                                description: 'This will DROP ALL TABLES and initialise empty tables!',
+                                name: 'Confirm'
+                            )
+                        ]
+                    )
+
+                    if (userInput != 'Yes') {
+                        error("Aborting pipeline as per user input.")
+                    }
+                }
+            }
+        }
+
         stage('Build Liquibase Image') {
             steps {
                 script {
-                    utils = load "scripts/liquibase/utils.groovy"                   
+                    utils = load "scripts/liquibase/utils.groovy"
                     def buildArgs = "-f Dockerfile.migrate . --no-cache"
                     docker.build("${IMAGE_NAME}:${TAG}", buildArgs)
                    
