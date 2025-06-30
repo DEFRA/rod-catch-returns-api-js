@@ -17,7 +17,8 @@ pipeline {
                 }
             }
         }
-        stage('Run Liquibase Migration') {
+
+        stage('Drop Database') {
             steps {
                 script {
                     def envVars = [
@@ -26,10 +27,30 @@ pipeline {
                         "DATABASE_NAME=${env.DATABASE_NAME}",
                         "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
                         "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
-                    //    "ACTION=${env.ACTION}"
+                        "ACTION=dropAll --requireForce=true --force=true"
                     ]
                     def envString = envVars.collect { "-e ${it}" }.join(' ')                 
-                    //docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
+
+                    sh """
+                        docker run ${envString} ${IMAGE_NAME}:${TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Initialise Empty Tag') {
+            steps {
+                script {
+                    def envVars = [
+                        "DATABASE_HOST=${env.DATABASE_HOST}",
+                        "DATABASE_PORT=${env.DATABASE_PORT}",
+                        "DATABASE_NAME=${env.DATABASE_NAME}",
+                        "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
+                        "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
+                        "ACTION=dropAll --requireForce=true --force=true"
+                    ]
+                    def envString = envVars.collect { "-e ${it}" }.join(' ')                 
+
                     sh """
                         docker run ${envString} ${IMAGE_NAME}:${TAG}
                     """
