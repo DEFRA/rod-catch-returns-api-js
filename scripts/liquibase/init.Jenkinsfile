@@ -29,11 +29,15 @@ pipeline {
                         "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
                         "ACTION='dropAll --requireForce=true --force=true'"
                     ]
-                    def envString = envVars.collect { "-e ${it}" }.join(' ')                 
+                    def envString = envVars.collect { "-e ${it}" }.join(' ')  
 
-                    sh """
-                        docker run ${envString} ${IMAGE_NAME}:${TAG}
-                    """
+                    withEnv(envVars) {
+                        sh """
+                            docker run ${envString} ${IMAGE_NAME}:${TAG}
+                        """
+                    }               
+
+                    
                 }
             }
         }
