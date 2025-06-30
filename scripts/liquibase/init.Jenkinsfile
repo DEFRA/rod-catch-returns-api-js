@@ -1,6 +1,4 @@
 #!/usr/bin/env groovy
-def utils = load 'utils.groovy'
-
 pipeline {
     agent any
 
@@ -8,6 +6,8 @@ pipeline {
         IMAGE_NAME = 'defra/rod-catch-returns-liquibase-migrator'
         TAG = 'latest'
     }
+    
+    def utils = load 'utils.groovy'
 
     stages {
         stage('Build Liquibase Image') {
