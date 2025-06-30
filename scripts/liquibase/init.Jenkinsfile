@@ -21,17 +21,20 @@ pipeline {
         stage('Drop Database') {
             steps {
                 script {
-                    def envVars = [
-                        "DATABASE_HOST=${env.DATABASE_HOST}",
-                        "DATABASE_PORT=${env.DATABASE_PORT}",
-                        "DATABASE_NAME=${env.DATABASE_NAME}",
-                        "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
-                        "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
-                        "ACTION='dropAll --requireForce=true --force=true'"
-                    ]
-                    def envString = envVars.collect { "-e ${it}" }.join(' ')
+                    // def envVars = [
+                    //     "DATABASE_HOST=${env.DATABASE_HOST}",
+                    //     "DATABASE_PORT=${env.DATABASE_PORT}",
+                    //     "DATABASE_NAME=${env.DATABASE_NAME}",
+                    //     "DATABASE_USERNAME=${env.DATABASE_USERNAME}",
+                    //     "DATABASE_PASSWORD=${env.DATABASE_PASSWORD}",
+                    //     "ACTION='dropAll --requireForce=true --force=true'"
+                    // ]
+                    // def envString = envVars.collect { "-e ${it}" }.join(' ')                 
 
-                    docker.image("${IMAGE_NAME}:${TAG}").inside(envString)
+                    // sh """
+                    //     docker run ${envString} ${IMAGE_NAME}:${TAG}
+                    // """
+                    utils.runLiquibaseAction("dropAll --requireForce=true --force=true")
                 }
             }
         }
