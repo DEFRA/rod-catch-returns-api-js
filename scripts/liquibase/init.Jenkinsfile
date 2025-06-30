@@ -36,7 +36,7 @@ pipeline {
                     // sh """
                     //     docker run ${envString} ${IMAGE_NAME}:${TAG}
                     // """
-                    def utils = load "utils.groovy"
+                    def utils = load "scripts/liquibase/utils.groovy"
                     utils.runLiquibaseAction("dropAll --requireForce=true --force=true")
                 }
             }
