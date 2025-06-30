@@ -33,7 +33,7 @@ pipeline {
 
                     withEnv(envVars) {
                         sh """
-                            docker run ${envString} ${IMAGE_NAME}:${TAG}
+                            docker run ${IMAGE_NAME}:${TAG}
                         """
                     }               
 
