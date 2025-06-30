@@ -13,3 +13,5 @@ def runLiquibaseAction(action) {
         docker run ${envString} ${env.IMAGE_NAME}:${env.TAG}
     """
 }
+
+return this
