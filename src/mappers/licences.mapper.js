@@ -5,10 +5,6 @@
  * @throws {Error} If the permission data is missing or invalid.
  */
 const validatePermission = (permission) => {
-  if (!Array.isArray(permission) || permission.length === 0) {
-    throw new Error('Invalid permission data: Expected a non-empty array.')
-  }
-
   const [licenceData] = permission
 
   if (

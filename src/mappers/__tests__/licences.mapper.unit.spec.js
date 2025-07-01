@@ -30,15 +30,6 @@ describe('licences.mapper.unit', () => {
       })
     })
 
-    it.each([null, undefined, [], {}])(
-      'should throw an error when input is %p',
-      (invalidInput) => {
-        expect(() => mapCRMPermissionToLicence(invalidInput)).toThrow(
-          'Invalid permission data: Expected a non-empty array.'
-        )
-      }
-    )
-
     it('should throw an error if licence data is missing required fields', () => {
       const invalidData = [
         {
