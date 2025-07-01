@@ -309,19 +309,18 @@ describe('submissions.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should call handleNotFound if the submission is not found', async () => {
+    it('should call log if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
       const h = getMockResponseToolkit()
 
       await getSubmissionByContactIdAndSeasonHandler(getSubmissionRequest(), h)
 
-      expect(handleNotFound).toHaveBeenCalledWith(
-        'Submission not found for contact-identifier-111 and 2024',
-        h
+      expect(logger.info).toHaveBeenCalledWith(
+        'Submission not found for contact-identifier-111 and 2024'
       )
     })
 
-    it('should return a not found response if the submission is not found', async () => {
+    it('should return a 404 status code if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
 
       const result = await getSubmissionByContactIdAndSeasonHandler(
@@ -329,7 +328,7 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result).toBe(NOT_FOUND_SYMBOL)
+      expect(result.statusCode).toBe(404)
     })
 
     it('should call handleServerError if fetching a submission fails', async () => {

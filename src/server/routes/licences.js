@@ -8,12 +8,15 @@ import {
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schemas/licences.schema.js'
+import {
+  mapCRMPermissionToLicence,
+  validatePermission
+} from '../../mappers/licences.mapper.js'
 import { Contact } from '../../models/contact.model.js'
 import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'
 import { handleServerError } from '../../utils/server-utils.js'
 import logger from '../../utils/logger-utils.js'
-import { mapCRMPermissionToLicence } from '../../mappers/licences.mapper.js'
 
 export default [
   {
@@ -35,7 +38,7 @@ export default [
 
         try {
           logger.info(
-            'Fetching contact with licence ending:%s and postcode%s',
+            'Fetching contact with licence ending:%s and postcode:%s',
             permissionReferenceNumberLast6Characters,
             licenseePostcode
           )
@@ -54,7 +57,7 @@ export default [
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
             logger.info(
-              'Contact found with licence ending:%s and postcode%s with contact id:%s',
+              'Contact found with licence ending:%s, postcode:%s and contact id:%s',
               permissionReferenceNumberLast6Characters,
               licenseePostcode,
               result.ContactId
@@ -99,6 +102,7 @@ export default [
             permissionForFullReferenceNumber(fullLicenceNumber)
           )
           try {
+            validatePermission(result, fullLicenceNumber)
             const mappedResult = mapCRMPermissionToLicence(result)
             return h.response(mappedResult).code(StatusCodes.OK)
           } catch (mapperError) {
