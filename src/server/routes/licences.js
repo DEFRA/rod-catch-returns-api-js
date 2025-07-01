@@ -8,12 +8,15 @@ import {
   licenceLoginRequestParamSchema,
   licenceLoginRequestQuerySchema
 } from '../../schemas/licences.schema.js'
+import {
+  mapCRMPermissionToLicence,
+  validatePermission
+} from '../../mappers/licences.mapper.js'
 import { Contact } from '../../models/contact.model.js'
 import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'
 import { handleServerError } from '../../utils/server-utils.js'
 import logger from '../../utils/logger-utils.js'
-import { mapCRMPermissionToLicence } from '../../mappers/licences.mapper.js'
 
 export default [
   {
@@ -99,10 +102,7 @@ export default [
             permissionForFullReferenceNumber(fullLicenceNumber)
           )
           try {
-            if (!Array.isArray(result) || result.length === 0) {
-              logger.info(`Permission not found for ${fullLicenceNumber}`)
-              return h.response().code(StatusCodes.FORBIDDEN)
-            }
+            validatePermission(result, fullLicenceNumber)
             const mappedResult = mapCRMPermissionToLicence(result)
             return h.response(mappedResult).code(StatusCodes.OK)
           } catch (mapperError) {

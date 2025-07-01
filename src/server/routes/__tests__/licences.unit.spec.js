@@ -180,16 +180,6 @@ describe('licences.unit', () => {
       expect(result.statusCode).toBe(403)
     })
 
-    it('should log when no licence is found', async () => {
-      executeQuery.mockResolvedValueOnce(null)
-
-      await getFullLicenceHandler(getLicenceRequest(), getMockResponseToolkit())
-
-      expect(logger.info).toHaveBeenCalledWith(
-        'Permission not found for 11100420-2WT1SFT-B7A111'
-      )
-    })
-
     it('should call handleServerError if an error occurs', async () => {
       const error = new Error('Unexpected error')
       executeQuery.mockRejectedValueOnce(error)
