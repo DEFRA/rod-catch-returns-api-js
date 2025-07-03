@@ -28,9 +28,16 @@ pipeline {
 
                     echo "Raw tags: ${rawTags}"
 
-                    def tags = rawTags.readLines()
-                        .findAll { it && !it.toLowerCase().contains('tag') } // Remove headers
-                        .collect { it.trim() }
+                    if (!rawTags || !rawTags.contains('Output of SELECT')) {
+                        error "No tags found or unexpected format in Liquibase output."
+                    }
+
+                    def outputStartIndex = lines.findIndexOf { it.contains('Output of SELECT') }
+                    def tagLines = lines.drop(outputStartIndex + 2) // skip "TAG |" header line as well
+
+                    def tags = tagLines
+                        .findAll { it?.trim() && it.contains('|') }
+                        .collect { it.split('\\|')[0].trim() }
 
                     echo "Available tags: ${tags}"
 
