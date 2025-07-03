@@ -51,8 +51,8 @@ pipeline {
                         choice(name: 'TAG', choices: tags.join('\n'), description: 'Select a tag from the list')
                     ]
             
-                    env.CHOSEN_TAG = selectedTag
-                    echo "Selected tag: ${env.CHOSEN_TAG}"
+                    CHOSEN_TAG = selectedTag
+                    echo "Selected tag: ${CHOSEN_TAG}"
                 }
             }
         }
@@ -61,7 +61,7 @@ pipeline {
             steps {
                 script {
                     echo 'hi'
-                    //utils.runLiquibaseAction("update-and-tag")
+                    utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}")
                 }
             }
         }
