@@ -51,6 +51,7 @@ pipeline {
         stage('Rolling back database schema') {
             steps {
                 script {
+                    echo 'hi'
                     //utils.runLiquibaseAction("update-and-tag")
                 }
             }
