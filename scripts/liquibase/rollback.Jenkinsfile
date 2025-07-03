@@ -10,6 +10,16 @@ pipeline {
     }
 
     stages {
+        stage('Confirm Database Reset') {
+            steps {
+                script {
+                    def userInput = input(
+                        message: 'Are you sure you want to proceed? This will rollback to a specified tag in the database!'
+                    )
+                }
+            }
+        }
+
         stage('Build Liquibase Image') {
             steps {
                 script {
@@ -60,7 +70,6 @@ pipeline {
         stage('Rolling back database schema') {
             steps {
                 script {
-                    echo 'hi'
                     utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}")
                 }
             }
