@@ -32,6 +32,8 @@ pipeline {
                         error "No tags found or unexpected format in Liquibase output."
                     }
 
+                    def lines = rawTags.readLines()
+
                     def outputStartIndex = lines.findIndexOf { it.contains('Output of SELECT') }
                     def tagLines = lines.drop(outputStartIndex + 2) // skip "TAG |" header line as well
 
