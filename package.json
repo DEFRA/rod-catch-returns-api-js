@@ -23,7 +23,7 @@
     "docker:service": "docker run -d --rm --env-file .env -p 5000:5000 --name rcr_api_js rod_catch_returns/api_js",
     "docker:stop": "docker container kill rcr_api_js",
     "migrate:build": "docker build -f Dockerfile.migrate -t liquibase-migrator .",
-    "migrate:up": "docker run --network host -e ACTION=update --rm --env-file .env liquibase-migrator",
+    "migrate:up": "docker run --network host -e ACTION=update-and-tag --rm --env-file .env liquibase-migrator",
     "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator"
   },
   "repository": {
