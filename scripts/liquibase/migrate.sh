@@ -19,6 +19,6 @@ if [ "$ACTION" = "update-and-tag" ]; then
   $liquibase_base_cmd tag $DATE_TAG
 else
   echo "Running Liquibase with action: $ACTION"
-  $liquibase_base_cmd $ACTION
+  eval "$liquibase_base_cmd $ACTION"
 fi
 
