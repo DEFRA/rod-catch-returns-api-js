@@ -6,12 +6,18 @@ import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import logger from '../utils/logger-utils.js'
 
-const getOpenIdConfigDocument = async () => {
+const getOpenIdConfigDocument = async (cache) => {
+  const cachedResponse = await cache.get('OIDC_WELL_KNOWN_RESULT')
+  if (cachedResponse) {
+    return cachedResponse
+  }
+
   const response = await fetch(process.env.OIDC_WELL_KNOWN_URL)
   if (!response.ok) {
     throw new Error(`HTTP error status: ${response.status}`)
   }
   const data = await response.json()
+  await cache.set('OIDC_WELL_KNOWN_RESULT', data, 3600000) // cache for 1 hour
   return data
 }
 
@@ -54,9 +60,11 @@ export const tokenService = async (request, h) => {
     return h.continue
   }
 
+  const cache = request.server.app.cache
+
   try {
     // Get OpenID configuration
-    const openIdConfigDocument = await getOpenIdConfigDocument()
+    const openIdConfigDocument = await getOpenIdConfigDocument(cache)
     const client = getJwksClient(openIdConfigDocument?.jwks_uri)
 
     // Verify token
@@ -72,7 +80,7 @@ export const tokenService = async (request, h) => {
     }
 
     // Get user details and validate account status
-    const userDetails = await getSystemUserByOid(decoded.oid)
+    const userDetails = await getSystemUserByOid(decoded.oid, cache)
     if (!isUserDetailsValid(userDetails)) {
       return createErrorResponse(h, 'ACCOUNT_DISABLED', StatusCodes.FORBIDDEN)
     }

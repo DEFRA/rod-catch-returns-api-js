@@ -70,7 +70,7 @@ export default async () => {
 
   server.app.cache = server.cache({
     segment: 'default-cache',
-    expiresIn: 1000
+    expiresIn: 3600000 // default cache is 1 hour
   })
 
   await server.register([Inert, Vision, Swagger])
