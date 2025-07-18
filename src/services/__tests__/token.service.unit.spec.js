@@ -1,9 +1,6 @@
-import {
-  getMockResponseToolkit,
-  getServerDetails
-} from '../../test-utils/server-test-utils.js'
 import { ROLES } from '../../utils/auth-utils.js'
 import fetch from 'node-fetch'
+import { getMockResponseToolkit } from '../../test-utils/server-test-utils.js'
 import { getSystemUserByOid } from '../system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
@@ -54,11 +51,29 @@ describe('token.service.unit', () => {
     }
   }
 
+  const getCacheServerDetails = (overrides) => ({
+    info: {
+      host: 'localhost:3000'
+    },
+    server: {
+      info: {
+        protocol: 'http'
+      },
+      app: {
+        cache: {
+          get: jest.fn(),
+          set: jest.fn()
+        }
+      }
+    },
+    ...overrides
+  })
+
   describe('tokenService', () => {
     it('should continue if no token is provided', async () => {
       const h = getMockResponseToolkit()
       const result = await tokenService(
-        getServerDetails({ headers: { token: undefined } }),
+        getCacheServerDetails({ headers: { token: undefined } }),
         h
       )
       expect(result).toBe(h.continue)
@@ -72,12 +87,32 @@ describe('token.service.unit', () => {
       })
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
       expect(result.statusCode).toBe(401)
       expect(result.payload).toStrictEqual({ error: 'INVALID_TOKEN' })
+    })
+
+    it('should set the openid config document in the cache if it is not already there', async () => {
+      const request = getCacheServerDetails({ headers: { token: 'abc123' } })
+      request.server.app.cache.get.mockResolvedValueOnce(null)
+      await tokenService(request, getMockResponseToolkitTakeover())
+
+      expect(request.server.app.cache.set).toHaveBeenCalledWith(
+        'OIDC_WELL_KNOWN_RESULT',
+        { jwks_uri: 'https://example.com/jwks' },
+        3600000
+      )
+    })
+
+    it('should fetch openid config document from the cache if it has been cached', async () => {
+      const request = getCacheServerDetails({ headers: { token: 'abc123' } })
+      request.server.app.cache.get.mockResolvedValueOnce('http://example.com')
+      await tokenService(request, getMockResponseToolkitTakeover())
+
+      expect(request.server.app.cache.set).not.toHaveBeenCalled()
     })
 
     it.each([
@@ -87,7 +122,7 @@ describe('token.service.unit', () => {
       jwt.decode.mockReturnValue(value)
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -101,7 +136,7 @@ describe('token.service.unit', () => {
       })
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -119,7 +154,7 @@ describe('token.service.unit', () => {
       jwt.verify.mockReturnValue({})
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -141,7 +176,7 @@ describe('token.service.unit', () => {
       })
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -163,7 +198,7 @@ describe('token.service.unit', () => {
       })
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -180,7 +215,7 @@ describe('token.service.unit', () => {
       jwt.decode.mockReturnValue({ header: { kid: 'abc' } })
 
       const result = await tokenService(
-        getServerDetails({ headers: { token: 'abc123' } }),
+        getCacheServerDetails({ headers: { token: 'abc123' } }),
         getMockResponseToolkitTakeover()
       )
 
@@ -202,7 +237,7 @@ describe('token.service.unit', () => {
       })
 
       const h = getMockResponseToolkit()
-      const request = getServerDetails({ headers: { token: 'abc123' } })
+      const request = getCacheServerDetails({ headers: { token: 'abc123' } })
       const result = await tokenService(request, h)
 
       expect(request.auth).toEqual({ role: ROLES.ADMIN })
@@ -223,7 +258,7 @@ describe('token.service.unit', () => {
       })
 
       const h = getMockResponseToolkit()
-      const request = getServerDetails({ headers: { token: 'abc123' } })
+      const request = getCacheServerDetails({ headers: { token: 'abc123' } })
       const result = await tokenService(request, h)
 
       expect(request.auth).toEqual({ role: ROLES.FMT })

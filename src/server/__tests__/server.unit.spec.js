@@ -99,14 +99,14 @@ describe('server.unit', () => {
     ])
   })
 
-  it('should configure the cache correctly', async () => {
+  it('should configure the cache correctly with a default expiry of 1 hour', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
     expect(server.cache).toHaveBeenCalledWith({
       segment: 'default-cache',
-      expiresIn: 1000
+      expiresIn: 3600000
     })
   })
 
