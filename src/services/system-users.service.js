@@ -8,6 +8,8 @@ import { getReferenceDataForEntity } from './reference-data.service.js'
 
 export const ENTITY_TYPES = [Role]
 
+const CACHE_TTL_MS_USER = 300000 // cache for 5 mins
+
 export const getSystemUserByOid = async (oid, cache) => {
   const cachedResponse = await cache.get(oid)
   if (cachedResponse) {
@@ -35,7 +37,7 @@ export const getSystemUserByOid = async (oid, cache) => {
     )
   }
 
-  await cache.set(oid, result, 300000) // cache for 5 mins
+  await cache.set(oid, result, CACHE_TTL_MS_USER)
 
   return result
 }

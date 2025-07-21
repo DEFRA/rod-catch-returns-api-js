@@ -6,6 +6,8 @@ import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import logger from '../utils/logger-utils.js'
 
+const CACHE_TTL_MS_WELL_KNOWN = 3600000 // cache for 1 hour
+
 const getOpenIdConfigDocument = async (cache) => {
   const cachedResponse = await cache.get('OIDC_WELL_KNOWN_RESULT')
   if (cachedResponse) {
@@ -17,7 +19,7 @@ const getOpenIdConfigDocument = async (cache) => {
     throw new Error(`HTTP error status: ${response.status}`)
   }
   const data = await response.json()
-  await cache.set('OIDC_WELL_KNOWN_RESULT', data, 3600000) // cache for 1 hour
+  await cache.set('OIDC_WELL_KNOWN_RESULT', data, CACHE_TTL_MS_WELL_KNOWN)
   return data
 }
 
