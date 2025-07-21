@@ -13,6 +13,8 @@ import logger from '../utils/logger-utils.js'
 import { sequelize } from '../services/database.service.js'
 import { tokenService } from '../services/token.service.js'
 
+const CACHE_TTL_MS_DEFAULT = 3600000 // default cache is 1 hour
+
 export default async () => {
   const envValidationResult = envSchema.validate(process.env, {
     abortEarly: false
@@ -70,7 +72,7 @@ export default async () => {
 
   server.app.cache = server.cache({
     segment: 'default-cache',
-    expiresIn: 1000
+    expiresIn: CACHE_TTL_MS_DEFAULT
   })
 
   await server.register([Inert, Vision, Swagger])

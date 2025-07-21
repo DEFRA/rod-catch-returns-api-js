@@ -8,7 +8,14 @@ import { getReferenceDataForEntity } from './reference-data.service.js'
 
 export const ENTITY_TYPES = [Role]
 
-export const getSystemUserByOid = async (oid) => {
+const CACHE_TTL_MS_USER = 300000 // cache for 5 mins
+
+export const getSystemUserByOid = async (oid, cache) => {
+  const cachedResponse = await cache.get(oid)
+  if (cachedResponse) {
+    return cachedResponse
+  }
+
   const matchedUsers = await findByExample(
     Object.assign(new SystemUser(), { oid })
   )
@@ -23,10 +30,14 @@ export const getSystemUserByOid = async (oid) => {
 
   const roles = await getReferenceDataForEntity(Role)
 
-  return {
+  const result = {
     ...user.toJSON(),
     roles: userRoles.map((userRole) =>
       roles.find((role) => role.id === userRole.roleId)
     )
   }
+
+  await cache.set(oid, result, CACHE_TTL_MS_USER)
+
+  return result
 }
