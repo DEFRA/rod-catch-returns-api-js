@@ -355,7 +355,11 @@ export default [
 
           return h.response(mappedSmallCatch).code(StatusCodes.OK)
         } catch (error) {
-          return handleServerError('Error updating catch', error, h)
+          return handleServerError(
+            'Error updating small catch for activity',
+            error,
+            h
+          )
         }
       },
       validate: {

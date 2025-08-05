@@ -173,3 +173,48 @@ exports[`smallCatches.unit POST /smallCatches should return the created small ca
   "version": "2024-10-11T09:30:57.463+0000",
 }
 `;
+
+exports[`smallCatches.unit PUT /smallCatches/{smallCatchId}/activity should return the updated small catch if the call to update the activity on the small catch is successful 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:5000/api/smallCatches/33551/activity",
+    },
+    "activityEntity": {
+      "href": "http://localhost:5000/api/activities/133750",
+    },
+    "self": {
+      "href": "http://localhost:5000/api/smallCatches/33551",
+    },
+    "smallCatch": {
+      "href": "http://localhost:5000/api/smallCatches/33551",
+    },
+  },
+  "counts": [
+    {
+      "_links": {
+        "method": {
+          "href": "http://localhost:5000/api/methods/1",
+        },
+      },
+      "count": 2,
+    },
+    {
+      "_links": {
+        "method": {
+          "href": "http://localhost:5000/api/methods/2",
+        },
+      },
+      "count": 2,
+    },
+  ],
+  "createdAt": "2024-12-11T10:07:11.726Z",
+  "id": "33551",
+  "month": "DECEMBER",
+  "noMonthRecorded": true,
+  "released": 2,
+  "reportingExclude": false,
+  "updatedAt": "2025-01-22T10:55:20.512Z",
+  "version": "2025-01-22T10:55:20.511Z",
+}
+`;

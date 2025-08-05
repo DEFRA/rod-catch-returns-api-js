@@ -25,7 +25,8 @@ jest.mock('../../../services/database.service.js', () => ({
       findOne: jest.fn(),
       create: jest.fn(),
       destroy: jest.fn(),
-      associations: jest.fn()
+      associations: jest.fn(),
+      findByPk: jest.fn()
     })),
     literal: jest.fn()
   }
@@ -46,6 +47,9 @@ const [
   },
   {
     options: { handler: patchSmallCatchHandler }
+  },
+  {
+    options: { handler: putSmallCatchActivityHandler }
   }
 ] = routes
 
@@ -810,5 +814,127 @@ describe('smallCatches.unit', () => {
         )
       }
     )
+  })
+
+  describe('PUT /smallCatches/{smallCatchId}/activity', () => {
+    const getSmallCatchRequest = (payload) => ({
+      ...getServerDetails(),
+      params: { smallCatchId: '1' },
+      payload
+    })
+
+    const getFoundSmallCatch = () => ({
+      update: jest.fn().mockResolvedValueOnce({
+        toJSON: jest.fn().mockReturnValueOnce({
+          id: '33551',
+          month: 12,
+          released: 2,
+          reportingExclude: false,
+          noMonthRecorded: true,
+          createdAt: '2024-12-11T10:07:11.726Z',
+          updatedAt: '2025-01-22T10:55:20.512Z',
+          version: '2025-01-22T10:55:20.511Z',
+          ActivityId: '133750',
+          activity_id: '133750',
+          counts: [
+            {
+              small_catch_id: '33551',
+              method_id: '1',
+              count: 2,
+              SmallCatchId: '33551'
+            },
+            {
+              small_catch_id: '33551',
+              method_id: '2',
+              count: 2,
+              SmallCatchId: '33551'
+            }
+          ]
+        })
+      })
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code if the activity on the small catch is updated successfully', async () => {
+      const foundSmallCatch = getFoundSmallCatch()
+      SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/101'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should return the updated small catch if the call to update the activity on the small catch is successful', async () => {
+      const foundSmallCatch = getFoundSmallCatch()
+      SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/101'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+    })
+
+    it('should call update if the call to update the activity on the small catch is successful', async () => {
+      const foundSmallCatch = getFoundSmallCatch()
+      SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+
+      await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/101'),
+        getMockResponseToolkit()
+      )
+
+      expect(foundSmallCatch.update).toHaveBeenCalledWith({
+        activity_id: '101'
+      })
+    })
+
+    it('should return a 404 status code if the small catch does not exist', async () => {
+      SmallCatch.findByPk.mockResolvedValueOnce(null)
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/00'),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should call handleServerError if an error occurs while updating the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/00'),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating small catch for activity',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while updating the small catch', async () => {
+      const error = new Error('Database error')
+      SmallCatch.findByPk.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/00'),
+        h
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
   })
 })
