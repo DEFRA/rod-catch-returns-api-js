@@ -344,7 +344,7 @@ export default [
           logger.info(
             `Updating small catch ${smallCatchId} with activity id=${activityId}`
           )
-
+          // TODO add activity not found and integration tests
           const updatedSmallCatch = await foundSmallCatch.update({
             activity_id: activityId
           })

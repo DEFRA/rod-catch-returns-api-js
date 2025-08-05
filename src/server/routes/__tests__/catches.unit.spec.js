@@ -1,3 +1,4 @@
+import { Activity, Catch } from '../../../entities/index.js'
 import {
   getMockResponseToolkit,
   getServerDetails
@@ -6,7 +7,6 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { Catch } from '../../../entities/index.js'
 import routes from '../catches.js'
 
 jest.mock('../../../entities/index.js')
@@ -773,6 +773,21 @@ describe('catches.unit', () => {
       })
     })
 
+    const getFoundActivity = () => ({
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: 1,
+          daysFishedWithMandatoryRelease: 8,
+          daysFishedOther: 12,
+          river_id: '3',
+          submission_id: '1',
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z',
+          version: '2024-10-10T13:13:11.000Z'
+        })
+      })
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
     })
@@ -780,6 +795,7 @@ describe('catches.unit', () => {
     it('should return a 200 status code if the activity on the catch is updated successfully', async () => {
       const foundCatch = getFoundCatch()
       Catch.findByPk.mockResolvedValueOnce(foundCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/101'),
@@ -792,6 +808,7 @@ describe('catches.unit', () => {
     it('should return the updated catch if the call to update the activity on the catch is successful', async () => {
       const foundCatch = getFoundCatch()
       Catch.findByPk.mockResolvedValueOnce(foundCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/101'),
@@ -804,6 +821,7 @@ describe('catches.unit', () => {
     it('should call update if the call to update the activity on the catch is successful', async () => {
       const foundCatch = getFoundCatch()
       Catch.findByPk.mockResolvedValueOnce(foundCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       await putCatchActivityHandler(
         getCatchRequest('activities/101'),
@@ -815,6 +833,7 @@ describe('catches.unit', () => {
 
     it('should return a 404 status code if the catch does not exist', async () => {
       Catch.findByPk.mockResolvedValueOnce(null)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/00'),
@@ -827,6 +846,7 @@ describe('catches.unit', () => {
     it('should call handleServerError if an error occurs while updating the catch', async () => {
       const error = new Error('Database error')
       Catch.findByPk.mockRejectedValueOnce(error)
+
       const h = getMockResponseToolkit()
 
       await putCatchActivityHandler(getCatchRequest('activities/00'), h)

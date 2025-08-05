@@ -399,6 +399,11 @@ export default [
             `Updating catch ${catchId} with activity id=${activityId}`
           )
 
+          const foundActivity = await Activity.findByPk(activityId)
+          if (!foundActivity) {
+            return handleNotFound(`Activity not found for ${catchId}`, h)
+          }
+
           const updatedCatch = await foundCatch.update({
             activity_id: activityId
           })
