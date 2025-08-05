@@ -254,3 +254,12 @@ export const updateCatchSchema = Joi.object({
 export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
 })
+
+export const updateCatchActivityIdSchema = Joi.string()
+  .required()
+  .pattern(/^activities\//)
+  .messages({
+    'any.required': 'CATCH_ACTIVITY_REQUIRED',
+    'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
+  })
+  .description('The activity associated with this catch')

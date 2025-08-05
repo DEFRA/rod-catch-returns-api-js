@@ -223,6 +223,14 @@ exports[`profile.integration GET /api/profile should return a list of all the ur
       "method": "PATCH",
       "path": "/api/submissions/{submissionId}",
     },
+    {
+      "method": "PUT",
+      "path": "/api/catches/{catchId}/activity",
+    },
+    {
+      "method": "PUT",
+      "path": "/api/smallCatches/{smallCatchId}/activity",
+    },
   ],
 }
 `;

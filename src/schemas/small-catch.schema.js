@@ -216,3 +216,12 @@ export const updateSmallCatchSchema = Joi.object({
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
 })
+
+export const updateSmallCatchActivityIdSchema = Joi.string()
+  .required()
+  .pattern(/^activities\//)
+  .messages({
+    'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED',
+    'string.pattern.base': 'SMALL_CATCH_ACTIVITY_INVALID'
+  })
+  .description('The activity associated with this small catch')
