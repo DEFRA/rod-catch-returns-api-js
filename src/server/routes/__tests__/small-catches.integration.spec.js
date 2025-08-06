@@ -773,7 +773,7 @@ describe('small-catches.integration', () => {
     })
   })
 
-  describe.only('PUT /api/smallCatches/{smallCatchId}/activity', () => {
+  describe('PUT /api/smallCatches/{smallCatchId}/activity', () => {
     const CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY =
       'contact-identifier-update-small-catch-activity'
     beforeEach(
