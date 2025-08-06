@@ -830,7 +830,7 @@ describe('catches.integration', () => {
     )
 
     it('should update the activity id of a catch', async () => {
-      // create submission, 2 activities
+      // create submission and 2 activities
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY
@@ -847,7 +847,7 @@ describe('catches.integration', () => {
       const createdCatch = await createCatch(server, activityId1)
       const catchId = JSON.parse(createdCatch.payload).id
 
-      // Update catch with activity id 2
+      // Update catch with activityId2
       const updatedCatch = await server.inject({
         method: 'PUT',
         url: `/api/catches/${catchId}/activity`,
@@ -858,7 +858,7 @@ describe('catches.integration', () => {
       })
       expect(updatedCatch.statusCode).toBe(200)
 
-      // verify catch has activity id 2
+      // verify catch has activityId2
       const foundUpdatedCatch = await server.inject({
         method: 'GET',
         url: `/api/catches/${catchId}`

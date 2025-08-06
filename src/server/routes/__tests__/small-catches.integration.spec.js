@@ -791,7 +791,7 @@ describe('small-catches.integration', () => {
     )
 
     it('should update the activity id of a small catch', async () => {
-      // create submission, 2 activities
+      // create submission and 2 activities
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
@@ -808,7 +808,7 @@ describe('small-catches.integration', () => {
       const createdSmallCatch = await createSmallCatch(server, activityId1)
       const smallCatchId = JSON.parse(createdSmallCatch.payload).id
 
-      // Update small catch with activity id 2
+      // Update small catch with activityId2
       const updatedSmallCatch = await server.inject({
         method: 'PUT',
         url: `/api/smallCatches/${smallCatchId}/activity`,
@@ -819,7 +819,7 @@ describe('small-catches.integration', () => {
       })
       expect(updatedSmallCatch.statusCode).toBe(200)
 
-      // verify small catch has activity id 2
+      // verify small catch has activityId2
       const foundUpdatedSmallCatch = await server.inject({
         method: 'GET',
         url: `/api/smallCatches/${smallCatchId}`

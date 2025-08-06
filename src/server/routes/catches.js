@@ -376,7 +376,7 @@ export default [
     path: `${BASE_CATCHES_URL}/activity`,
     options: {
       /**
-       * Update the activity of catch in the database using the catch ID
+       * Update the activity of a catch in the database using the catch ID
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        *     @param {string} request.params.catchId - The ID of the catch to update

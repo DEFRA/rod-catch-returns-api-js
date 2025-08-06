@@ -319,12 +319,12 @@ export default [
     path: `${BASE_SMALL_CATCHES_URL}/activity`,
     options: {
       /**
-       * Update a catch in the database using the catch ID
+       * Update the activity of a small catch in the database using the small catch ID
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
-       *     @param {string} request.params.catchId - The ID of the catch to update
+       *     @param {string} request.params.catchId - The ID of the small catch to update
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
-       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link SmallCatch}
        */
       handler: async (request, h) => {
         const { smallCatchId } = request.params
