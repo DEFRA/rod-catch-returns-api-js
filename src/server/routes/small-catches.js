@@ -344,7 +344,15 @@ export default [
           logger.info(
             `Updating small catch ${smallCatchId} with activity id=${activityId}`
           )
-          // TODO add activity not found and integration tests
+
+          const foundActivity = await Activity.findByPk(activityId)
+          if (!foundActivity) {
+            return handleNotFound(
+              `Activity not found for small catch:${smallCatchId}`,
+              h
+            )
+          }
+
           const updatedSmallCatch = await foundSmallCatch.update({
             activity_id: activityId
           })

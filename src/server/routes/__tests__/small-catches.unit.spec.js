@@ -1,4 +1,8 @@
-import { SmallCatch, SmallCatchCount } from '../../../entities/index.js'
+import {
+  Activity,
+  SmallCatch,
+  SmallCatchCount
+} from '../../../entities/index.js'
 import {
   getMockResponseToolkit,
   getServerDetails
@@ -854,6 +858,21 @@ describe('smallCatches.unit', () => {
       })
     })
 
+    const getFoundActivity = () => ({
+      update: jest.fn().mockResolvedValue({
+        toJSON: jest.fn().mockReturnValue({
+          id: 1,
+          daysFishedWithMandatoryRelease: 8,
+          daysFishedOther: 12,
+          river_id: '3',
+          submission_id: '1',
+          createdAt: '2024-10-10T13:13:11.000Z',
+          updatedAt: '2024-10-10T13:13:11.000Z',
+          version: '2024-10-10T13:13:11.000Z'
+        })
+      })
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
     })
@@ -861,6 +880,7 @@ describe('smallCatches.unit', () => {
     it('should return a 200 status code if the activity on the small catch is updated successfully', async () => {
       const foundSmallCatch = getFoundSmallCatch()
       SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
@@ -873,6 +893,7 @@ describe('smallCatches.unit', () => {
     it('should return the updated small catch if the call to update the activity on the small catch is successful', async () => {
       const foundSmallCatch = getFoundSmallCatch()
       SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
@@ -885,6 +906,7 @@ describe('smallCatches.unit', () => {
     it('should call update if the call to update the activity on the small catch is successful', async () => {
       const foundSmallCatch = getFoundSmallCatch()
       SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
@@ -898,9 +920,22 @@ describe('smallCatches.unit', () => {
 
     it('should return a 404 status code if the small catch does not exist', async () => {
       SmallCatch.findByPk.mockResolvedValueOnce(null)
+      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/00'),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should return a 404 status code if the activity does not exist', async () => {
+      SmallCatch.findByPk.mockResolvedValueOnce(getFoundSmallCatch())
+      Activity.findByPk.mockResolvedValueOnce(null)
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/101'),
         getMockResponseToolkit()
       )
 
