@@ -154,6 +154,16 @@ describe('catch.schema.unit', () => {
           'CATCH_DATE_IN_FUTURE'
         )
       })
+
+      it('should return CATCH_DATE_REQUIRED if "dateCaught" is null', async () => {
+        const payload = getValidPayload({
+          dateCaught: null
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
+      })
     })
 
     describe('onlyMonthRecorded', () => {
@@ -526,6 +536,16 @@ describe('catch.schema.unit', () => {
         await expect(
           updateCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('CATCH_DATE_IN_FUTURE')
+      })
+
+      it('should return CATCH_DATE_REQUIRED if "dateCaught" is null', async () => {
+        const payload = {
+          dateCaught: null
+        }
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
       })
     })
 
