@@ -195,7 +195,6 @@ export const updateSmallCatchSchema = Joi.object({
     const foundTotalCaught =
       await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
 
-    // We make two calls to getSmallCatchById in this schema, there must be a better way to only fetch it once and store it
     const foundSmallCatch = await getSmallCatchById(smallCatchId)
 
     const releasedValue = value ?? foundSmallCatch.released
@@ -216,3 +215,12 @@ export const updateSmallCatchSchema = Joi.object({
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
 })
+
+export const updateSmallCatchActivityIdSchema = Joi.string()
+  .required()
+  .pattern(/^activities\/\d+$/)
+  .messages({
+    'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED',
+    'string.pattern.base': 'SMALL_CATCH_ACTIVITY_INVALID'
+  })
+  .description('The activity associated with this small catch')

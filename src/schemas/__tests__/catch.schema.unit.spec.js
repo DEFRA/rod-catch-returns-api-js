@@ -1,6 +1,7 @@
 import {
   catchIdSchema,
   createCatchSchema,
+  updateCatchActivityIdSchema,
   updateCatchSchema
 } from '../catch.schema.js'
 import { getCatchById } from '../../services/catches.service.js'
@@ -828,6 +829,33 @@ describe('catch.schema.unit', () => {
           ).resolves.toStrictEqual(payload)
         }
       )
+    })
+  })
+
+  describe('updateCatchActivityIdSchema', () => {
+    it('should validate successfully if activity is valid', async () => {
+      const activity = 'activities/101'
+      await expect(
+        updateCatchActivityIdSchema.validateAsync(activity)
+      ).resolves.toStrictEqual(activity)
+    })
+
+    it('should return an error if "activity" is missing', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync(undefined)
+      ).rejects.toThrow('CATCH_ACTIVITY_REQUIRED')
+    })
+
+    it('should return an error if "activity" does not start with "activities/"', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync('invalid/123')
+      ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
+    })
+
+    it('should return an error if "activity" does not end in a number', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync('activities/abc')
+      ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
     })
   })
 })

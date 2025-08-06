@@ -183,3 +183,42 @@ exports[`catches.unit POST /catches should return the created catch if the call 
   "version": "2024-11-18T11:22:36.437Z",
 }
 `;
+
+exports[`catches.unit PUT /catches/{catchId}/activity should return the updated catch if the call to update the activity on the catch is successful 1`] = `
+{
+  "_links": {
+    "activity": {
+      "href": "http://localhost:5000/api/catches/4/activity",
+    },
+    "activityEntity": {
+      "href": "http://localhost:5000/api/activities/404",
+    },
+    "catch": {
+      "href": "http://localhost:5000/api/catches/4",
+    },
+    "method": {
+      "href": "http://localhost:5000/api/catches/4/method",
+    },
+    "self": {
+      "href": "http://localhost:5000/api/catches/4",
+    },
+    "species": {
+      "href": "http://localhost:5000/api/catches/4/species",
+    },
+  },
+  "createdAt": "2024-11-06T14:45:55.782Z",
+  "dateCaught": "2024-08-02T00:00:00.000Z",
+  "id": "4",
+  "mass": {
+    "kg": 2,
+    "oz": 70.547924,
+    "type": "METRIC",
+  },
+  "noDateRecorded": false,
+  "onlyMonthRecorded": true,
+  "released": false,
+  "reportingExclude": true,
+  "updatedAt": "2025-01-03T09:24:00.032Z",
+  "version": "2025-01-03T09:24:00.032Z",
+}
+`;

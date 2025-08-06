@@ -2,6 +2,7 @@ import { Activity, Catch, Method, Species } from '../../entities/index.js'
 import {
   catchIdSchema,
   createCatchSchema,
+  updateCatchActivityIdSchema,
   updateCatchSchema
 } from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
@@ -10,6 +11,7 @@ import {
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
+import { extractActivityId } from '../../utils/entity-utils.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
@@ -366,6 +368,66 @@ export default [
       },
       description: 'Update a catch',
       notes: 'Update a catch',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'PUT',
+    path: `${BASE_CATCHES_URL}/activity`,
+    options: {
+      /**
+       * Update the activity of a catch in the database using the catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        const { catchId } = request.params
+        const activity = request.payload
+
+        try {
+          const foundCatch = await Catch.findByPk(catchId)
+
+          if (!foundCatch) {
+            return handleNotFound(`Catch not found for ${catchId}`, h)
+          }
+
+          const activityId = extractActivityId(activity)
+          logger.info(
+            `Updating catch ${catchId} with activity id=${activityId}`
+          )
+
+          const foundActivity = await Activity.findByPk(activityId)
+          if (!foundActivity) {
+            return handleNotFound(`Activity not found for catch:${catchId}`, h)
+          }
+
+          const updatedCatch = await foundCatch.update({
+            activity_id: activityId
+          })
+
+          console.log(updatedCatch.toJSON())
+
+          const mappedCatch = mapCatchToResponse(updatedCatch.toJSON())
+
+          return h.response(mappedCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error updating catch for activity',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: catchIdSchema,
+        payload: updateCatchActivityIdSchema,
+        options: { entity: 'Catch' }
+      },
+      description: 'Update the activity id on a catch',
+      notes: 'Update the activity id on catch',
       tags: ['api', 'catches']
     }
   }

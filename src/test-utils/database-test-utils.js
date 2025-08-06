@@ -32,13 +32,13 @@ export const deleteSmallCatches = async (activityId) => {
 }
 
 export const deleteActivitiesAndSmallCatches = async (submissionId) => {
-  const activity = await Activity.findOne({
+  const activities = await Activity.findAll({
     where: {
       submission_id: submissionId
     }
   })
 
-  if (activity) {
+  for (const activity of activities) {
     await deleteSmallCatches(activity.id)
     await deleteCatches(activity.id)
   }
