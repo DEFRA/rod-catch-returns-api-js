@@ -790,6 +790,8 @@ describe('catches.unit', () => {
 
     afterEach(() => {
       jest.clearAllMocks()
+      Catch.findByPk.mockReset()
+      Activity.findByPk.mockReset()
     })
 
     it('should return a 200 status code if the activity on the catch is updated successfully', async () => {
@@ -834,6 +836,18 @@ describe('catches.unit', () => {
     it('should return a 404 status code if the catch does not exist', async () => {
       Catch.findByPk.mockResolvedValueOnce(null)
       Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
+
+      const result = await putCatchActivityHandler(
+        getCatchRequest('activities/00'),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should return a 404 status code if the activity does not exist', async () => {
+      Catch.findByPk.mockResolvedValueOnce(getFoundCatch())
+      Activity.findByPk.mockResolvedValueOnce(null)
 
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/00'),

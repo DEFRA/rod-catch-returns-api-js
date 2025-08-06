@@ -875,6 +875,8 @@ describe('smallCatches.unit', () => {
 
     afterEach(() => {
       jest.clearAllMocks()
+      SmallCatch.findByPk.mockReset()
+      Activity.findByPk.mockReset()
     })
 
     it('should return a 200 status code if the activity on the small catch is updated successfully', async () => {
