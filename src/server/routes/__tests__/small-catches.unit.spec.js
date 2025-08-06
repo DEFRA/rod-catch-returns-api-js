@@ -873,17 +873,16 @@ describe('smallCatches.unit', () => {
       })
     })
 
+    beforeEach(() => {
+      SmallCatch.findByPk.mockResolvedValue(getFoundSmallCatch())
+      Activity.findByPk.mockResolvedValue(getFoundActivity())
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
-      SmallCatch.findByPk.mockReset()
-      Activity.findByPk.mockReset()
     })
 
     it('should return a 200 status code if the activity on the small catch is updated successfully', async () => {
-      const foundSmallCatch = getFoundSmallCatch()
-      SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
-
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
         getMockResponseToolkit()
@@ -893,10 +892,6 @@ describe('smallCatches.unit', () => {
     })
 
     it('should return the updated small catch if the call to update the activity on the small catch is successful', async () => {
-      const foundSmallCatch = getFoundSmallCatch()
-      SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
-
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
         getMockResponseToolkit()
@@ -908,7 +903,6 @@ describe('smallCatches.unit', () => {
     it('should call update if the call to update the activity on the small catch is successful', async () => {
       const foundSmallCatch = getFoundSmallCatch()
       SmallCatch.findByPk.mockResolvedValueOnce(foundSmallCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/101'),
@@ -922,7 +916,6 @@ describe('smallCatches.unit', () => {
 
     it('should return a 404 status code if the small catch does not exist', async () => {
       SmallCatch.findByPk.mockResolvedValueOnce(null)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putSmallCatchActivityHandler(
         getSmallCatchRequest('activities/00'),
@@ -933,7 +926,6 @@ describe('smallCatches.unit', () => {
     })
 
     it('should return a 404 status code if the activity does not exist', async () => {
-      SmallCatch.findByPk.mockResolvedValueOnce(getFoundSmallCatch())
       Activity.findByPk.mockResolvedValueOnce(null)
 
       const result = await putSmallCatchActivityHandler(

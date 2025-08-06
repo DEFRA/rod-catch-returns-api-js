@@ -257,7 +257,7 @@ export const catchIdSchema = Joi.object({
 
 export const updateCatchActivityIdSchema = Joi.string()
   .required()
-  .pattern(/^activities\//)
+  .pattern(/^activities\/\d+$/)
   .messages({
     'any.required': 'CATCH_ACTIVITY_REQUIRED',
     'string.pattern.base': 'CATCH_ACTIVITY_INVALID'

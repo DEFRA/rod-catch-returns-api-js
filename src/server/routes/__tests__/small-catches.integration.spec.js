@@ -842,7 +842,7 @@ describe('small-catches.integration', () => {
       })
 
       expect(result.statusCode).toBe(404)
-      expect(result.payload).toBe('')
+      expect(result.payload.length).toBe(0)
     })
 
     it('should return a 404 and empty body if the activity does not exist', async () => {
@@ -863,7 +863,7 @@ describe('small-catches.integration', () => {
       })
 
       expect(result.statusCode).toBe(404)
-      expect(result.payload).toBe('')
+      expect(result.payload.length).toBe(0)
     })
   })
 })

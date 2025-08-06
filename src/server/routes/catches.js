@@ -408,6 +408,8 @@ export default [
             activity_id: activityId
           })
 
+          console.log(updatedCatch.toJSON())
+
           const mappedCatch = mapCatchToResponse(updatedCatch.toJSON())
 
           return h.response(mappedCatch).code(StatusCodes.OK)

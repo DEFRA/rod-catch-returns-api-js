@@ -12,6 +12,24 @@ import routes from '../catches.js'
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/database.service.js', () => ({
+  sequelize: {
+    transaction: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      bulkCreate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      destroy: jest.fn(),
+      associations: jest.fn(),
+      findByPk: jest.fn()
+    })),
+    literal: jest.fn()
+  }
+}))
 
 const [
   {
@@ -788,17 +806,16 @@ describe('catches.unit', () => {
       })
     })
 
+    beforeEach(() => {
+      Catch.findByPk.mockResolvedValue(getFoundCatch())
+      Activity.findByPk.mockResolvedValue(getFoundActivity())
+    })
+
     afterEach(() => {
       jest.clearAllMocks()
-      Catch.findByPk.mockReset()
-      Activity.findByPk.mockReset()
     })
 
     it('should return a 200 status code if the activity on the catch is updated successfully', async () => {
-      const foundCatch = getFoundCatch()
-      Catch.findByPk.mockResolvedValueOnce(foundCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
-
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/101'),
         getMockResponseToolkit()
@@ -808,10 +825,6 @@ describe('catches.unit', () => {
     })
 
     it('should return the updated catch if the call to update the activity on the catch is successful', async () => {
-      const foundCatch = getFoundCatch()
-      Catch.findByPk.mockResolvedValueOnce(foundCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
-
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/101'),
         getMockResponseToolkit()
@@ -823,7 +836,6 @@ describe('catches.unit', () => {
     it('should call update if the call to update the activity on the catch is successful', async () => {
       const foundCatch = getFoundCatch()
       Catch.findByPk.mockResolvedValueOnce(foundCatch)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       await putCatchActivityHandler(
         getCatchRequest('activities/101'),
@@ -835,7 +847,6 @@ describe('catches.unit', () => {
 
     it('should return a 404 status code if the catch does not exist', async () => {
       Catch.findByPk.mockResolvedValueOnce(null)
-      Activity.findByPk.mockResolvedValueOnce(getFoundActivity())
 
       const result = await putCatchActivityHandler(
         getCatchRequest('activities/00'),
@@ -846,7 +857,6 @@ describe('catches.unit', () => {
     })
 
     it('should return a 404 status code if the activity does not exist', async () => {
-      Catch.findByPk.mockResolvedValueOnce(getFoundCatch())
       Activity.findByPk.mockResolvedValueOnce(null)
 
       const result = await putCatchActivityHandler(

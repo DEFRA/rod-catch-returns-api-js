@@ -766,5 +766,11 @@ describe('smallCatch.schema.unit', () => {
         updateSmallCatchActivityIdSchema.validateAsync('invalid/123')
       ).rejects.toThrow('SMALL_CATCH_ACTIVITY_INVALID')
     })
+
+    it('should return an error if "activity" does not end in a number', async () => {
+      await expect(
+        updateSmallCatchActivityIdSchema.validateAsync('activities/abc')
+      ).rejects.toThrow('SMALL_CATCH_ACTIVITY_INVALID')
+    })
   })
 })

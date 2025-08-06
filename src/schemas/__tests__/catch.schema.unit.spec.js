@@ -851,5 +851,11 @@ describe('catch.schema.unit', () => {
         updateCatchActivityIdSchema.validateAsync('invalid/123')
       ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
     })
+
+    it('should return an error if "activity" does not end in a number', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync('activities/abc')
+      ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
+    })
   })
 })
