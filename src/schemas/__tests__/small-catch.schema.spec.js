@@ -1,5 +1,6 @@
 import {
   createSmallCatchSchema,
+  updateSmallCatchActivityIdSchema,
   updateSmallCatchSchema
 } from '../small-catch.schema.js'
 import {
@@ -743,6 +744,27 @@ describe('smallCatch.schema.unit', () => {
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_NO_MONTH_RECORDED_INVALID')
       })
+    })
+  })
+
+  describe('updateSmallCatchActivityIdSchema', () => {
+    it('should validate successfully if activity is valid', async () => {
+      const activity = 'activities/101'
+      await expect(
+        updateSmallCatchActivityIdSchema.validateAsync(activity)
+      ).resolves.toStrictEqual(activity)
+    })
+
+    it('should return an error if "activity" is missing', async () => {
+      await expect(
+        updateSmallCatchActivityIdSchema.validateAsync(undefined)
+      ).rejects.toThrow('SMALL_CATCH_ACTIVITY_REQUIRED')
+    })
+
+    it('should return an error if "activity" does not start with "activities/"', async () => {
+      await expect(
+        updateSmallCatchActivityIdSchema.validateAsync('invalid/123')
+      ).rejects.toThrow('SMALL_CATCH_ACTIVITY_INVALID')
     })
   })
 })

@@ -255,7 +255,6 @@ export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
 })
 
-// todo write unit test for this and other one in small catch schema
 export const updateCatchActivityIdSchema = Joi.string()
   .required()
   .pattern(/^activities\//)
