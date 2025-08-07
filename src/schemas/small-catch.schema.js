@@ -67,7 +67,12 @@ const validateCounts = async (value, helper) => {
   return value
 }
 
-const monthField = Joi.string().description('The month this record relates to')
+const monthField = Joi.string()
+  .invalid(null)
+  .messages({
+    'any.invalid': 'SMALL_CATCH_MONTH_REQUIRED'
+  })
+  .description('The month this record relates to')
 
 const countsField = Joi.array()
   .items(

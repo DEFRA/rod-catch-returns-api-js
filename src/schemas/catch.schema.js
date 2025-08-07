@@ -70,7 +70,12 @@ const checkDefaultFlagConflict = (onlyMonthRecorded, noDateRecorded) => {
   }
 }
 
-const dateCaughtField = Joi.string().description('The date of the catch')
+const dateCaughtField = Joi.string()
+  .invalid(null)
+  .messages({
+    'any.invalid': 'CATCH_DATE_REQUIRED'
+  })
+  .description('The date of the catch')
 
 const onlyMonthRecordedField = Joi.boolean()
   .messages({

@@ -165,6 +165,15 @@ describe('smallCatch.schema.unit', () => {
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_DEFAULT_MONTH_REQUIRED')
       })
+
+      it('should return SMALL_CATCH_MONTH_REQUIRED error if "month" is null', async () => {
+        const payload = getValidPayload({
+          month: null
+        })
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_MONTH_REQUIRED')
+      })
     })
 
     describe('released', () => {
@@ -451,6 +460,15 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).resolves.toStrictEqual(payload)
+      })
+
+      it('should return SMALL_CATCH_MONTH_REQUIRED error if "month" is null', async () => {
+        setupMocks()
+        const payload = { month: null }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_MONTH_REQUIRED')
       })
 
       it('should return SMALL_CATCH_MONTH_IN_FUTURE error if the submission season is in the future', async () => {
