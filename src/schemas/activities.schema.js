@@ -1,8 +1,4 @@
-import {
-  extractActivityId,
-  extractRiverId,
-  extractSubmissionId
-} from '../utils/entity-utils.js'
+import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
 import {
   getSubmission,
   isSubmissionExists
@@ -12,14 +8,20 @@ import {
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
-
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
 
 const validateDaysFished = (daysFishedOther, helper) => {
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
   const daysFishedWithMandatoryRelease =
     helper.state.ancestors[0].daysFishedWithMandatoryRelease
 
-  if (daysFishedOther < 1 && daysFishedWithMandatoryRelease < 1) {
+  if (
+    !fmtOrAdmin &&
+    daysFishedOther < 1 &&
+    daysFishedWithMandatoryRelease < 1
+  ) {
     return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
   }
 
@@ -57,9 +59,13 @@ const validateRiver = async (value, helper) => {
   try {
     const riverId = extractRiverId(value)
     const riverInternal = await isRiverInternal(riverId)
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
-    // If the river is internal, return a validation error
-    return riverInternal ? helper.message('ACTIVITY_RIVER_FORBIDDEN') : value
+    if (riverInternal && !fmtOrAdmin) {
+      return helper.message('ACTIVITY_RIVER_FORBIDDEN')
+    }
+
+    return value
   } catch (error) {
     // Handle the case where the river does not exist
     if (error.message === 'RIVER_NOT_FOUND') {
@@ -156,10 +162,8 @@ export const updateActivitySchema = Joi.object({
       if (value === undefined) {
         return value
       }
-      // Get activityId from the request context
-      const activityId = extractActivityId(
-        helper.prefs.context.params.activityId
-      )
+
+      const activityId = helper.prefs.context.params.activityId
       const submission = await getSubmissionByActivityId(activityId)
       return validateDaysFishedWithMandatoryRelease(value, helper, submission)
     }),
@@ -196,3 +200,7 @@ export const updateActivitySchema = Joi.object({
       return value
     })
 }).unknown()
+
+export const activityIdSchema = Joi.object({
+  activityId: Joi.number().required().description('The id of the activity')
+})

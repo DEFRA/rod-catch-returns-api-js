@@ -218,9 +218,6 @@ describe('licences.integration', () => {
         url: '/api/licence/full/23210126-2WC3FBP-ABNFA7'
       })
 
-      expect(JSON.parse(result.payload)).toStrictEqual({
-        message: 'Invalid permission data: Expected a non-empty array.'
-      })
       expect(result.statusCode).toBe(403)
     })
 

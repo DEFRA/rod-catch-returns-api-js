@@ -12,6 +12,7 @@ import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
 
@@ -57,15 +58,21 @@ const validateCounts = async (value, helper) => {
 
   const methodIds = methods.map((method) => extractMethodId(method))
 
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
   const methodInternal = await isMethodsInternal(methodIds)
-  if (methodInternal) {
+  if (!fmtOrAdmin && methodInternal) {
     return helper.message('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
   }
 
   return value
 }
 
-const monthField = Joi.string().description('The month this record relates to')
+const monthField = Joi.string()
+  .invalid(null)
+  .messages({
+    'any.invalid': 'SMALL_CATCH_MONTH_REQUIRED'
+  })
+  .description('The month this record relates to')
 
 const countsField = Joi.array()
   .items(
@@ -193,7 +200,6 @@ export const updateSmallCatchSchema = Joi.object({
     const foundTotalCaught =
       await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
 
-    // We make two calls to getSmallCatchById in this schema, there must be a better way to only fetch it once and store it
     const foundSmallCatch = await getSmallCatchById(smallCatchId)
 
     const releasedValue = value ?? foundSmallCatch.released
@@ -214,3 +220,12 @@ export const updateSmallCatchSchema = Joi.object({
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
 })
+
+export const updateSmallCatchActivityIdSchema = Joi.string()
+  .required()
+  .pattern(/^activities\/\d+$/)
+  .messages({
+    'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED',
+    'string.pattern.base': 'SMALL_CATCH_ACTIVITY_INVALID'
+  })
+  .description('The activity associated with this small catch')

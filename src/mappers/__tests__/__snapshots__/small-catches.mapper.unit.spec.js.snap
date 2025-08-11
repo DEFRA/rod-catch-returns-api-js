@@ -4,23 +4,23 @@ exports[`small-catches.mapper.unit mapSmallCatchToResponse should map a SmallCat
 {
   "_links": {
     "activity": {
-      "href": "http://localhost:3000/api/smallCatches/1/activity",
+      "href": "http://localhost:5000/api/smallCatches/1/activity",
     },
     "activityEntity": {
-      "href": "http://localhost:3000/api/activities/3",
+      "href": "http://localhost:5000/api/activities/3",
     },
     "self": {
-      "href": "http://localhost:3000/api/smallCatches/1",
+      "href": "http://localhost:5000/api/smallCatches/1",
     },
     "smallCatch": {
-      "href": "http://localhost:3000/api/smallCatches/1",
+      "href": "http://localhost:5000/api/smallCatches/1",
     },
   },
   "counts": [
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/1",
+          "href": "http://localhost:5000/api/methods/1",
         },
       },
       "count": 3,
@@ -28,7 +28,7 @@ exports[`small-catches.mapper.unit mapSmallCatchToResponse should map a SmallCat
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/2",
+          "href": "http://localhost:5000/api/methods/2",
         },
       },
       "count": 2,
@@ -36,7 +36,7 @@ exports[`small-catches.mapper.unit mapSmallCatchToResponse should map a SmallCat
     {
       "_links": {
         "method": {
-          "href": "http://localhost:3000/api/methods/3",
+          "href": "http://localhost:5000/api/methods/3",
         },
       },
       "count": 1,

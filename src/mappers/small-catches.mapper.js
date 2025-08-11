@@ -67,12 +67,11 @@ export const mapRequestToSmallCatch = ({
 /**
  * Maps a SmallCatchCount entity to a response object.
  *
- * @param {import('@hapi/hapi').Request} request - The Hapi request object
  * @param {import('../entities/index.js').SmallCatchCount} smallCatchCount - The SmallCatchCount entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
-export const mapSmallCatchCountToResponse = (request, smallCatchCount) => {
-  const baseUrl = getBaseUrl(request)
+export const mapSmallCatchCountToResponse = (smallCatchCount) => {
+  const baseUrl = getBaseUrl()
 
   return {
     count: smallCatchCount.count,
@@ -87,11 +86,10 @@ export const mapSmallCatchCountToResponse = (request, smallCatchCount) => {
 /**
  * Maps a SmallCatch entity to a response object.
  *
- * @param {import('@hapi/hapi').Request} request - The Hapi request object
  * @param {import('../entities/index.js').SmallCatch} smallCatch - The SmallCatch entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
-export function mapSmallCatchToResponse(request, smallCatch) {
+export function mapSmallCatchToResponse(smallCatch) {
   const {
     id,
     month,
@@ -104,7 +102,7 @@ export function mapSmallCatchToResponse(request, smallCatch) {
     createdAt
   } = smallCatch
 
-  const baseUrl = getBaseUrl(request)
+  const baseUrl = getBaseUrl()
   const smallCatchUrl = `${baseUrl}/api/smallCatches/${id}`
 
   return {
@@ -113,9 +111,7 @@ export function mapSmallCatchToResponse(request, smallCatch) {
     released,
     reportingExclude,
     noMonthRecorded,
-    counts: counts?.map((count) =>
-      mapSmallCatchCountToResponse(request, count)
-    ),
+    counts: counts?.map((count) => mapSmallCatchCountToResponse(count)),
     version,
     updatedAt,
     createdAt,

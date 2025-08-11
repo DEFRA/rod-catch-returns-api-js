@@ -30,14 +30,18 @@ export default [
         const { contactId, season, status, source, reportingExclude } =
           request.payload
         try {
-          const createdSubmission = await Submission.create({
+          const submissionData = {
             contactId,
             season,
             status,
             source,
             reportingExclude,
-            version: Date.now()
-          })
+            version: new Date()
+          }
+
+          logger.info('Creating submission with details', submissionData)
+
+          const createdSubmission = await Submission.create(submissionData)
 
           logger.info('Creating CRM activity with request:', contactId, season)
 
@@ -58,10 +62,7 @@ export default [
             )
           }
 
-          const response = mapSubmissionToResponse(
-            request,
-            createdSubmission.toJSON()
-          )
+          const response = mapSubmissionToResponse(createdSubmission.toJSON())
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -102,7 +103,7 @@ export default [
           let response = []
           if (foundSubmissions.length > 0) {
             response = foundSubmissions.map((foundSubmission) =>
-              mapSubmissionToResponse(request, foundSubmission.toJSON())
+              mapSubmissionToResponse(foundSubmission.toJSON())
             )
           }
 
@@ -147,16 +148,12 @@ export default [
           })
 
           if (foundSubmission) {
-            const response = mapSubmissionToResponse(
-              request,
-              foundSubmission.toJSON()
-            )
+            const response = mapSubmissionToResponse(foundSubmission.toJSON())
             return h.response(response).code(StatusCodes.OK)
           }
-          return handleNotFound(
-            `Submission not found for ${contactId} and ${season}`,
-            h
-          )
+
+          logger.info(`Submission not found for ${contactId} and ${season}`)
+          return h.response().code(StatusCodes.NOT_FOUND)
         } catch (error) {
           return handleServerError('Error finding submission', error, h)
         }
@@ -215,7 +212,7 @@ export default [
           }
 
           const response = foundActivities.map((activity) =>
-            mapActivityToResponse(request, activity.toJSON())
+            mapActivityToResponse(activity.toJSON())
           )
 
           return h
@@ -260,10 +257,7 @@ export default [
           })
 
           if (foundSubmission) {
-            const response = mapSubmissionToResponse(
-              request,
-              foundSubmission.toJSON()
-            )
+            const response = mapSubmissionToResponse(foundSubmission.toJSON())
             return h.response(response).code(StatusCodes.OK)
           }
           return handleNotFound(`Submission not found ${submissionId}`, h)
@@ -302,12 +296,19 @@ export default [
             return handleNotFound(`Submission not found for ${submissionId}`, h)
           }
 
-          // if a value is undefined, it is not updated by Sequelize
-          const updatedSubmission = await submission.update({
+          const submissionData = {
             status,
             reportingExclude,
             version: new Date()
-          })
+          }
+
+          logger.info(
+            `Updating submission ${submissionId} with details`,
+            submissionData
+          )
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedSubmission = await submission.update(submissionData)
 
           // Update CRM Activity if status is SUBMITTED
           if (status === STATUSES.SUBMITTED) {
@@ -336,7 +337,6 @@ export default [
           }
 
           const mappedSubmission = mapSubmissionToResponse(
-            request,
             updatedSubmission.toJSON()
           )
 
@@ -346,6 +346,7 @@ export default [
         }
       },
       validate: {
+        params: getBySubmissionIdSchema,
         payload: updateSubmissionSchema,
         options: { entity: 'Submission' }
       },

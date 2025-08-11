@@ -7,6 +7,7 @@ import {
   Submission
 } from '../../entities/index.js'
 import {
+  activityIdSchema,
   createActivitySchema,
   updateActivitySchema
 } from '../../schemas/activities.schema.js'
@@ -51,21 +52,19 @@ export default [
             river
           } = request.payload
 
-          const submissionId = extractSubmissionId(submission)
-          const riverId = extractRiverId(river)
-
-          const createdActivity = await Activity.create({
-            daysFishedOther,
+          const activityData = {
+            submission_id: extractSubmissionId(submission),
+            river_id: extractRiverId(river),
             daysFishedWithMandatoryRelease,
-            submission_id: submissionId,
-            river_id: riverId,
-            version: Date.now()
-          })
+            daysFishedOther,
+            version: new Date()
+          }
 
-          const response = mapActivityToResponse(
-            request,
-            createdActivity.toJSON()
-          )
+          logger.info('Creating activity with details', activityData)
+
+          const createdActivity = await Activity.create(activityData)
+
+          const response = mapActivityToResponse(createdActivity.toJSON())
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
@@ -113,10 +112,7 @@ export default [
             )
           }
 
-          const mappedRiver = mapRiverToResponse(
-            request,
-            activity.River.toJSON()
-          )
+          const mappedRiver = mapRiverToResponse(activity.River.toJSON())
 
           return h.response(mappedRiver).code(StatusCodes.OK)
         } catch (error) {
@@ -126,6 +122,9 @@ export default [
             h
           )
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description:
         'Retrieve the river associated with an activity in the database',
@@ -171,7 +170,7 @@ export default [
 
           const mappedSmallCatches = (
             activityWithCatches.SmallCatches || []
-          ).map((smallCatch) => mapSmallCatchToResponse(request, smallCatch))
+          ).map((smallCatch) => mapSmallCatchToResponse(smallCatch))
 
           return h
             .response({
@@ -183,6 +182,9 @@ export default [
         } catch (error) {
           return handleServerError('Error fetching small catches', error, h)
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description:
         'Retrieve the small catches associated with an activity in the database',
@@ -219,7 +221,7 @@ export default [
           }
 
           const mappedCatches = (activityWithCatches.Catches || []).map(
-            (catchEntity) => mapCatchToResponse(request, catchEntity)
+            (catchEntity) => mapCatchToResponse(catchEntity)
           )
 
           return h
@@ -232,6 +234,9 @@ export default [
         } catch (error) {
           return handleServerError('Error fetching catches', error, h)
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description:
         'Retrieve the catches (salmon and large sea trout) associated with an activity in the database',
@@ -263,15 +268,15 @@ export default [
             return handleNotFound(`Activity not found for ID: ${activityId}`, h)
           }
 
-          const mappedActivity = mapActivityToResponse(
-            request,
-            activity.toJSON()
-          )
+          const mappedActivity = mapActivityToResponse(activity.toJSON())
 
           return h.response(mappedActivity).code(StatusCodes.OK)
         } catch (error) {
           return handleServerError('Error fetching activity by ID', error, h)
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description: 'Retrieve an activity by its ID',
       notes: 'Retrieve an activity from the database by its ID',
@@ -352,6 +357,9 @@ export default [
           return handleServerError('Error deleting activity', error, h)
         }
       },
+      validate: {
+        params: activityIdSchema
+      },
       description: 'Delete an activity by ID',
       notes: 'Deletes an activity from the database by its ID',
       tags: ['api', 'activities']
@@ -381,20 +389,22 @@ export default [
             return handleNotFound(`Activity not found for ${activityId}`, h)
           }
 
-          const riverId = river ? extractRiverId(river) : undefined
-
-          // if a value is undefined, it is not updated by Sequelize
-          const updatedActivity = await activity.update({
+          const activityData = {
+            river_id: river ? extractRiverId(river) : undefined,
             daysFishedWithMandatoryRelease,
             daysFishedOther,
-            river_id: riverId,
             version: new Date()
-          })
+          }
 
-          const mappedActivity = mapActivityToResponse(
-            request,
-            updatedActivity.toJSON()
+          logger.info(
+            `Updating activity ${activityId} with details`,
+            activityData
           )
+
+          // if a value is undefined, it is not updated by Sequelize
+          const updatedActivity = await activity.update(activityData)
+
+          const mappedActivity = mapActivityToResponse(updatedActivity.toJSON())
 
           return h.response(mappedActivity).code(StatusCodes.OK)
         } catch (error) {
@@ -402,6 +412,7 @@ export default [
         }
       },
       validate: {
+        params: activityIdSchema,
         payload: updateActivitySchema,
         options: { entity: 'Activity' }
       },
@@ -443,7 +454,6 @@ export default [
           }
 
           const mappedSubmission = mapSubmissionToResponse(
-            request,
             activity.Submission.toJSON()
           )
 
@@ -455,6 +465,9 @@ export default [
             h
           )
         }
+      },
+      validate: {
+        params: activityIdSchema
       },
       description:
         'Retrieve the submission associated with an activity in the database',

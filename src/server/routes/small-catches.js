@@ -2,6 +2,7 @@ import { Activity, SmallCatch, SmallCatchCount } from '../../entities/index.js'
 import {
   createSmallCatchSchema,
   smallCatchIdSchema,
+  updateSmallCatchActivityIdSchema,
   updateSmallCatchSchema
 } from '../../schemas/small-catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
@@ -11,7 +12,8 @@ import {
   mapSmallCatchToResponse
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import loggerUtils from '../../utils/logger-utils.js'
+import { extractActivityId } from '../../utils/entity-utils.js'
+import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
@@ -39,12 +41,13 @@ export default [
         try {
           const smallCatchData = mapRequestToSmallCatch(request.payload)
 
+          logger.info('Creating small catch with details', smallCatchData)
+
           const smallCatch = await SmallCatch.create(smallCatchData, {
             include: [{ association: SmallCatch.associations.counts }]
           })
 
           const smallCatchResponse = mapSmallCatchToResponse(
-            request,
             smallCatch.toJSON()
           )
 
@@ -98,7 +101,7 @@ export default [
           }
 
           const foundActivity = smallCatchWithActivity.toJSON().Activity
-          const response = mapActivityToResponse(request, foundActivity)
+          const response = mapActivityToResponse(foundActivity)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -145,15 +148,15 @@ export default [
             )
           }
 
-          const mappedSmallCatch = mapSmallCatchToResponse(
-            request,
-            smallCatch.toJSON()
-          )
+          const mappedSmallCatch = mapSmallCatchToResponse(smallCatch.toJSON())
 
           return h.response(mappedSmallCatch).code(StatusCodes.OK)
         } catch (error) {
           return handleServerError('Error fetching small catch by ID', error, h)
         }
+      },
+      validate: {
+        params: smallCatchIdSchema
       },
       description: 'Retrieve a small catch by its ID',
       notes: 'Retrieve a small catch from the database by its ID',
@@ -179,7 +182,7 @@ export default [
         const transaction = await sequelize.transaction()
 
         try {
-          loggerUtils.info(
+          logger.info(
             `Deleting small catches with id:%s and related records`,
             smallCatchId
           )
@@ -204,7 +207,7 @@ export default [
           // Commit transaction
           await transaction.commit()
 
-          loggerUtils.info(
+          logger.info(
             `Deleted small catches with id:%s and related records`,
             smallCatchId
           )
@@ -213,6 +216,9 @@ export default [
           await transaction.rollback()
           return handleServerError('Error deleting small catch', error, h)
         }
+      },
+      validate: {
+        params: smallCatchIdSchema
       },
       description: 'Delete a small catch by ID',
       notes: 'Deletes a small catch from the database by its ID',
@@ -258,6 +264,11 @@ export default [
             reportingExclude
           })
 
+          logger.info(
+            `Updating small catch ${smallCatchId} with details`,
+            smallCatchData
+          )
+
           // if a value is undefined, it is not updated by Sequelize
           const updatedSmallCatch = await foundSmallCatch.update(
             smallCatchData,
@@ -282,7 +293,7 @@ export default [
 
           await transaction.commit()
 
-          const mappedSmallCatch = mapSmallCatchToResponse(request, {
+          const mappedSmallCatch = mapSmallCatchToResponse({
             ...updatedSmallCatch.toJSON(),
             countRecords
           })
@@ -294,11 +305,78 @@ export default [
         }
       },
       validate: {
+        params: smallCatchIdSchema,
         payload: updateSmallCatchSchema,
         options: { entity: 'SmallCatch' }
       },
       description: 'Update a small catch',
       notes: 'Update a small catch',
+      tags: ['api', 'smallCatches']
+    }
+  },
+  {
+    method: 'PUT',
+    path: `${BASE_SMALL_CATCHES_URL}/activity`,
+    options: {
+      /**
+       * Update the activity of a small catch in the database using the small catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the small catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link SmallCatch}
+       */
+      handler: async (request, h) => {
+        const { smallCatchId } = request.params
+        const activity = request.payload
+
+        try {
+          const foundSmallCatch = await SmallCatch.findByPk(smallCatchId)
+
+          if (!foundSmallCatch) {
+            return handleNotFound(
+              `Small Catch not found for ${smallCatchId}`,
+              h
+            )
+          }
+
+          const activityId = extractActivityId(activity)
+          logger.info(
+            `Updating small catch ${smallCatchId} with activity id=${activityId}`
+          )
+
+          const foundActivity = await Activity.findByPk(activityId)
+          if (!foundActivity) {
+            return handleNotFound(
+              `Activity not found for small catch:${smallCatchId}`,
+              h
+            )
+          }
+
+          const updatedSmallCatch = await foundSmallCatch.update({
+            activity_id: activityId
+          })
+
+          const mappedSmallCatch = mapSmallCatchToResponse(
+            updatedSmallCatch.toJSON()
+          )
+
+          return h.response(mappedSmallCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error updating small catch for activity',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: smallCatchIdSchema,
+        payload: updateSmallCatchActivityIdSchema,
+        options: { entity: 'SmallCatch' }
+      },
+      description: 'Update the activity id on a small catch',
+      notes: 'Update the activity id on a small catch',
       tags: ['api', 'smallCatches']
     }
   }

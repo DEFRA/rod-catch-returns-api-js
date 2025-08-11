@@ -1,4 +1,7 @@
-import { mapCRMPermissionToLicence } from '../licences.mapper.js'
+import {
+  mapCRMPermissionToLicence,
+  validatePermission
+} from '../licences.mapper.js'
 
 describe('licences.mapper.unit', () => {
   const getMockCRMPermission = () => [
@@ -28,41 +31,6 @@ describe('licences.mapper.unit', () => {
           fullName: 'Brenin Pysgotwr'
         }
       })
-    })
-
-    it.each([null, undefined, [], {}])(
-      'should throw an error when input is %p',
-      (invalidInput) => {
-        expect(() => mapCRMPermissionToLicence(invalidInput)).toThrow(
-          'Invalid permission data: Expected a non-empty array.'
-        )
-      }
-    )
-
-    it('should throw an error if licence data is missing required fields', () => {
-      const invalidData = [
-        {
-          entity: {},
-          expanded: {
-            licensee: { entity: { id: 'a1a91429-deb7-ef11-b8e8-7c1e5237cbf4' } }
-          }
-        }
-      ]
-      expect(() => mapCRMPermissionToLicence(invalidData)).toThrow(
-        'Invalid permission data: Missing required fields.'
-      )
-    })
-
-    it('should throw an error if contact ID is missing', () => {
-      const invalidData = [
-        {
-          entity: { referenceNumber: '23210126-2WC3FBP-ABNFA7' },
-          expanded: { licensee: { entity: {} } }
-        }
-      ]
-      expect(() => mapCRMPermissionToLicence(invalidData)).toThrow(
-        'Invalid permission data: Missing required fields.'
-      )
     })
 
     it('should handle missing first or last name by returning "Unknown" if both are absent', () => {
@@ -127,6 +95,49 @@ describe('licences.mapper.unit', () => {
           fullName: 'Pysgotwr'
         }
       })
+    })
+  })
+
+  describe('validatePermission', () => {
+    it.each([null, undefined, [], {}])(
+      'should throw an error when input is %p',
+      (invalidInput) => {
+        expect(() => validatePermission(invalidInput, 'abc123')).toThrow(
+          'Permission not found for abc123'
+        )
+      }
+    )
+
+    it('should throw an error if licence data is missing required fields', () => {
+      const invalidData = [
+        {
+          entity: {},
+          expanded: {
+            licensee: { entity: { id: 'a1a91429-deb7-ef11-b8e8-7c1e5237cbf4' } }
+          }
+        }
+      ]
+      expect(() => validatePermission(invalidData, 'abc123')).toThrow(
+        'Invalid permission data: Missing required fields.'
+      )
+    })
+
+    it('should throw an error if contact ID is missing', () => {
+      const invalidData = [
+        {
+          entity: { referenceNumber: '23210126-2WC3FBP-ABNFA7' },
+          expanded: { licensee: { entity: {} } }
+        }
+      ]
+      expect(() => validatePermission(invalidData, 'abc123')).toThrow(
+        'Invalid permission data: Missing required fields.'
+      )
+    })
+
+    it('should not throw any errors if the required fields are present', () => {
+      expect(() =>
+        validatePermission(getMockCRMPermission())
+      ).not.toThrowError()
     })
   })
 })

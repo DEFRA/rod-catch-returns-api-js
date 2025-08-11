@@ -6,6 +6,7 @@ import {
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
 
 describe('catches.integration', () => {
@@ -115,7 +116,7 @@ describe('catches.integration', () => {
       expect(createdCatch.statusCode).toBe(400)
     })
 
-    it('should throw an error if the "method" is internal', async () => {
+    it('should throw an error if the "method" is internal and the user is not an admin or fmt', async () => {
       const activityId = await setupSubmissionAndActivity(
         CONTACT_IDENTIFIER_CREATE_CATCH
       )
@@ -136,6 +137,32 @@ describe('catches.integration', () => {
       })
       expect(createdCatch.statusCode).toBe(400)
     })
+
+    it.each(['System Administrator', 'RCR CRM Integration User'])(
+      'should validate succesfully if the "method" is internal and the user is %s',
+      async (roleName) => {
+        const activityId = await setupSubmissionAndActivity(
+          CONTACT_IDENTIFIER_CREATE_CATCH
+        )
+        getMockAuthAndUser({
+          isDisabled: false,
+          roles: [{ name: roleName }]
+        })
+
+        const createdCatch = await createCatch(
+          server,
+          activityId,
+          {
+            method: 'methods/4' // this method name is Unknown and is internal
+          },
+          {
+            token: 'abc123'
+          }
+        )
+
+        expect(createdCatch.statusCode).toBe(201)
+      }
+    )
 
     it('should throw an error if the "species" does not exist', async () => {
       const activityId = await setupSubmissionAndActivity(
@@ -739,8 +766,7 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_MASS_TYPE_REQUIRED',
-            property: 'mass',
-            value: {}
+            property: 'mass.type'
           }
         ]
       })
@@ -783,6 +809,99 @@ describe('catches.integration', () => {
         ]
       })
       expect(updatedCatch.statusCode).toBe(400)
+    })
+  })
+
+  describe('PUT /api/catches/{catchId}/activity', () => {
+    const CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY =
+      'contact-identifier-update-catch-activity'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY
+        )
+    )
+
+    it('should update the activity id of a catch', async () => {
+      // create submission and 2 activities
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity1 = await createActivity(server, submissionId)
+      const activityId1 = JSON.parse(activity1.payload).id
+      const activity2 = await createActivity(server, submissionId, {
+        river: 'rivers/2'
+      })
+      const activityId2 = JSON.parse(activity2.payload).id
+
+      // create catch with activityId1
+      const createdCatch = await createCatch(server, activityId1)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      // Update catch with activityId2
+      const updatedCatch = await server.inject({
+        method: 'PUT',
+        url: `/api/catches/${catchId}/activity`,
+        payload: `activities/${activityId2}`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+      expect(updatedCatch.statusCode).toBe(200)
+
+      // verify catch has activityId2
+      const foundUpdatedCatch = await server.inject({
+        method: 'GET',
+        url: `/api/catches/${catchId}`
+      })
+      const updatedPayload = JSON.parse(foundUpdatedCatch.payload)
+      expect(updatedPayload._links.activityEntity.href).toStrictEqual(
+        expect.stringMatching(`/api/activities/${activityId2}`)
+      )
+    })
+
+    it('should return a 404 and empty body if the catch does not exist', async () => {
+      const result = await server.inject({
+        method: 'PUT',
+        url: '/api/catches/0/activity',
+        payload: `activities/1`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload.length).toBe(0)
+    })
+
+    it('should return a 404 and empty body if the activity does not exist', async () => {
+      // create submission, activity and catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_CATCH_ACTIVITY
+      )
+      const createdCatch = await createCatch(server, activityId)
+      const catchId = JSON.parse(createdCatch.payload).id
+
+      const result = await server.inject({
+        method: 'PUT',
+        url: `/api/catches/${catchId}/activity`,
+        payload: `activities/0`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload.length).toBe(0)
     })
   })
 })

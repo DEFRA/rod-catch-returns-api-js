@@ -8,6 +8,7 @@ import airbrake from '../../utils/airbrake.js'
 import initialiseServer from '../server.js'
 import logger from '../../utils/logger-utils.js'
 import { sequelize } from '../../services/database.service.js'
+import { tokenService } from '../../services/token.service.js'
 
 jest.mock('../../services/database.service.js', () => ({
   sequelize: {
@@ -47,7 +48,8 @@ jest.mock('@hapi/hapi', () => {
       register: jest.fn(),
       app: {},
       realm: { modifiers: { route: {} } },
-      cache: jest.fn()
+      cache: jest.fn(),
+      ext: jest.fn()
     }))
   }
   return Hapi
@@ -97,14 +99,14 @@ describe('server.unit', () => {
     ])
   })
 
-  it('should configure the cache correctly', async () => {
+  it('should configure the cache correctly with a default expiry of 1 hour', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
     const server = await initialiseServer()
 
     expect(server.cache).toHaveBeenCalledWith({
       segment: 'default-cache',
-      expiresIn: 1000
+      expiresIn: 3600000
     })
   })
 
@@ -179,6 +181,14 @@ describe('server.unit', () => {
     expect(server.register).toHaveBeenNthCalledWith(2, HealthCheck(server))
   })
 
+  it('should add the token service as an interceptor', async () => {
+    sequelize.authenticate.mockResolvedValueOnce()
+
+    const server = await initialiseServer()
+
+    expect(server.ext).toHaveBeenCalledWith('onPreAuth', tokenService)
+  })
+
   it('should log successful connection message when database connection is successful', async () => {
     sequelize.authenticate.mockResolvedValueOnce()
 
@@ -206,7 +216,7 @@ describe('server.unit', () => {
     ['SIGINT', 130],
     ['SIGTERM', 137]
   ])(
-    'should stop the server and exit with code %d when receiving %s signal',
+    'should stop the server and exit with code %s when receiving %d signal',
     async (signal, code) => {
       const server = await initialiseServer()
       const serverStopSpy = jest.spyOn(server, 'stop').mockResolvedValueOnce()

@@ -123,13 +123,13 @@ describe('submissions.unit', () => {
         version: '2024-10-10T13:13:11.000Z',
         _links: {
           activities: {
-            href: 'http://localhost:3000/api/submissions/1/activities'
+            href: 'http://localhost:5000/api/submissions/1/activities'
           },
           self: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           },
           submission: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           }
         }
       })
@@ -309,19 +309,18 @@ describe('submissions.unit', () => {
       expect(result.payload).toMatchSnapshot()
     })
 
-    it('should call handleNotFound if the submission is not found', async () => {
+    it('should call log if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
       const h = getMockResponseToolkit()
 
       await getSubmissionByContactIdAndSeasonHandler(getSubmissionRequest(), h)
 
-      expect(handleNotFound).toHaveBeenCalledWith(
-        'Submission not found for contact-identifier-111 and 2024',
-        h
+      expect(logger.info).toHaveBeenCalledWith(
+        'Submission not found for contact-identifier-111 and 2024'
       )
     })
 
-    it('should return a not found response if the submission is not found', async () => {
+    it('should return a 404 status code if the submission is not found', async () => {
       Submission.findOne.mockResolvedValueOnce(null)
 
       const result = await getSubmissionByContactIdAndSeasonHandler(
@@ -329,7 +328,7 @@ describe('submissions.unit', () => {
         getMockResponseToolkit()
       )
 
-      expect(result).toBe(NOT_FOUND_SYMBOL)
+      expect(result.statusCode).toBe(404)
     })
 
     it('should call handleServerError if fetching a submission fails', async () => {
@@ -402,13 +401,13 @@ describe('submissions.unit', () => {
         version: '2024-10-10T13:13:11.000Z',
         _links: {
           activities: {
-            href: 'http://localhost:3000/api/submissions/1/activities'
+            href: 'http://localhost:5000/api/submissions/1/activities'
           },
           self: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           },
           submission: {
-            href: 'http://localhost:3000/api/submissions/1'
+            href: 'http://localhost:5000/api/submissions/1'
           }
         }
       })
@@ -519,22 +518,22 @@ describe('submissions.unit', () => {
               version: '2024-10-10T13:13:11.000Z',
               _links: {
                 self: {
-                  href: 'http://localhost:3000/api/activities/1'
+                  href: 'http://localhost:5000/api/activities/1'
                 },
                 activity: {
-                  href: 'http://localhost:3000/api/activities/1'
+                  href: 'http://localhost:5000/api/activities/1'
                 },
                 submission: {
-                  href: 'http://localhost:3000/api/activities/1/submission'
+                  href: 'http://localhost:5000/api/activities/1/submission'
                 },
                 catches: {
-                  href: 'http://localhost:3000/api/activities/1/catches'
+                  href: 'http://localhost:5000/api/activities/1/catches'
                 },
                 river: {
-                  href: 'http://localhost:3000/api/activities/1/river'
+                  href: 'http://localhost:5000/api/activities/1/river'
                 },
                 smallCatches: {
-                  href: 'http://localhost:3000/api/activities/1/smallCatches'
+                  href: 'http://localhost:5000/api/activities/1/smallCatches'
                 }
               }
             }

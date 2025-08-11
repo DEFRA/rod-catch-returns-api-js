@@ -8,6 +8,7 @@ describe('config', () => {
       validEnv = {
         NODE_ENV: 'development',
         PORT: 3000,
+        DEBUG: 'rcr-api:*',
         DATABASE_HOST: 'localhost',
         DATABASE_NAME: 'mydb',
         DATABASE_USERNAME: 'user',
@@ -21,7 +22,11 @@ describe('config', () => {
         DYNAMICS_API_PATH: '/api/path',
         DYNAMICS_API_VERSION: 'v9.0',
         DYNAMICS_API_TIMEOUT: 5000,
-        DYNAMICS_CACHE_TTL: 3600
+        DYNAMICS_CACHE_TTL: 3600,
+        OIDC_WELL_KNOWN_URL: 'http://wellknown.url',
+        BASE_URL: 'http://localhost:5000',
+        AIRBRAKE_PROJECT_KEY: 'abc123',
+        AIRBRAKE_HOST: 'airbrake.host'
       }
     })
 
@@ -59,7 +64,9 @@ describe('config', () => {
       'OAUTH_TENANT',
       'OAUTH_SCOPE',
       'DYNAMICS_API_PATH',
-      'DYNAMICS_API_VERSION'
+      'DYNAMICS_API_VERSION',
+      'OIDC_WELL_KNOWN_URL',
+      'BASE_URL'
     ])('should fail validation if %s is missing', (requiredField) => {
       delete validEnv[requiredField]
       const { error } = envSchema.validate(validEnv)

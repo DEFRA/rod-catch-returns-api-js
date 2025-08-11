@@ -15,13 +15,13 @@ export default [
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
        * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link GrilseWeightGate}
        */
-      handler: async (request, h) => {
+      handler: async (_request, h) => {
         try {
           const grilseWeightGates = await GrilseWeightGate.findAll()
 
           const mappedGrilseWeightGates = grilseWeightGates.map(
             (grilseWeightGate) =>
-              mapGrilseWeightGateToResponse(request, grilseWeightGate)
+              mapGrilseWeightGateToResponse(grilseWeightGate)
           )
 
           return h

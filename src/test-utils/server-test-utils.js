@@ -75,7 +75,8 @@ export const createSmallCatch = (
       }
     ],
     noMonthRecorded = false
-  } = {}
+  } = {},
+  headers = {}
 ) => {
   return server.inject({
     method: 'POST',
@@ -86,7 +87,8 @@ export const createSmallCatch = (
       released,
       counts,
       noMonthRecorded
-    }
+    },
+    headers
   })
 }
 
@@ -105,7 +107,8 @@ export const createCatch = (
     released = true,
     onlyMonthRecorded = false,
     noDateRecorded = false
-  } = {}
+  } = {},
+  headers = {}
 ) => {
   return server.inject({
     method: 'POST',
@@ -119,6 +122,7 @@ export const createCatch = (
       released,
       onlyMonthRecorded,
       noDateRecorded
-    }
+    },
+    headers
   })
 }

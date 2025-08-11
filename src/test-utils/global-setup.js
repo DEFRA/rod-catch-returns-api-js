@@ -11,5 +11,8 @@ export default async () => {
 
   // running tests with NODE_ENV as development
   process.env.NODE_ENV = 'development'
+
+  process.env.BASE_URL = 'http://localhost:5000'
+
   logger.info('\nDatabase host set to localhost')
 }

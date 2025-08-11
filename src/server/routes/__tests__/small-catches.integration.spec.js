@@ -6,6 +6,7 @@ import {
 import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import { getMonthNameFromNumber } from '../../../utils/date-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -159,11 +160,11 @@ describe('small-catches.integration', () => {
             value: [
               {
                 method: 'methods/1',
-                count: '3'
+                count: 3
               },
               {
                 method: 'methods/1',
-                count: '2'
+                count: 2
               }
             ]
           }
@@ -209,7 +210,7 @@ describe('small-catches.integration', () => {
       expect(smallCatch.statusCode).toBe(400)
     })
 
-    it('should throw an error when creating small catch with a method that is internal', async () => {
+    it('should throw an error when creating small catch with a method that is internal and the user is not an admin or fmt', async () => {
       const submission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
@@ -242,11 +243,11 @@ describe('small-catches.integration', () => {
             value: [
               {
                 method: 'methods/1',
-                count: '3'
+                count: 3
               },
               {
                 method: 'methods/4',
-                count: '2'
+                count: 2
               }
             ]
           }
@@ -254,6 +255,48 @@ describe('small-catches.integration', () => {
       })
       expect(smallCatch.statusCode).toBe(400)
     })
+
+    it.each(['System Administrator', 'RCR CRM Integration User'])(
+      'should validate successfully when creating small catch with a method that is internal and the user is %s',
+      async (roleName) => {
+        const submission = await createSubmission(
+          server,
+          CONTACT_IDENTIFIER_CREATE_SMALL_CATCH
+        )
+        const submissionId = JSON.parse(submission.payload).id
+
+        const activity = await createActivity(server, submissionId)
+        const activityId = JSON.parse(activity.payload).id
+
+        getMockAuthAndUser({
+          isDisabled: false,
+          roles: [{ name: roleName }]
+        })
+
+        const smallCatch = await createSmallCatch(
+          server,
+          activityId,
+          {
+            released: 1,
+            counts: [
+              {
+                method: 'methods/1',
+                count: '3'
+              },
+              {
+                method: 'methods/4', // methods/4 is internal
+                count: '2'
+              }
+            ]
+          },
+          {
+            token: 'abc123'
+          }
+        )
+
+        expect(smallCatch.statusCode).toBe(201)
+      }
+    )
 
     it('should throw an error if small catch month is in the future', async () => {
       jest
@@ -727,6 +770,100 @@ describe('small-catches.integration', () => {
         ]
       })
       expect(updatedSmallCatch.statusCode).toBe(400)
+    })
+  })
+
+  describe('PUT /api/smallCatches/{smallCatchId}/activity', () => {
+    const CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY =
+      'contact-identifier-update-small-catch-activity'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
+        )
+    )
+
+    it('should update the activity id of a small catch', async () => {
+      // create submission and 2 activities
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity1 = await createActivity(server, submissionId)
+      const activityId1 = JSON.parse(activity1.payload).id
+      const activity2 = await createActivity(server, submissionId, {
+        river: 'rivers/2'
+      })
+      const activityId2 = JSON.parse(activity2.payload).id
+
+      // create small catch with activityId1
+      const createdSmallCatch = await createSmallCatch(server, activityId1)
+      const smallCatchId = JSON.parse(createdSmallCatch.payload).id
+
+      // Update small catch with activityId2
+      const updatedSmallCatch = await server.inject({
+        method: 'PUT',
+        url: `/api/smallCatches/${smallCatchId}/activity`,
+        payload: `activities/${activityId2}`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+      expect(updatedSmallCatch.statusCode).toBe(200)
+
+      // verify small catch has activityId2
+      const foundUpdatedSmallCatch = await server.inject({
+        method: 'GET',
+        url: `/api/smallCatches/${smallCatchId}`
+      })
+
+      const updatedPayload = JSON.parse(foundUpdatedSmallCatch.payload)
+      expect(updatedPayload._links.activityEntity.href).toStrictEqual(
+        expect.stringMatching(`/api/activities/${activityId2}`)
+      )
+    })
+
+    it('should return a 404 and empty body if the small catch does not exist', async () => {
+      const result = await server.inject({
+        method: 'PUT',
+        url: '/api/smallCatches/0/activity',
+        payload: 'activities/1',
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload.length).toBe(0)
+    })
+
+    it('should return a 404 and empty body if the activity does not exist', async () => {
+      // create submission, activity and small catch
+      const activityId = await setupSubmissionAndActivity(
+        CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
+      )
+      const createdSmallCatch = await createSmallCatch(server, activityId)
+      const smallCatchId = JSON.parse(createdSmallCatch.payload).id
+
+      const result = await server.inject({
+        method: 'PUT',
+        url: `/api/smallCatches/${smallCatchId}/activity`,
+        payload: `activities/0`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload.length).toBe(0)
     })
   })
 })

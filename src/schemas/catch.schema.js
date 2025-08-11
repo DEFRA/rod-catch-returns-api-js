@@ -9,6 +9,7 @@ import { convertKgtoOz } from '../utils/mass-utils.js'
 import { getCatchById } from '../services/catches.service.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { getSubmissionByCatchId } from '../services/submissions.service.js'
+import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodInternal } from '../services/methods.service.js'
 import { isSpeciesExists } from '../services/species.service.js'
 import logger from '../utils/logger-utils.js'
@@ -20,7 +21,13 @@ const MIN_FISH_MASS = 0
 const validateMethod = async (value, helper) => {
   const methodId = extractMethodId(value)
   const methodInternal = await isMethodInternal(methodId)
-  return methodInternal ? helper.message('CATCH_METHOD_FORBIDDEN') : value
+  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+  if (!fmtOrAdmin && methodInternal) {
+    return helper.message('CATCH_METHOD_FORBIDDEN')
+  }
+
+  return value
 }
 
 const validateSpecies = async (value, helper) => {
@@ -63,7 +70,12 @@ const checkDefaultFlagConflict = (onlyMonthRecorded, noDateRecorded) => {
   }
 }
 
-const dateCaughtField = Joi.string().description('The date of the catch')
+const dateCaughtField = Joi.string()
+  .invalid(null)
+  .messages({
+    'any.invalid': 'CATCH_DATE_REQUIRED'
+  })
+  .description('The date of the catch')
 
 const onlyMonthRecordedField = Joi.boolean()
   .messages({
@@ -154,28 +166,32 @@ export const createCatchSchema = Joi.object({
       'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
     })
     .description('The activity associated with this catch'),
-  dateCaught: dateCaughtField.external(async (value, helper) => {
-    const activityId = extractActivityId(helper.state.ancestors[0].activity)
+  dateCaught: dateCaughtField
+    .external(async (value, helper) => {
+      const activityId = extractActivityId(helper.state.ancestors[0].activity)
 
-    const submission = await getSubmissionByActivityId(activityId)
+      const submission = await getSubmissionByActivityId(activityId)
 
-    const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
-    const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
+      const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
+      const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
 
-    try {
-      checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
-      validateDateCaughtRequired({
-        dateCaught: value,
-        noDateRecorded,
-        onlyMonthRecorded
-      })
-      validateDateCaughtYear(value, submission?.season)
-    } catch (error) {
-      logger.error(error)
-      return helper.message(error.message)
-    }
-    return value
-  }),
+      try {
+        checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
+        validateDateCaughtRequired({
+          dateCaught: value,
+          noDateRecorded,
+          onlyMonthRecorded
+        })
+        validateDateCaughtYear(value, submission?.season)
+      } catch (error) {
+        logger.error(error)
+        return helper.message(error.message)
+      }
+      return value
+    })
+    .messages({
+      'string.base': 'CATCH_DATE_REQUIRED'
+    }),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
   species: speciesField.required().external(validateSpecies),
@@ -243,3 +259,12 @@ export const updateCatchSchema = Joi.object({
 export const catchIdSchema = Joi.object({
   catchId: Joi.number().required().description('The id of the catch')
 })
+
+export const updateCatchActivityIdSchema = Joi.string()
+  .required()
+  .pattern(/^activities\/\d+$/)
+  .messages({
+    'any.required': 'CATCH_ACTIVITY_REQUIRED',
+    'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
+  })
+  .description('The activity associated with this catch')

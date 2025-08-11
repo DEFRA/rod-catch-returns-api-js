@@ -125,24 +125,6 @@ describe('catches.mapper.unit', () => {
   })
 
   describe('mapCatchToResponse', () => {
-    const mockRequest = {
-      url: {
-        host: 'localhost:3000',
-        protocol: 'http'
-      },
-      info: {
-        host: 'localhost:3000'
-      },
-      server: {
-        info: {
-          protocol: 'http'
-        }
-      },
-      headers: {
-        'x-forwarded-proto': 'http'
-      }
-    }
-
     const mockCatchEnity = {
       id: '1600',
       activity_id: '404',
@@ -163,7 +145,7 @@ describe('catches.mapper.unit', () => {
     }
 
     it('should map a Catch entity to a response object with correct links', () => {
-      const result = mapCatchToResponse(mockRequest, mockCatchEnity)
+      const result = mapCatchToResponse(mockCatchEnity)
 
       expect(result).toStrictEqual({
         createdAt: '2024-11-18T11:22:36.438Z',
@@ -182,22 +164,22 @@ describe('catches.mapper.unit', () => {
         version: '2024-11-18T11:22:36.437Z',
         _links: {
           activity: {
-            href: 'http://localhost:3000/api/catches/1600/activity'
+            href: 'http://localhost:5000/api/catches/1600/activity'
           },
           activityEntity: {
-            href: 'http://localhost:3000/api/activities/404'
+            href: 'http://localhost:5000/api/activities/404'
           },
           catch: {
-            href: 'http://localhost:3000/api/catches/1600'
+            href: 'http://localhost:5000/api/catches/1600'
           },
           method: {
-            href: 'http://localhost:3000/api/catches/1600/method'
+            href: 'http://localhost:5000/api/catches/1600/method'
           },
           self: {
-            href: 'http://localhost:3000/api/catches/1600'
+            href: 'http://localhost:5000/api/catches/1600'
           },
           species: {
-            href: 'http://localhost:3000/api/catches/1600/species'
+            href: 'http://localhost:5000/api/catches/1600/species'
           }
         }
       })

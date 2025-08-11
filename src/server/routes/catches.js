@@ -2,6 +2,7 @@ import { Activity, Catch, Method, Species } from '../../entities/index.js'
 import {
   catchIdSchema,
   createCatchSchema,
+  updateCatchActivityIdSchema,
   updateCatchSchema
 } from '../../schemas/catch.schema.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
@@ -10,6 +11,7 @@ import {
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
+import { extractActivityId } from '../../utils/entity-utils.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
@@ -45,12 +47,11 @@ export default [
         try {
           const catchData = mapRequestToCatch(request.payload)
 
+          logger.info('Creating catch with details', catchData)
+
           const createdCatch = await Catch.create(catchData)
 
-          const catchResponse = mapCatchToResponse(
-            request,
-            createdCatch.toJSON()
-          )
+          const catchResponse = mapCatchToResponse(createdCatch.toJSON())
 
           return h.response(catchResponse).code(StatusCodes.CREATED)
         } catch (error) {
@@ -104,7 +105,7 @@ export default [
           }
 
           const foundActivity = catchWithActivity.toJSON().Activity
-          const response = mapActivityToResponse(request, foundActivity)
+          const response = mapActivityToResponse(foundActivity)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -160,7 +161,7 @@ export default [
           }
 
           const foundSpecies = catchWithSpecies.toJSON().Species
-          const response = mapSpeciesToResponse(request, foundSpecies)
+          const response = mapSpeciesToResponse(foundSpecies)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -212,7 +213,7 @@ export default [
           }
 
           const foundMethod = catchWithMethod.toJSON().Method
-          const response = mapMethodToResponse(request, foundMethod)
+          const response = mapMethodToResponse(foundMethod)
 
           return h.response(response).code(StatusCodes.OK)
         } catch (error) {
@@ -251,12 +252,15 @@ export default [
             return handleNotFound(`Catch not found for ID: ${catchId}`, h)
           }
 
-          const mappedCatch = mapCatchToResponse(request, foundCatch.toJSON())
+          const mappedCatch = mapCatchToResponse(foundCatch.toJSON())
 
           return h.response(mappedCatch).code(StatusCodes.OK)
         } catch (error) {
           return handleServerError('Error fetching catch by ID', error, h)
         }
+      },
+      validate: {
+        params: catchIdSchema
       },
       description: 'Retrieve a catch by its ID',
       notes: 'Retrieve a catch from the database by its ID',
@@ -293,6 +297,9 @@ export default [
         } catch (error) {
           return handleServerError('Error deleting catch', error, h)
         }
+      },
+      validate: {
+        params: catchIdSchema
       },
       description: 'Delete a catch by ID',
       notes: 'Deletes a catch from the database by its ID',
@@ -342,10 +349,12 @@ export default [
             reportingExclude
           })
 
+          logger.info(`Updating catch ${catchId} with details`, catchData)
+
           // if a value is undefined, it is not updated by Sequelize
           const updatedCatch = await foundCatch.update(catchData)
 
-          const mappedCatch = mapCatchToResponse(request, updatedCatch.toJSON())
+          const mappedCatch = mapCatchToResponse(updatedCatch.toJSON())
 
           return h.response(mappedCatch).code(StatusCodes.OK)
         } catch (error) {
@@ -353,11 +362,72 @@ export default [
         }
       },
       validate: {
+        params: catchIdSchema,
         payload: updateCatchSchema,
         options: { entity: 'Catch' }
       },
       description: 'Update a catch',
       notes: 'Update a catch',
+      tags: ['api', 'catches']
+    }
+  },
+  {
+    method: 'PUT',
+    path: `${BASE_CATCHES_URL}/activity`,
+    options: {
+      /**
+       * Update the activity of a catch in the database using the catch ID
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.catchId - The ID of the catch to update
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Catch}
+       */
+      handler: async (request, h) => {
+        const { catchId } = request.params
+        const activity = request.payload
+
+        try {
+          const foundCatch = await Catch.findByPk(catchId)
+
+          if (!foundCatch) {
+            return handleNotFound(`Catch not found for ${catchId}`, h)
+          }
+
+          const activityId = extractActivityId(activity)
+          logger.info(
+            `Updating catch ${catchId} with activity id=${activityId}`
+          )
+
+          const foundActivity = await Activity.findByPk(activityId)
+          if (!foundActivity) {
+            return handleNotFound(`Activity not found for catch:${catchId}`, h)
+          }
+
+          const updatedCatch = await foundCatch.update({
+            activity_id: activityId
+          })
+
+          console.log(updatedCatch.toJSON())
+
+          const mappedCatch = mapCatchToResponse(updatedCatch.toJSON())
+
+          return h.response(mappedCatch).code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error updating catch for activity',
+            error,
+            h
+          )
+        }
+      },
+      validate: {
+        params: catchIdSchema,
+        payload: updateCatchActivityIdSchema,
+        options: { entity: 'Catch' }
+      },
+      description: 'Update the activity id on a catch',
+      notes: 'Update the activity id on catch',
       tags: ['api', 'catches']
     }
   }

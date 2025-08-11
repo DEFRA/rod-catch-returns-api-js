@@ -1,11 +1,13 @@
 import {
   catchIdSchema,
   createCatchSchema,
+  updateCatchActivityIdSchema,
   updateCatchSchema
 } from '../catch.schema.js'
 import { getCatchById } from '../../services/catches.service.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { getSubmissionByCatchId } from '../../services/submissions.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 import { isSpeciesExists } from '../../services/species.service.js'
 
@@ -14,6 +16,7 @@ jest.mock('../../services/catches.service.js')
 jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
 jest.mock('../../services/species.service.js')
+jest.mock('../../utils/auth-utils.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -37,11 +40,13 @@ describe('catch.schema.unit', () => {
     const setupMocks = ({
       season = 2024,
       methodInternal = false,
-      speciesExists = true
+      speciesExists = true,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmissionByActivityId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValue(methodInternal)
       isSpeciesExists.mockResolvedValueOnce(speciesExists)
+      isFMTOrAdmin.mockReturnValueOnce(fmtOrAdmin)
     }
 
     afterEach(() => {
@@ -103,6 +108,18 @@ describe('catch.schema.unit', () => {
         )
       })
 
+      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is null, noDateRecorded is false and onlyMonthRecorded is false', async () => {
+        const payload = getValidPayload({
+          dateCaught: null,
+          noDateRecorded: false,
+          onlyMonthRecorded: false
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
+      })
+
       it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
         setupMocks({ season: 2022 })
         const payload = getValidPayload({
@@ -135,6 +152,16 @@ describe('catch.schema.unit', () => {
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_DATE_IN_FUTURE'
+        )
+      })
+
+      it('should return CATCH_DATE_REQUIRED if "dateCaught" is null', async () => {
+        const payload = getValidPayload({
+          dateCaught: null
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
         )
       })
     })
@@ -322,13 +349,22 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return an error if "method" is restricted', async () => {
+      it('should return an error if "method" is restricted and the user is not an admin or fmt', async () => {
         setupMocks({ methodInternal: true })
         const payload = getValidPayload({ method: 'methods/4' })
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_METHOD_FORBIDDEN'
         )
+      })
+
+      it('should validate successfully if "method" is restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodInternal: true, fmtOrAdmin: true })
+        const payload = getValidPayload({ method: 'methods/4' })
+
+        await expect(
+          createCatchSchema.validateAsync(payload)
+        ).resolves.toStrictEqual(payload)
       })
     })
 
@@ -447,7 +483,8 @@ describe('catch.schema.unit', () => {
       onlyMonthRecorded = true,
       noDateRecorded = false,
       dateCaught = '2024-08-02T00:00:00+01:00',
-      speciesExists = true
+      speciesExists = true,
+      fmtOrAdmin = false
     } = {}) => {
       getSubmissionByCatchId.mockResolvedValueOnce({ season })
       isMethodInternal.mockResolvedValueOnce(methodInternal)
@@ -457,6 +494,7 @@ describe('catch.schema.unit', () => {
         dateCaught
       })
       isSpeciesExists.mockResolvedValueOnce(speciesExists)
+      isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
     afterEach(() => {
@@ -498,6 +536,16 @@ describe('catch.schema.unit', () => {
         await expect(
           updateCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('CATCH_DATE_IN_FUTURE')
+      })
+
+      it('should return CATCH_DATE_REQUIRED if "dateCaught" is null', async () => {
+        const payload = {
+          dateCaught: null
+        }
+
+        await expect(updateCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_REQUIRED'
+        )
       })
     })
 
@@ -687,6 +735,24 @@ describe('catch.schema.unit', () => {
           updateCatchSchema.validateAsync(payload, getDefaultContext())
         ).resolves.toStrictEqual(payload)
       })
+
+      it('should return an error if "method" is restricted and the user is not an admin or fmt', async () => {
+        setupMocks({ methodInternal: true })
+        const payload = { method: 'methods/4' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('CATCH_METHOD_FORBIDDEN')
+      })
+
+      it('should validate successfully if "method" is restricted and the user is an admin or fmt', async () => {
+        setupMocks({ methodInternal: true, fmtOrAdmin: true })
+        const payload = { method: 'methods/4' }
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).resolves.toStrictEqual(payload)
+      })
     })
 
     describe('released', () => {
@@ -783,6 +849,33 @@ describe('catch.schema.unit', () => {
           ).resolves.toStrictEqual(payload)
         }
       )
+    })
+  })
+
+  describe('updateCatchActivityIdSchema', () => {
+    it('should validate successfully if activity is valid', async () => {
+      const activity = 'activities/101'
+      await expect(
+        updateCatchActivityIdSchema.validateAsync(activity)
+      ).resolves.toStrictEqual(activity)
+    })
+
+    it('should return an error if "activity" is missing', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync(undefined)
+      ).rejects.toThrow('CATCH_ACTIVITY_REQUIRED')
+    })
+
+    it('should return an error if "activity" does not start with "activities/"', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync('invalid/123')
+      ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
+    })
+
+    it('should return an error if "activity" does not end in a number', async () => {
+      await expect(
+        updateCatchActivityIdSchema.validateAsync('activities/abc')
+      ).rejects.toThrow('CATCH_ACTIVITY_INVALID')
     })
   })
 })
