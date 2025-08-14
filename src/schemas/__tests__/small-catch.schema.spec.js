@@ -12,11 +12,13 @@ import { getMonthNameFromNumber } from '../../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../../services/activities.service.js'
 import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isMethodsInternal } from '../../services/methods.service.js'
+import logger from '../../utils/logger-utils.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/small-catch.service.js')
 jest.mock('../../services/methods.service.js')
 jest.mock('../../utils/auth-utils.js')
+jest.mock('../../utils/logger-utils.js')
 
 describe('smallCatch.schema.unit', () => {
   const mockCurrentDate = new Date()
@@ -117,10 +119,35 @@ describe('smallCatch.schema.unit', () => {
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
       })
+
+      it('should not log an error if SMALL_CATCH_DUPLICATE_FOUND is returned', async () => {
+        setupMocks({ season: currentYear })
+        isDuplicateSmallCatch.mockResolvedValue(true)
+
+        const payload = getValidPayload()
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
+        expect(logger.error).not.toHaveBeenCalled()
+      })
+
+      it('should log an error if there is any other error', async () => {
+        setupMocks({ season: currentYear })
+        const error = new Error('error')
+        isDuplicateSmallCatch.mockRejectedValueOnce(error)
+
+        const payload = getValidPayload()
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow()
+        expect(logger.error).toHaveBeenCalledWith(error)
+      })
     })
 
     describe('month', () => {
-      it('should return an error if the submission season is in the future', async () => {
+      it('should return SMALL_CATCH_MONTH_IN_FUTURE error if the submission season is in the future', async () => {
         const futureYear = currentYear + 1
         setupMocks({ season: futureYear })
         const payload = getValidPayload()
@@ -128,6 +155,17 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
+      })
+
+      it('should not log an error if SMALL_CATCH_MONTH_IN_FUTURE is returned', async () => {
+        const futureYear = currentYear + 1
+        setupMocks({ season: futureYear })
+        const payload = getValidPayload()
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_MONTH_IN_FUTURE')
+        expect(logger.error).not.toHaveBeenCalled()
       })
 
       it('should return an error if the submission season is current year and month is in the future', async () => {
