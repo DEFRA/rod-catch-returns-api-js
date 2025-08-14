@@ -10,6 +10,7 @@ import { getSubmissionByCatchId } from '../../services/submissions.service.js'
 import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isMethodInternal } from '../../services/methods.service.js'
 import { isSpeciesExists } from '../../services/species.service.js'
+import logger from '../../utils/logger-utils.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/catches.service.js')
@@ -17,6 +18,7 @@ jest.mock('../../services/submissions.service.js')
 jest.mock('../../services/methods.service.js')
 jest.mock('../../services/species.service.js')
 jest.mock('../../utils/auth-utils.js')
+jest.mock('../../utils/logger-utils.js')
 
 describe('catch.schema.unit', () => {
   describe('createCatchSchema', () => {
@@ -72,7 +74,7 @@ describe('catch.schema.unit', () => {
     })
 
     describe('dateCaught', () => {
-      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is true and onlyMonthRecorded is false', async () => {
+      it('should return CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is true and onlyMonthRecorded is false', async () => {
         const payload = getValidPayload({
           dateCaught: undefined,
           noDateRecorded: true,
@@ -84,7 +86,7 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is true', async () => {
+      it('should return CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is true', async () => {
         const payload = getValidPayload({
           dateCaught: undefined,
           noDateRecorded: false,
@@ -96,7 +98,7 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return a CATCH_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is false', async () => {
+      it('should return CATCH_DATE_REQUIRED if "dateCaught" is missing, noDateRecorded is false and onlyMonthRecorded is false', async () => {
         const payload = getValidPayload({
           dateCaught: undefined,
           noDateRecorded: false,
@@ -108,7 +110,7 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return a CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is null, noDateRecorded is false and onlyMonthRecorded is false', async () => {
+      it('should return CATCH_DEFAULT_DATE_REQUIRED if "dateCaught" is null, noDateRecorded is false and onlyMonthRecorded is false', async () => {
         const payload = getValidPayload({
           dateCaught: null,
           noDateRecorded: false,
@@ -120,7 +122,7 @@ describe('catch.schema.unit', () => {
         )
       })
 
-      it('should return an error if the year for "dateCaught" does not match the year in the submission', async () => {
+      it('should return CATCH_YEAR_MISMATCH if the year for "dateCaught" does not match the year in the submission', async () => {
         setupMocks({ season: 2022 })
         const payload = getValidPayload({
           dateCaught: '2023-08-01T00:00:00+01:00'
@@ -128,6 +130,20 @@ describe('catch.schema.unit', () => {
 
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_YEAR_MISMATCH'
+        )
+      })
+
+      it('should log an error if CATCH_YEAR_MISMATCH is returned', async () => {
+        setupMocks({ season: 2022 })
+        const payload = getValidPayload({
+          dateCaught: '2023-08-01T00:00:00+01:00'
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_YEAR_MISMATCH'
+        )
+        expect(logger.error).toHaveBeenCalledWith(
+          new Error('CATCH_YEAR_MISMATCH')
         )
       })
 
@@ -153,6 +169,20 @@ describe('catch.schema.unit', () => {
         await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
           'CATCH_DATE_IN_FUTURE'
         )
+      })
+
+      it('should not log an error if CATCH_DATE_IN_FUTURE is returned', async () => {
+        const futureDate = new Date()
+        futureDate.setFullYear(futureDate.getFullYear() + 1)
+
+        const payload = getValidPayload({
+          dateCaught: futureDate.toISOString()
+        })
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow(
+          'CATCH_DATE_IN_FUTURE'
+        )
+        expect(logger.error).not.toHaveBeenCalled()
       })
 
       it('should return CATCH_DATE_REQUIRED if "dateCaught" is null', async () => {

@@ -184,7 +184,9 @@ export const createCatchSchema = Joi.object({
         })
         validateDateCaughtYear(value, submission?.season)
       } catch (error) {
-        logger.error(error)
+        if (error.message !== 'CATCH_DATE_IN_FUTURE') {
+          logger.error(error)
+        }
         return helper.message(error.message)
       }
       return value
