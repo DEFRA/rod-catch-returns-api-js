@@ -94,13 +94,13 @@ describe('grilse-probabilities.integration', () => {
       })
 
       expect(JSON.parse(result.payload)).toStrictEqual({
-        error: 'Unprocessable Entity',
-        message: 'File is empty or not a valid csv.',
+        message: '400 BAD_REQUEST "Invalid CSV data"',
+        errors: [{ errorType: 'FILE_EMPTY' }],
         path: '/api/reporting/reference/grilse-probabilities/2024/1',
-        status: 422,
+        status: 400,
         timestamp: expect.any(String)
       })
-      expect(result.statusCode).toBe(422)
+      expect(result.statusCode).toBe(400)
     })
 
     it('should return an error if the data already exists in the database and ovewrite is false', async () => {
@@ -150,24 +150,27 @@ describe('grilse-probabilities.integration', () => {
       expect(getResult.payload).toMatchSnapshot()
     })
 
-    it('should return an error if an invalid csv is passed in', async () => {
-      const fileBuffer = loadFixture('invalid-csv.csv')
+    it.each([['empty.csv'], ['empty-line.csv']])(
+      'should return an error if an %s is passed in',
+      async (fileName) => {
+        const fileBuffer = loadFixture(fileName)
 
-      const result = await uploadFile(
-        server,
-        '/api/reporting/reference/grilse-probabilities/2024/1',
-        fileBuffer
-      )
+        const result = await uploadFile(
+          server,
+          '/api/reporting/reference/grilse-probabilities/2024/1',
+          fileBuffer
+        )
 
-      expect(JSON.parse(result.payload)).toStrictEqual({
-        error: 'Unprocessable Entity',
-        message: 'File is empty or not a valid csv.',
-        path: '/api/reporting/reference/grilse-probabilities/2024/1',
-        status: 422,
-        timestamp: expect.any(String)
-      })
-      expect(result.statusCode).toBe(422)
-    })
+        expect(JSON.parse(result.payload)).toStrictEqual({
+          message: '400 BAD_REQUEST "Invalid CSV data"',
+          errors: [{ errorType: 'FILE_EMPTY' }],
+          path: '/api/reporting/reference/grilse-probabilities/2024/1',
+          status: 400,
+          timestamp: expect.any(String)
+        })
+        expect(result.statusCode).toBe(400)
+      }
+    )
 
     it.each([
       [
