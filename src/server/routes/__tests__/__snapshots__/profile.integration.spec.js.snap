@@ -208,6 +208,10 @@ exports[`profile.integration GET /api/profile should return a list of all the ur
       "path": "/api/smallCatches/{smallCatchId}",
     },
     {
+      "method": "DELETE",
+      "path": "/api/submissions/{submissionId}",
+    },
+    {
       "method": "PATCH",
       "path": "/api/activities/{activityId}",
     },
