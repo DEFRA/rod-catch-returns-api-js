@@ -125,6 +125,14 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
   return grilseProbabilities
 }
 
+const throwGrilseValidationError400 = (errors) => {
+  throw new GrilseValidationError({
+    status: StatusCodes.BAD_REQUEST,
+    message: '400 BAD_REQUEST "Invalid CSV data"',
+    errors
+  })
+}
+
 /**
  * Validates the uploaded CSV file.
  *
@@ -141,19 +149,12 @@ export const processGrilseProbabilities = (csvData, season, gate) => {
  * ]
  */
 export const validateAndParseCsvFile = async (file) => {
-  const fileEmptyErrorDetails = {
-    status: StatusCodes.UNPROCESSABLE_ENTITY,
-    message: 'File is empty or not a valid csv.',
-    error: 'Unprocessable Entity'
-  }
+  const csvData = Buffer.isBuffer(file)
+    ? file.toString('utf-8')
+    : file?.trim?.()
 
-  if (!(typeof file === 'string' || Buffer.isBuffer(file))) {
-    throw new GrilseValidationError(fileEmptyErrorDetails)
-  }
-
-  const csvData = Buffer.isBuffer(file) ? file.toString('utf-8') : file.trim()
   if (!csvData) {
-    throw new GrilseValidationError(fileEmptyErrorDetails)
+    throwGrilseValidationError400([{ errorType: 'FILE_EMPTY' }])
   }
 
   const records = await parseAsync(csvData, {
@@ -211,11 +212,7 @@ export const validateHeaders = (headers) => {
   }
 
   if (errors.length > 0) {
-    throw new GrilseValidationError({
-      status: StatusCodes.BAD_REQUEST,
-      message: '400 BAD_REQUEST "Invalid CSV data"',
-      errors
-    })
+    throwGrilseValidationError400(errors)
   }
 }
 
@@ -267,11 +264,7 @@ export const validateRows = (headers, rows) => {
   }
 
   if (errors.length > 0) {
-    throw new GrilseValidationError({
-      status: StatusCodes.BAD_REQUEST,
-      message: '400 BAD_REQUEST "Invalid CSV data"',
-      errors
-    })
+    throwGrilseValidationError400(errors)
   }
 }
 
