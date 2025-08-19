@@ -10,6 +10,7 @@ import { Submission } from '../../../entities/index.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
+// TODO add integration test for delete submission
 const createExpectedActivity = (
   id,
   daysFishedWithMandatoryRelease,
@@ -870,6 +871,66 @@ describe('submissions.integration', () => {
         error: 'Error updating submission'
       })
       expect(result.statusCode).toBe(500)
+    })
+  })
+
+  describe('DELETE /api/submission/{submissionId}', () => {
+    const CONTACT_IDENTIFIER_DELETE_SUBMISSION =
+      'contact-identifier-delete-submission'
+    beforeEach(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_DELETE_SUBMISSION
+        )
+    )
+
+    afterAll(
+      async () =>
+        await deleteSubmissionAndRelatedData(
+          CONTACT_IDENTIFIER_DELETE_SUBMISSION
+        )
+    )
+
+    it('should return a 204 and delete an activity', async () => {
+      createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_DELETE_SUBMISSION
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      await createActivity(server, submissionId)
+
+      // make sure submission exists
+      const foundSubmission = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}`
+      })
+      expect(foundSubmission.statusCode).toBe(200)
+
+      // delete submission
+      const deletedSubmission = await server.inject({
+        method: 'DELETE',
+        url: `/api/submissions/${submissionId}`
+      })
+      expect(deletedSubmission.statusCode).toBe(204)
+      expect(deletedSubmission.body).toBeUndefined()
+
+      // make sure submission has been deleted
+      const foundSubmissionAfterDelete = await server.inject({
+        method: 'GET',
+        url: `/api/submissions/${submissionId}`
+      })
+      expect(foundSubmissionAfterDelete.statusCode).toBe(404)
+    })
+
+    it('should return a 404 and empty body if the submission could not be deleted', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/submissions/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload).toBe('')
     })
   })
 })

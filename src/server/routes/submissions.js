@@ -73,6 +73,7 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
+          console.log(error)
           return handleServerError('Error creating submission', error, h)
         }
       },
@@ -385,6 +386,7 @@ export default [
           })
 
           if (!foundSubmission) {
+            await transaction.rollback()
             return handleNotFound(`Submission not found ${submissionId}`, h)
           }
 
