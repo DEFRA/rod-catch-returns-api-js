@@ -21,6 +21,8 @@ import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 import { sequelize } from '../../services/database.service.js'
 
+const BASE_SUBMISSIONS_URL = '/submissions/{submissionId}'
+
 export default [
   {
     method: 'POST',
@@ -176,7 +178,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/submissions/{submissionId}/activities',
+    path: `${BASE_SUBMISSIONS_URL}/activities`,
     options: {
       /**
        * Get all activities associated with a submission by its submission id from the database
@@ -244,7 +246,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/submissions/{submissionId}',
+    path: BASE_SUBMISSIONS_URL,
     options: {
       /**
        * Get a submission by its submissionId from the database
@@ -283,7 +285,7 @@ export default [
   },
   {
     method: 'PATCH',
-    path: '/submissions/{submissionId}',
+    path: BASE_SUBMISSIONS_URL,
     options: {
       /**
        * Update a submission in the database using the submission ID
@@ -365,7 +367,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/submissions/{submissionId}',
+    path: BASE_SUBMISSIONS_URL,
     options: {
       /**
        * Delete a submission by its submissionId from the database
