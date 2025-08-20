@@ -10,7 +10,6 @@ import { Submission } from '../../../entities/index.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
 
-// TODO add integration test for delete submission
 const createExpectedActivity = (
   id,
   daysFishedWithMandatoryRelease,

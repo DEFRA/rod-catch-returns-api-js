@@ -75,7 +75,6 @@ export default [
 
           return h.response(response).code(StatusCodes.CREATED)
         } catch (error) {
-          console.log(error)
           return handleServerError('Error creating submission', error, h)
         }
       },
