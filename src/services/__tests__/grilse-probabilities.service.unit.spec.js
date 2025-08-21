@@ -296,16 +296,17 @@ describe('grilse-probabilities.service.unit', () => {
       ['object', { invalid: 'object' }],
       ['empty string', ''],
       ['only spaces', ' '],
+      ['only a number', 1],
       ['empty buffer', Buffer.from('')]
     ])(
-      'should throw "File is empty or not a valid csv." error if the request is a %s',
+      'should throw "FILE_EMPTY" error if the request is a %s',
       async (_, payload) => {
         await expect(() =>
           validateAndParseCsvFile(payload)
         ).rejects.toMatchObject({
-          status: 422,
-          message: 'File is empty or not a valid csv.',
-          error: 'Unprocessable Entity'
+          status: 400,
+          message: '400 BAD_REQUEST "Invalid CSV data"',
+          errors: [{ errorType: 'FILE_EMPTY' }]
         })
       }
     )
