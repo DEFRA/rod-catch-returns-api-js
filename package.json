@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "jest",
+    "test:integration": "jest .*.integration.spec.js",
+    "test:unit": "jest .*.unit.spec.js",
     "test:coverage": "jest --coverage",
     "lint": "eslint",
     "lint:fix": "npm run lint -- --fix",
