@@ -1,4 +1,10 @@
-import { Activity, Submission } from '../../entities/index.js'
+import {
+  Activity,
+  Catch,
+  SmallCatch,
+  SmallCatchCount,
+  Submission
+} from '../../entities/index.js'
 import { createActivity, updateActivity } from '@defra-fish/dynamics-lib'
 import {
   createSubmissionSchema,
@@ -13,6 +19,9 @@ import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
+import { sequelize } from '../../services/database.service.js'
+
+const BASE_SUBMISSIONS_URL = '/submissions/{submissionId}'
 
 export default [
   {
@@ -168,7 +177,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/submissions/{submissionId}/activities',
+    path: `${BASE_SUBMISSIONS_URL}/activities`,
     options: {
       /**
        * Get all activities associated with a submission by its submission id from the database
@@ -236,7 +245,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/submissions/{submissionId}',
+    path: BASE_SUBMISSIONS_URL,
     options: {
       /**
        * Get a submission by its submissionId from the database
@@ -275,7 +284,7 @@ export default [
   },
   {
     method: 'PATCH',
-    path: '/submissions/{submissionId}',
+    path: BASE_SUBMISSIONS_URL,
     options: {
       /**
        * Update a submission in the database using the submission ID
@@ -352,6 +361,112 @@ export default [
       },
       description: 'Update a submission',
       notes: 'Update a submission',
+      tags: ['api', 'submissions']
+    }
+  },
+  {
+    method: 'DELETE',
+    path: BASE_SUBMISSIONS_URL,
+    options: {
+      /**
+       * Delete a submission by its submissionId from the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       *     @param {string} request.params.submissionId - The ID of the submission to be deleted
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Submission}
+       */
+      handler: async (request, h) => {
+        const submissionId = request.params.submissionId
+        // Begin transaction for atomic operation
+        const transaction = await sequelize.transaction()
+
+        try {
+          const foundSubmission = await Submission.findOne({
+            where: { id: submissionId }
+          })
+
+          if (!foundSubmission) {
+            await transaction.rollback()
+            return handleNotFound(`Submission not found ${submissionId}`, h)
+          }
+
+          logger.info(
+            'Deleting submission with id:%s and related records',
+            submissionId
+          )
+
+          const activities = await Activity.findAll({
+            where: { submission_id: submissionId }
+          })
+
+          for (const activity of activities) {
+            const smallCatchIds = (
+              await SmallCatch.findAll({
+                attributes: ['id'],
+                where: { activity_id: activity.id },
+                transaction
+              })
+            )?.map((smallCatch) => smallCatch.id)
+
+            // Delete associated SmallCatchCount
+            await SmallCatchCount.destroy({
+              where: { small_catch_id: smallCatchIds },
+              transaction
+            })
+
+            // Delete associated SmallCatches
+            await SmallCatch.destroy({
+              where: { activity_id: activity.id },
+              transaction
+            })
+
+            // Delete associated Catches
+            await Catch.destroy({
+              where: { activity_id: activity.id },
+              transaction
+            })
+
+            // Delete the Activity
+            await Activity.destroy({
+              where: { id: activity.id },
+              transaction
+            })
+          }
+
+          // Delete the submission
+          const deletedCount = await Submission.destroy({
+            where: { id: submissionId },
+            transaction
+          })
+
+          if (deletedCount === 0) {
+            await transaction.rollback()
+            return handleServerError(
+              'Error deleting submission',
+              new Error('Unable to delete submission'),
+              h
+            )
+          }
+
+          // Commit transaction
+          await transaction.commit()
+
+          logger.info(
+            'Deleted submission with id: %s and related records',
+            submissionId
+          )
+          return h.response().code(StatusCodes.NO_CONTENT)
+        } catch (error) {
+          await transaction.rollback()
+          return handleServerError('Error deleting submission', error, h)
+        }
+      },
+      validate: {
+        params: getBySubmissionIdSchema
+      },
+      description: 'Delete a submission by submissionId',
+      notes: 'Delete a submission by submissionId',
       tags: ['api', 'submissions']
     }
   }

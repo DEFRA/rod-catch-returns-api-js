@@ -1,4 +1,11 @@
 import {
+  Activity,
+  Catch,
+  SmallCatch,
+  SmallCatchCount,
+  Submission
+} from '../../../entities/index.js'
+import {
   createActivity as createActivityCRM,
   updateActivity as updateActivityCRM
 } from '@defra-fish/dynamics-lib'
@@ -10,14 +17,30 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { Submission } from '../../../entities/index.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
+import { sequelize } from '../../../services/database.service.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/database.service.js', () => ({
+  sequelize: {
+    transaction: jest.fn(),
+    define: jest.fn(() => ({
+      associate: jest.fn(),
+      hasMany: jest.fn(),
+      belongsTo: jest.fn(),
+      findAll: jest.fn(),
+      findByPk: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      destroy: jest.fn()
+    })),
+    literal: jest.fn()
+  }
+}))
 
 const [
   {
@@ -37,6 +60,9 @@ const [
   },
   {
     options: { handler: patchSubmissionByIdHandler }
+  },
+  {
+    options: { handler: deleteSubmissionByIdHandler }
   }
 ] = routes
 
@@ -831,6 +857,229 @@ describe('submissions.unit', () => {
         getSubmissionRequest({ status: 'SUBMITTED' }),
         getMockResponseToolkit()
       )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('DELETE /submission/{submissionId}', () => {
+    const getDeleteRequest = (submissionId) =>
+      getServerDetails({ params: { submissionId } })
+
+    const getTransaction = () => ({ commit: jest.fn(), rollback: jest.fn() })
+
+    const setUpDeleteSuccess = ({
+      smallCatchIds = [1, 2, 3],
+      activityResults = [{ id: 1 }],
+      submissionDestroy = 1,
+      transaction
+    } = {}) => {
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      SmallCatch.findAll.mockResolvedValueOnce(
+        smallCatchIds.map((id) => ({ id, toJSON: jest.fn() }))
+      )
+      SmallCatchCount.destroy.mockResolvedValueOnce(3)
+      SmallCatch.destroy.mockResolvedValueOnce(3)
+      Catch.destroy.mockResolvedValueOnce(2)
+      Activity.destroy.mockResolvedValueOnce(1)
+      Submission.destroy.mockResolvedValueOnce(submissionDestroy)
+      Submission.findOne.mockResolvedValueOnce({ id: 2 })
+      Activity.findAll.mockResolvedValueOnce(activityResults)
+    }
+
+    const setUpDeleteFailure = ({
+      transaction,
+      activityResults = [{ id: 1 }],
+      error = new Error('Delete failed')
+    } = {}) => {
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      Activity.findAll.mockResolvedValueOnce(activityResults)
+      Submission.findOne.mockResolvedValueOnce({ id: 2 })
+      Submission.destroy.mockRejectedValueOnce(error)
+    }
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should call Submission.destroy with the correct parameters', async () => {
+      const submissionId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest(submissionId),
+        getMockResponseToolkit()
+      )
+
+      expect(Submission.destroy).toHaveBeenCalledWith({
+        where: { id: submissionId },
+        transaction
+      })
+    })
+
+    it('should call SmallCatch.findAll to fetch associated small catches', async () => {
+      const submissionId = '3'
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest(submissionId),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatch.findAll).toHaveBeenCalledWith({
+        attributes: ['id'],
+        where: { activity_id: 1 },
+        transaction
+      })
+    })
+
+    it('should delete all associated SmallCatchCount records', async () => {
+      const smallCatchIds = [1, 2, 3, 4]
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ smallCatchIds, transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatchCount.destroy).toHaveBeenCalledWith({
+        where: { small_catch_id: smallCatchIds },
+        transaction
+      })
+    })
+
+    it('should delete all associated SmallCatch records', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(SmallCatch.destroy).toHaveBeenCalledWith({
+        where: { activity_id: 1 },
+        transaction
+      })
+    })
+
+    it('should delete all associated Catch records', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(Catch.destroy).toHaveBeenCalledWith({
+        where: { activity_id: 1 },
+        transaction
+      })
+    })
+
+    it('should commit the transaction on successful deletion', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      await deleteSubmissionByIdHandler(
+        getDeleteRequest('2'),
+        getMockResponseToolkit()
+      )
+
+      expect(transaction.commit).toHaveBeenCalled()
+    })
+
+    it('should return a 204 status code on successful deletion', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      const result = await deleteSubmissionByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(204)
+    })
+
+    it('should return an empty response body on successful deletion', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction })
+
+      const result = await deleteSubmissionByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toBeUndefined()
+    })
+
+    it('should call handleNotFound if the submission does not exist', async () => {
+      const submissionId = 'nonexistent-id'
+      const transaction = getTransaction()
+      sequelize.transaction.mockResolvedValueOnce(transaction)
+      Submission.findOne.mockResolvedValueOnce(null)
+      const h = getMockResponseToolkit()
+
+      await deleteSubmissionByIdHandler(getDeleteRequest(submissionId), h)
+
+      expect(handleNotFound).toHaveBeenCalledWith(
+        `Submission not found ${submissionId}`,
+        h
+      )
+    })
+
+    it('should rollback the transaction if no submission is deleted', async () => {
+      const transaction = getTransaction()
+      setUpDeleteSuccess({ transaction, submissionDestroy: 0 })
+      const h = getMockResponseToolkit()
+
+      await deleteSubmissionByIdHandler(getDeleteRequest('nonexistent-id'), h)
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should call handleServerError if an error occurs during Submission.destroy', async () => {
+      const error = new Error('Database error')
+      setUpDeleteFailure({
+        transaction: getTransaction(),
+        error
+      })
+      const h = getMockResponseToolkit()
+
+      await deleteSubmissionByIdHandler(getDeleteRequest('3'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting submission',
+        error,
+        h
+      )
+    })
+
+    it('should rollback the transaction if an error occurs during deletion', async () => {
+      const transaction = getTransaction()
+      setUpDeleteFailure({
+        transaction
+      })
+      const h = getMockResponseToolkit()
+
+      await deleteSubmissionByIdHandler(getDeleteRequest('3'), h)
+
+      expect(transaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should return SERVER_ERROR_SYMBOL if an error occurs during deletion', async () => {
+      const error = new Error('Database error')
+      setUpDeleteFailure({
+        transaction: getTransaction(),
+        error
+      })
+      const h = getMockResponseToolkit()
+
+      const result = await deleteSubmissionByIdHandler(getDeleteRequest('3'), h)
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
