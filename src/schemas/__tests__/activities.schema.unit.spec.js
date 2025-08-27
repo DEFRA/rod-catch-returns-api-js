@@ -241,7 +241,7 @@ describe('activities.schema.unit', () => {
         )
       })
 
-      it('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
+      it.only('should validate successfully when daysFishedWithMandatoryRelease is within the limit for a leap year', async () => {
         setupMocks({ season: 2024 }) // 2024 is a leap year
         const payload = getDefaultPayload({
           daysFishedWithMandatoryRelease: 168

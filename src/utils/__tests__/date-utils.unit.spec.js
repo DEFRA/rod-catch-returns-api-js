@@ -1,7 +1,8 @@
 import {
   extractDateFromISO,
   getMonthNameFromNumber,
-  getMonthNumberFromName
+  getMonthNumberFromName,
+  isLeapYear
 } from '../date-utils.js'
 
 describe('date-utils.unit', () => {
@@ -164,5 +165,21 @@ describe('date-utils.unit', () => {
         'Invalid ISO 8601 date-time string'
       )
     })
+  })
+
+  describe('isLeapYear', () => {
+    it.each([2000, 2024, 2028, 2048, 2052, 2132, 2400])(
+      'should return true if the year is a leap year',
+      (year) => {
+        expect(isLeapYear(year)).toBeTruthy()
+      }
+    )
+
+    it.each([2026, 2027, 2100, 2133, 2399])(
+      'should return false if the year is not a leap year',
+      (year) => {
+        expect(isLeapYear(year)).toBeFalsy()
+      }
+    )
   })
 })

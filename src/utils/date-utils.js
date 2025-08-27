@@ -1,3 +1,5 @@
+const DIVISIBLE_BY_400 = 400
+
 export const MONTH_NAMES = Object.freeze([
   'JANUARY',
   'FEBRUARY',
@@ -75,4 +77,14 @@ export const extractDateFromISO = (isoDateTime) => {
     throw new Error('Invalid ISO 8601 date-time string')
   }
   return /^20\d{2}-\d{2}-\d{2}/.exec(isoDateTime)[0]
+}
+
+/**
+ * Check if the year entered is a leap year
+ *
+ * @param {number} year - The year to check as a number
+ * @returns {boolean} If the year is a leap year
+ */
+export const isLeapYear = (year) => {
+  return (year % 4 === 0 && year % 100 !== 0) || year % DIVISIBLE_BY_400 === 0
 }
