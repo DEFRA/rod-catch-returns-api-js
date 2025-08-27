@@ -1,12 +1,14 @@
 {
   "name": "rod-catch-returns-api",
-  "version": "0.9.0-rc.0",
+  "version": "0.9.0-rc.1",
   "description": "rod catch returns api js",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "test": "jest",
+    "test:integration": "jest .*.integration.spec.js",
+    "test:unit": "jest .*.unit.spec.js",
     "test:coverage": "jest --coverage",
     "lint": "eslint",
     "lint:fix": "npm run lint -- --fix",
