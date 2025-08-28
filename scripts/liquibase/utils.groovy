@@ -1,7 +1,7 @@
 def runLiquibaseAction(action) {
     def envVars = [
         "DATABASE_HOST=${DATABASE_HOST}",
-        "DATABASE_PORT=${DATABASE_PORT}",
+        "DATABASE_PORT=5432",
         "DATABASE_NAME=${DATABASE_NAME}",
         "DATABASE_USERNAME=${DATABASE_USERNAME}",
         "DATABASE_PASSWORD=${DATABASE_PASSWORD}",
