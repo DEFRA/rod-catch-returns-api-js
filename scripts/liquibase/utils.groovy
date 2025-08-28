@@ -3,10 +3,10 @@ def runLiquibaseAction(action, dbEnv) {
 
     def envString = envVars.collect { k, v -> "-e ${k}=${v}" }.join(' ')
 
-    return sh(
-        script: "docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}",
-        returnStdout: false
-    )
+    sh(script: """
+        set +x
+        docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}
+    """, returnStdout: true).trim()
 }
 
 def fetchSecret(secretId, region) {
