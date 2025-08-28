@@ -59,6 +59,7 @@ pipeline {
                         //     returnStdout: true
                         // ).trim()
                         // DATABASE_PORT = 5432
+                        utils.runLiquibaseAction("update-and-tag", [])
 
                         def dbEnv = utils.loadDatabaseEnv(SETTINGS)
 
