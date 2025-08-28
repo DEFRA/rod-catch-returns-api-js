@@ -9,7 +9,6 @@ liquibase_base_cmd="liquibase \
   --defaultSchemaName=public \
   --log-level=severe \
   --show-banner=false \
-  --show-summary=off \
   --changeLogFile=db/changelog/db.changelog-master.xml"
 
 if [ "$ACTION" = "update-and-tag" ]; then
