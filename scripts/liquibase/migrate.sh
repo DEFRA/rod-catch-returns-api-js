@@ -1,13 +1,13 @@
 #!/bin/sh
 
 export FULL_URL="jdbc:postgresql://$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
-echo "Full URL=$FULL_URL"
 
 liquibase_base_cmd="liquibase \
   --url=$FULL_URL \
   --username=$DATABASE_USERNAME \
   --password=$DATABASE_PASSWORD \
   --defaultSchemaName=public \
+  --log-level=severe \
   --changeLogFile=db/changelog/db.changelog-master.xml"
 
 if [ "$ACTION" = "update-and-tag" ]; then

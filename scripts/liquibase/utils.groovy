@@ -6,7 +6,7 @@ def runLiquibaseAction(action, dbEnv) {
     return sh(
         script: "docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}",
         returnStdout: false
-    ).trim()
+    )
 }
 
 def fetchSecret(secretId, region) {
