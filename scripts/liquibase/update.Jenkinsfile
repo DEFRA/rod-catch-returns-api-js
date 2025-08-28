@@ -59,7 +59,7 @@ pipeline {
                             returnStdout: true
                         ).trim()
                         DATABASE_PORT = sh(
-                            script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_port' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
+                            script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/port' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
                             returnStdout: true
                         ).trim()
                         utils.runLiquibaseAction("update-and-tag")
