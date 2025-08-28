@@ -10,6 +10,23 @@ pipeline {
     }
 
     stages {
+        stage('Preparing') {
+            steps {
+                withFolderProperties {
+                    script {
+                        SETTINGS = [:]
+                        SETTINGS.ENVIRONMENT = env.ENVIRONMENT
+                        SETTINGS.LOCATION = env.LOCATION
+                        SETTINGS.SERVICE_CODE = env.SERVICE_CODE
+                        SETTINGS.PARAM_SECRET_PREFIX = "/${SETTINGS.ENVIRONMENT}/${SETTINGS.LOCATION}/${SETTINGS.SERVICE_CODE}/webops/".toLowerCase()
+                        SETTINGS.ACCOUNT_ID = env.ACCOUNT_ID
+                        SETTINGS.ROLE_NAME = env.ROLE_NAME
+                        echo "Running with settings: ${SETTINGS}"
+
+                    }
+                }
+            }
+        }
         stage('Build Liquibase Image') {
             steps {
                 script {
