@@ -40,28 +40,26 @@ pipeline {
 
         stage('Update Database') {
             steps {
-                script {
-                    withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
-                        script {
-                            DATABASE_USERNAME = sh(
-                                script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_user' --region ${AWS_REGION} --query SecretString --output text",
-                                returnStdout: true
-                            ).trim()
-                            DATABASE_PASSWORD = sh(
-                                script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_password' --region ${AWS_REGION} --query SecretString --output text",
-                                returnStdout: true
-                            )
-                            DATABASE_HOST = sh(
-                                script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/hostname' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
-                                returnStdout: true
-                            ).trim()
-                            DATABASE_NAME = sh(
-                                script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_name' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
-                                returnStdout: true
-                            ).trim()
-                        }
+                withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
+                    script {
+                        DATABASE_USERNAME = sh(
+                            script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_user' --region ${AWS_REGION} --query SecretString --output text",
+                            returnStdout: true
+                        ).trim()
+                        DATABASE_PASSWORD = sh(
+                            script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_password' --region ${AWS_REGION} --query SecretString --output text",
+                            returnStdout: true
+                        )
+                        DATABASE_HOST = sh(
+                            script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/hostname' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
+                            returnStdout: true
+                        ).trim()
+                        DATABASE_NAME = sh(
+                            script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_name' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
+                            returnStdout: true
+                        ).trim()
+                        utils.runLiquibaseAction("update-and-tag")
                     }
-                    utils.runLiquibaseAction("update-and-tag")
                 }
             }
         }

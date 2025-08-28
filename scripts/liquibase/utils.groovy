@@ -10,7 +10,7 @@ def runLiquibaseAction(action) {
     def envString = envVars.collect { "-e ${it}" }.join(' ')
 
     return sh(
-        script: "docker run ${envString} ${env.IMAGE_NAME}:${env.TAG}",
+        script: "docker run ${envString} ${IMAGE_NAME}:${TAG}",
         returnStdout: true
     ).trim()
 }
