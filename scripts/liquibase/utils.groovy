@@ -1,11 +1,11 @@
 def runLiquibaseAction(action) {
     def envVars = [
         "DATABASE_HOST=${DATABASE_HOST}",
-        "DATABASE_PORT=5432",
+        "DATABASE_PORT=${DATABASE_PORT}",
         "DATABASE_NAME=${DATABASE_NAME}",
         "DATABASE_USERNAME=${DATABASE_USERNAME}",
-        "ACTION='${action}'",
-        "DATABASE_PASSWORD=${DATABASE_PASSWORD}"
+        "DATABASE_PASSWORD=${DATABASE_PASSWORD}",
+        "ACTION='${action}'"
     ]
     def envString = envVars.collect { "-e ${it}" }.join(' ')
 
