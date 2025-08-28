@@ -7,8 +7,8 @@ liquibase_base_cmd="liquibase \
   --username=$DATABASE_USERNAME \
   --password=$DATABASE_PASSWORD \
   --defaultSchemaName=public \
-  --sql-log-level=SEVERE \
-  --log-level=SEVERE \
+  --sql-log-level=OFF \
+  --log-level=OFF \
   --changeLogFile=db/changelog/db.changelog-master.xml"
 
 if [ "$ACTION" = "update-and-tag" ]; then

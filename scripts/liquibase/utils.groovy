@@ -3,6 +3,8 @@ def runLiquibaseAction(action, dbEnv) {
 
     def envString = envVars.collect { k, v -> "-e ${k}=${v}" }.join(' ')
 
+    echo "Running Liquibase Docker container IMAGE=${env.IMAGE_NAME}:${env.TAG} for ACTION=${action}"
+
     sh(script: """
         set +x
         docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}
