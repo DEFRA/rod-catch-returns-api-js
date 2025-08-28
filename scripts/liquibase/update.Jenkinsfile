@@ -32,7 +32,7 @@ pipeline {
                 script {
                     utils = load "scripts/liquibase/utils.groovy"
                     def buildArgs = "-f Dockerfile.migrate . --no-cache"
-                    withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: AWS_REGION){
+                    withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
                         script {
                         DATABASE_USERNAME = sh(
                             script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_user' --region ${AWS_REGION} --query SecretString --output text",
