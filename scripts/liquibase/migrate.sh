@@ -15,8 +15,7 @@ if [ "$ACTION" = "update-and-tag" ]; then
 
   DATE_TAG=$(date -u +"%Y%m%d-%H%M%S")
   echo "Tagging database with: $DATE_TAG"
-  $liquibase_base_cmd tag $DATE_TAG > /tmp/liquibase.log 2>&1
-  echo "Tagged database with: $DATE_TAG"
+  $liquibase_base_cmd tag $DATE_TAG
 else
   echo "Running Liquibase with action: $ACTION"
   eval "$liquibase_base_cmd $ACTION"
