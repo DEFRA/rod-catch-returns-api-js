@@ -1,18 +1,11 @@
 def runLiquibaseAction(action, dbEnv) {
-    // Always include the action
     def envVars = dbEnv + [ACTION: action]
 
-    // Build docker -e args
     def envString = envVars.collect { k, v -> "-e ${k}=${v}" }.join(' ')
-
-    // Safe log (no password)
-    echo "Running liquibase with IMAGE=${env.IMAGE_NAME}:${env.TAG}, HOST=${dbEnv.DATABASE_HOST}, DB=${dbEnv.DATABASE_NAME}, ACTION=${action}"
-
-    echo "${envString} ${env.IMAGE_NAME}:${env.TAG}"
 
     return sh(
         script: "docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}",
-        returnStdout: true
+        returnStdout: false
     ).trim()
 }
 
