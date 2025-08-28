@@ -49,7 +49,7 @@ pipeline {
                         DATABASE_PASSWORD = sh(
                             script: "aws secretsmanager get-secret-value --secret-id '${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_password' --region ${AWS_REGION} --query SecretString --output text",
                             returnStdout: true
-                        )
+                        ).trim()
                         DATABASE_HOST = sh(
                             script: "aws ssm get-parameter --name '${SETTINGS.PARAM_SECRET_PREFIX}/rds/hostname' --with-decryption --region eu-west-1 --query 'Parameter.Value' --output text",
                             returnStdout: true
