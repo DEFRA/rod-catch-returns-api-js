@@ -59,8 +59,8 @@ pipeline {
                         //     returnStdout: true
                         // ).trim()
                         // DATABASE_PORT = 5432
-                        def envLoader = load "scripts/liquibase/utils.groovy"
-                        def dbEnv = envLoader.loadDatabaseEnv(SETTINGS)
+
+                        def dbEnv = utils.loadDatabaseEnv(SETTINGS)
 
                         utils.runLiquibaseAction("update-and-tag", dbEnv)
                     }
