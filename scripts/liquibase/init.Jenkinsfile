@@ -25,13 +25,12 @@ pipeline {
                 withFolderProperties {
                     script {
                         utils = load "scripts/liquibase/utils.groovy"
-                        SETTINGS = utils.loadAWSSettings(env)
-                        echo "Running with settings: ${SETTINGS}"
-                    }
-                }
-                withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
-                    script {
-                        DB_ENV = utils.loadDatabaseEnv(SETTINGS, AWS_REGION)
+                        def settings = utils.loadAWSSettings(env)
+                        echo "Running with settings: ${settings}"
+
+                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: 'eu-west-1') {
+                            DB_ENV = utils.loadDatabaseEnv(settings, AWS_REGION)
+                        }
                     }
                 }
             }
