@@ -29,6 +29,8 @@ This pipeline allows the database to be rolled back to any available tag recorde
 
 This pipeline is completely driven via environment variables as per the following example.
 
+TODO update this
+
 ```dotenv
 DATABASE_HOST=db.eu-west-1.rds.amazonaws.com
 DATABASE_PORT=5432
