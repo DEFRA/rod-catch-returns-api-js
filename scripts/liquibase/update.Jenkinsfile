@@ -15,12 +15,17 @@ pipeline {
                 withFolderProperties {
                     script {
                         utils = load "scripts/liquibase/utils.groovy"
-                        SETTINGS = utils.loadAWSSettings(env)
-                        echo "Running with settings: ${SETTINGS}"
+                        def settings = utils.loadAWSSettings(env)
+                        echo "Running with settings: ${settings}"
+
+                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: 'eu-west-1') {
+                            DB_ENV = utils.loadDatabaseEnv(settings, AWS_REGION)
+                        }
                     }
                 }
             }
         }
+
         stage('Build Liquibase Image') {
             steps {
                 script {
@@ -31,12 +36,8 @@ pipeline {
         }
         stage('Update Database') {
             steps {
-                withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
-                    script {
-                        def dbEnv = utils.loadDatabaseEnv(SETTINGS, AWS_REGION)
-
-                        utils.runLiquibaseAction("update-and-tag", dbEnv)
-                    }
+                script {
+                   utils.runLiquibaseAction("update-and-tag", DB_ENV)
                 }
             }
         }
