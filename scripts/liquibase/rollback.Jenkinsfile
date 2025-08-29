@@ -29,8 +29,14 @@ pipeline {
                         echo "Running with settings: ${SETTINGS}"
                     }
                 }
+                withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
+                    script {
+                        DB_ENV = utils.loadDatabaseEnv(SETTINGS, AWS_REGION)
+                    }
+                }
             }
         }
+
 
         stage('Build Liquibase Image') {
             steps {
@@ -45,7 +51,7 @@ pipeline {
         stage('Choose target tag') {
             steps {
                 script {
-                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"SELECT DISTINCT tag FROM databasechangelog WHERE tag IS NOT NULL;\"")
+                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"SELECT DISTINCT tag FROM databasechangelog WHERE tag IS NOT NULL;\"", DB_ENV)
 
                     echo "Raw tags: ${rawTags}"
 
@@ -80,12 +86,8 @@ pipeline {
 
         stage('Rolling back database schema') {
             steps {
-                withAWS(role: SETTINGS.ROLE_NAME, roleAccount:SETTINGS.ACCOUNT_ID, region: 'eu-west-1'){
-                    script {
-                        def dbEnv = utils.loadDatabaseEnv(SETTINGS, AWS_REGION)
-
-                        utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}", dbEnv)
-                    }
+                script {
+                    utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}", DB_ENV)
                 }
             }
         }
