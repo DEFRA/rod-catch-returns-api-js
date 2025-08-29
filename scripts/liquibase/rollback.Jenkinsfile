@@ -84,7 +84,7 @@ pipeline {
                     script {
                         def dbEnv = utils.loadDatabaseEnv(SETTINGS, AWS_REGION)
 
-                        utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}")
+                        utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}", dbEnv)
                     }
                 }
             }
