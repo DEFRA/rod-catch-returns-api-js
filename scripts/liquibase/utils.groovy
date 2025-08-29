@@ -1,5 +1,5 @@
 def runLiquibaseAction(action, dbEnv) {
-    def envVars = dbEnv
+    def envVars = dbEnv + [ACTION: "'${action}'"]
 
     def envString = envVars.collect { k, v -> "-e ${k}=${v}" }.join(' ')
 
@@ -8,7 +8,7 @@ def runLiquibaseAction(action, dbEnv) {
 
     // TODO add `set +x` back in
     sh(script: """    
-        docker run --rm ${envString} '${action}' ${env.IMAGE_NAME}:${env.TAG}
+        docker run --rm ${envString} ${env.IMAGE_NAME}:${env.TAG}
     """, returnStdout: true).trim()
 }
 

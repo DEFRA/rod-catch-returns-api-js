@@ -51,7 +51,7 @@ pipeline {
         stage('Choose target tag') {
             steps {
                 script {
-                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"select distinct tag from databasechangelog where tag is not null;\"", DB_ENV)
+                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"SELECT DISTINCT tag FROM databasechangelog WHERE tag IS NOT NULL;\"", DB_ENV)
 
                     echo "Raw tags: ${rawTags}"
 
