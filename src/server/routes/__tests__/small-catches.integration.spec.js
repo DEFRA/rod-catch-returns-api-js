@@ -865,5 +865,42 @@ describe('small-catches.integration', () => {
       expect(result.statusCode).toBe(404)
       expect(result.payload.length).toBe(0)
     })
+
+    it('should return a 409 and empty body if if there exists a small catch for the same month and activity', async () => {
+      // create submission and 2 activities
+      const submission = await createSubmission(
+        server,
+        CONTACT_IDENTIFIER_UPDATE_SMALL_CATCH_ACTIVITY
+      )
+      const submissionId = JSON.parse(submission.payload).id
+      const activity1 = await createActivity(server, submissionId)
+      const activityId1 = JSON.parse(activity1.payload).id
+      const activity2 = await createActivity(server, submissionId, {
+        river: 'rivers/2'
+      })
+      const activityId2 = JSON.parse(activity2.payload).id
+
+      // create small catch with activityId1
+      await createSmallCatch(server, activityId1, { month: 'JANUARY' })
+
+      // create small catch with activityId2 (same month as the previous catch, but a different river)
+      const createdSmallCatch2 = await createSmallCatch(server, activityId2, {
+        month: 'JANUARY'
+      })
+      const smallCatchId2 = JSON.parse(createdSmallCatch2.payload).id
+
+      // try to update createdSmallCatch2 with activityId1
+      const result = await server.inject({
+        method: 'PUT',
+        url: `/api/smallCatches/${smallCatchId2}/activity`,
+        payload: `activities/${activityId1}`,
+        headers: {
+          'content-type': 'text/uri-list'
+        }
+      })
+
+      expect(result.statusCode).toBe(409)
+      expect(result.payload.length).toBe(0)
+    })
   })
 })

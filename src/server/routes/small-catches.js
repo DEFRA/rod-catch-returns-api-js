@@ -13,6 +13,7 @@ import {
 } from '../../mappers/small-catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
 import { extractActivityId } from '../../utils/entity-utils.js'
+import { isDuplicateSmallCatch } from '../../services/small-catch.service.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { sequelize } from '../../services/database.service.js'
@@ -351,6 +352,15 @@ export default [
               `Activity not found for small catch:${smallCatchId}`,
               h
             )
+          }
+
+          const duplicateSmallCatch = await isDuplicateSmallCatch(
+            activityId,
+            foundSmallCatch.month
+          )
+
+          if (duplicateSmallCatch) {
+            return h.response().code(StatusCodes.CONFLICT)
           }
 
           const updatedSmallCatch = await foundSmallCatch.update({
