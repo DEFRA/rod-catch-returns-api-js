@@ -25,7 +25,7 @@ def fetchParameter(paramName, region) {
     ).trim()
 }
 
-def loadDatabaseEnv(SETTINGS, region) {
+def loadDatabaseEnv(paramSecretPrefix, region) {
     return [
         DATABASE_USERNAME: fetchSecret("${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_user", region),
         DATABASE_PASSWORD: fetchSecret("${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_password", region),
@@ -43,6 +43,7 @@ def loadAWSSettings(env) {
     SETTINGS.PARAM_SECRET_PREFIX = "/${SETTINGS.ENVIRONMENT}/${SETTINGS.LOCATION}/${SETTINGS.SERVICE_CODE}/webops".toLowerCase()
     SETTINGS.ACCOUNT_ID = env.ACCOUNT_ID
     SETTINGS.ROLE_NAME = env.ROLE_NAME
+    SETTINGS.REGION = env.REGION
 
     echo "Running with settings: ${SETTINGS}"
 
