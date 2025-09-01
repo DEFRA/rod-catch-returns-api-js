@@ -27,10 +27,10 @@ def fetchParameter(paramName, region) {
 
 def loadDatabaseEnv(paramSecretPrefix, region) {
     return [
-        DATABASE_USERNAME: fetchSecret("${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_user", region),
-        DATABASE_PASSWORD: fetchSecret("${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_password", region),
-        DATABASE_HOST    : fetchParameter("${SETTINGS.PARAM_SECRET_PREFIX}/rds/hostname", region),
-        DATABASE_NAME    : fetchParameter("${SETTINGS.PARAM_SECRET_PREFIX}/rds/db_name", region),
+        DATABASE_USERNAME: fetchSecret("${paramSecretPrefix}/rds/db_user", region),
+        DATABASE_PASSWORD: fetchSecret("${paramSecretPrefix}/rds/db_password", region),
+        DATABASE_HOST    : fetchParameter("${paramSecretPrefix}/rds/hostname", region),
+        DATABASE_NAME    : fetchParameter("${paramSecretPrefix}/rds/db_name", region),
         DATABASE_PORT    : 5432
     ]
 }
