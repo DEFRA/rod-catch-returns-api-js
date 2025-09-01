@@ -18,8 +18,8 @@ pipeline {
                         def settings = utils.loadAWSSettings(env)
                         echo "Running with settings: ${settings}"
 
-                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: AWS_REGION) {
-                            DB_ENV = utils.loadDatabaseEnv(settings, AWS_REGION)
+                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: REGION) {
+                            DB_ENV = utils.loadDatabaseEnv(settings, REGION)
                         }
                     }
                 }
