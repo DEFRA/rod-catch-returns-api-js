@@ -19,6 +19,45 @@ import logger from '../../utils/logger-utils.js'
 
 export default [
   {
+    method: 'GET',
+    path: '/grilseProbabilities',
+    options: {
+      /**
+       * Retrieve all the species in the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Species}
+       */
+      handler: async (_request, h) => {
+        try {
+          const foundGrilseProbabilities = await GrilseProbability.findAll()
+
+          const mappedGrilseProbabilities = foundGrilseProbabilities.map(
+            (grilseProbability) => grilseProbability
+          )
+
+          return h
+            .response({
+              _embedded: {
+                grilseProbabilities: mappedGrilseProbabilities
+              }
+            })
+            .code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error fetching grilse probabilities',
+            error,
+            h
+          )
+        }
+      },
+      description: 'Retrieve all the grilse probabilities in the database',
+      notes: 'Retrieve all the grilse probabilities in the database',
+      tags: ['api', 'grilseProbabilities']
+    }
+  },
+  {
     method: 'POST',
     path: '/reporting/reference/grilse-probabilities/{season}/{gate}',
     options: {
