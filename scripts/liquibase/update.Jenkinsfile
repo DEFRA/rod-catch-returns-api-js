@@ -10,21 +10,34 @@ pipeline {
     }
 
     stages {
-        stage('Build Liquibase Image') {
+        stage('Preparing') {
             steps {
-                script {
-                    utils = load "scripts/liquibase/utils.groovy"
-                    def buildArgs = "-f Dockerfile.migrate . --no-cache"
-                    docker.build("${IMAGE_NAME}:${TAG}", buildArgs)
-                   
+                withFolderProperties {
+                    script {
+                        utils = load "scripts/liquibase/utils.groovy"
+                        def settings = utils.loadAWSSettings(env)
+                        echo "Running with settings: ${settings}"
+
+                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: settings.REGION) {
+                            DB_ENV = utils.loadDatabaseEnv(settings.PARAM_SECRET_PREFIX, settings.REGION)
+                        }
+                    }
                 }
             }
         }
 
+        stage('Build Liquibase Image') {
+            steps {
+                script {
+                    def buildArgs = "-f Dockerfile.migrate . --no-cache"
+                    docker.build("${IMAGE_NAME}:${TAG}", buildArgs)
+                }
+            }
+        }
         stage('Update Database') {
             steps {
                 script {
-                    utils.runLiquibaseAction("update-and-tag")
+                   utils.runLiquibaseAction("update-and-tag", DB_ENV)
                 }
             }
         }

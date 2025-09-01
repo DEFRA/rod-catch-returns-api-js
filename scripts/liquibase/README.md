@@ -27,12 +27,13 @@ This pipeline allows the database to be rolled back to any available tag recorde
 
 ## Environment variables
 
-This pipeline is completely driven via environment variables as per the following example.
+This pipeline is completely driven via environment variables, the database variables are fetched from ssm and parameter store in AWS. Below are the required AWS variables to enable this
 
 ```dotenv
-DATABASE_HOST=db.eu-west-1.rds.amazonaws.com
-DATABASE_PORT=5432
-DATABASE_NAME=db_name
-DATABASE_USERNAME=db_username
-DATABASE_PASSWORD=db_password
+ENVIRONMENT=DEV
+LOCATION=IRE
+SERVICE_CODE=RCR
+ACCOUNT_ID=123456
+ROLE_NAME=role
+REGION=eu-west-1
 ```
