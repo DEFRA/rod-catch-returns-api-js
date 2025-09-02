@@ -16,6 +16,7 @@ import { GrilseProbability } from '../../entities/index.js'
 import { GrilseValidationError } from '../../models/grilse-validation-error.model.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
+import { mapGrilseProbabilityToResponse } from '../../mappers/grilse-probabilities.mapper.js'
 
 export default [
   {
@@ -23,18 +24,19 @@ export default [
     path: '/grilseProbabilities',
     options: {
       /**
-       * Retrieve all the species in the database
+       * Retrieve all the grilse probabilities in the database
        *
        * @param {import('@hapi/hapi').Request request - The Hapi request object
        * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
-       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link Species}
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link GrilseProbability}
        */
       handler: async (_request, h) => {
         try {
           const foundGrilseProbabilities = await GrilseProbability.findAll()
 
           const mappedGrilseProbabilities = foundGrilseProbabilities.map(
-            (grilseProbability) => grilseProbability
+            (grilseProbability) =>
+              mapGrilseProbabilityToResponse(grilseProbability)
           )
 
           return h

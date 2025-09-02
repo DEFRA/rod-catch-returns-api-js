@@ -6,24 +6,30 @@ import { getBaseUrl } from '../utils/url-utils.js'
  * @param {import('../entities/index.js').GrilseProbability} grilseProbability - The Grilse GrilseProbabilityProbability entity
  * @returns {Object} - The mapped response object with HATEOAS links
  */
-export function mapGrilseProbabilityToResponse(species) {
-  const { id, name, smallCatchMass, updatedAt, createdAt } = species
+export function mapGrilseProbabilityToResponse(grilseProbability) {
+  const { id, season, month, massInPounds, probability, updatedAt, createdAt } =
+    grilseProbability
 
   const baseUrl = getBaseUrl()
-  const speciesUrl = `${baseUrl}/api/species/${id}`
+  const grilseProbabilitiesUrl = `${baseUrl}/api/grilseProbabilities/${id}`
 
   return {
     id,
-    name,
-    smallCatchMass: parseFloat(smallCatchMass),
+    season,
+    month,
+    massInPounds,
+    probability,
     updatedAt,
     createdAt,
     _links: {
       self: {
-        href: speciesUrl
+        href: grilseProbabilitiesUrl
       },
-      species: {
-        href: speciesUrl
+      grilseProbability: {
+        href: grilseProbabilitiesUrl
+      },
+      gate: {
+        href: `${grilseProbabilitiesUrl}/gate`
       }
     }
   }
