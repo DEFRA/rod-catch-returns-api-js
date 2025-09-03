@@ -60,7 +60,13 @@ export default [
           )
 
           if (createCrmActivityResponse.ErrorMessage) {
-            logger.error(
+            const logFn =
+              createCrmActivityResponse.ErrorMessage ===
+              'RCR Activity Already Exists For the Given Contact and Activity Status'
+                ? logger.info
+                : logger.error
+
+            logFn(
               `failed to create activity in CRM for ${contactId}`,
               createCrmActivityResponse.ErrorMessage
             )
