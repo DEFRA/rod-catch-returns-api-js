@@ -29,6 +29,9 @@ const [
     options: { handler: getAllGrilseProbabilitiesHandler }
   },
   {
+    options: { handler: deleteGrilseProbabilityByIdHandler }
+  },
+  {
     options: { handler: uploadGrilseProbabilitiesHandler }
   },
   {
@@ -111,6 +114,73 @@ describe('grilse-probabilities.unit', () => {
       )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
+  describe('DELETE /grilseProbabilities/{grilseProbabilityId}', () => {
+    const getDeleteRequest = (grilseProbabilityId) =>
+      getServerDetails({ params: { grilseProbabilityId } })
+
+    it('should return a 204 status code on successful deletion', async () => {
+      GrilseProbability.destroy.mockResolvedValueOnce(1)
+
+      const result = await deleteGrilseProbabilityByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(204)
+    })
+
+    it('should return an empty response on successful deletion', async () => {
+      GrilseProbability.destroy.mockResolvedValueOnce(1)
+
+      const result = await deleteGrilseProbabilityByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toBeUndefined()
+    })
+
+    it('should call GrilseProbability.destroy with the correct parameters', async () => {
+      const grilseProbabilityId = '3'
+      GrilseProbability.destroy.mockResolvedValueOnce(1)
+
+      await deleteGrilseProbabilityByIdHandler(
+        getDeleteRequest(grilseProbabilityId),
+        getMockResponseToolkit()
+      )
+
+      expect(GrilseProbability.destroy).toHaveBeenCalledWith({
+        where: { id: grilseProbabilityId }
+      })
+    })
+
+    it('should return a 404 status code if the GrilseProbability does not exist', async () => {
+      GrilseProbability.destroy.mockResolvedValueOnce(0)
+
+      const result = await deleteGrilseProbabilityByIdHandler(
+        getDeleteRequest('3'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(404)
+    })
+
+    it('should call handleServerError if an error occurs during GrilseProbability.destroy', async () => {
+      const error = new Error('Database error')
+
+      GrilseProbability.destroy.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await deleteGrilseProbabilityByIdHandler(getDeleteRequest('3'), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error deleting grilse probability',
+        error,
+        h
+      )
     })
   })
 

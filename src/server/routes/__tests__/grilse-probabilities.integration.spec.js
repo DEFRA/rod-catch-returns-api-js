@@ -92,6 +92,51 @@ describe('grilse-probabilities.integration', () => {
     })
   })
 
+  describe('DELETE /api/grilseProbabilities/{grilseProbabilityId}', () => {
+    beforeEach(async () => {
+      await deleteAllGrilseProbabilities()
+    })
+
+    it('should return a 204 status code if the GrilseProbability is deleted', async () => {
+      // Upload grilse probabilities file
+      const fileBuffer = loadFixture('valid-grilse-data-1-datapoint.csv')
+      const fileUploadresult = await uploadFile(
+        server,
+        '/api/reporting/reference/grilse-probabilities/2024/1',
+        fileBuffer
+      )
+      expect(fileUploadresult.statusCode).toBe(201)
+
+      // ensure they are all returned
+      const result = await server.inject({
+        method: 'GET',
+        url: '/api/grilseProbabilities'
+      })
+
+      // get the first grilseProbability in the list
+      const grilseProbabilityToDelete = JSON.parse(result.payload)._embedded
+        .grilseProbabilities[0]
+
+      const deletedGrilseProbability = await server.inject({
+        method: 'DELETE',
+        url: `/api/grilseProbabilities/${grilseProbabilityToDelete.id}`
+      })
+
+      expect(deletedGrilseProbability.statusCode).toBe(204)
+      expect(deletedGrilseProbability.payload.length).toBe(0)
+    })
+
+    it('should return a 404 status code if the GrilseProbability does not exist', async () => {
+      const result = await server.inject({
+        method: 'DELETE',
+        url: '/api/grilseProbabilities/0'
+      })
+
+      expect(result.statusCode).toBe(404)
+      expect(result.payload.length).toBe(0)
+    })
+  })
+
   describe('POST /api/reporting/reference/grilse-probabilities/{season}/{gate}', () => {
     beforeEach(async () => {
       await deleteAllGrilseProbabilities()
