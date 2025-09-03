@@ -97,7 +97,7 @@ export default [
           return h.response().code(StatusCodes.NO_CONTENT)
         } catch (error) {
           return handleServerError(
-            'Error deleteing grilse probability',
+            'Error deleting grilse probability',
             error,
             h
           )
