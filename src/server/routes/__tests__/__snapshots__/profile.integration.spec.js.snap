@@ -209,6 +209,10 @@ exports[`profile.integration GET /api/profile should return a list of all the ur
     },
     {
       "method": "DELETE",
+      "path": "/api/grilseProbabilities/{grilseProbabilityId}",
+    },
+    {
+      "method": "DELETE",
       "path": "/api/smallCatches/{smallCatchId}",
     },
     {
