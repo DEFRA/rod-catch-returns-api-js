@@ -9,7 +9,11 @@ import {
 } from '../services/activities.service.js'
 import Joi from 'joi'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
+import { isLeapYear } from '../utils/date-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
+
+const MAX_DAYS_LEAP_YEAR = 168
+const MAX_DAYS_NON_LEAP_YEAR = 167
 
 const validateDaysFished = (daysFishedOther, helper) => {
   const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
@@ -37,7 +41,9 @@ const validateDaysFishedWithMandatoryRelease = async (
     return helper.message('ACTIVITY_SUBMISSION_NOT_FOUND')
   }
 
-  const maxDaysFished = submission.season % 4 === 0 ? 168 : 167
+  const maxDaysFished = isLeapYear(submission.season)
+    ? MAX_DAYS_LEAP_YEAR
+    : MAX_DAYS_NON_LEAP_YEAR
 
   if (value > maxDaysFished) {
     return helper.message(

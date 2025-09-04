@@ -11,12 +11,14 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
+import { isDuplicateSmallCatch } from '../../../services/small-catch.service.js'
 import routes from '../small-catches.js'
 import { sequelize } from '../../../services/database.service.js'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/small-catch.service.js')
 jest.mock('../../../services/database.service.js', () => ({
   sequelize: {
     transaction: jest.fn(),
@@ -876,6 +878,7 @@ describe('smallCatches.unit', () => {
     beforeEach(() => {
       SmallCatch.findByPk.mockResolvedValue(getFoundSmallCatch())
       Activity.findByPk.mockResolvedValue(getFoundActivity())
+      isDuplicateSmallCatch.mockResolvedValue(false)
     })
 
     afterEach(() => {
@@ -923,6 +926,17 @@ describe('smallCatches.unit', () => {
       )
 
       expect(result).toBe(NOT_FOUND_SYMBOL)
+    })
+
+    it('should return a 409 status code if there exists a small catch for the same month and activity', async () => {
+      isDuplicateSmallCatch.mockResolvedValue(true)
+
+      const result = await putSmallCatchActivityHandler(
+        getSmallCatchRequest('activities/101'),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(409)
     })
 
     it('should return a 404 status code if the activity does not exist', async () => {

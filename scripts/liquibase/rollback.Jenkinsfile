@@ -20,10 +20,26 @@ pipeline {
             }
         }
 
+        stage('Preparing') {
+            steps {
+                withFolderProperties {
+                    script {
+                        utils = load "scripts/liquibase/utils.groovy"
+                        def settings = utils.loadAWSSettings(env)
+                        echo "Running with settings: ${settings}"
+
+                        withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: settings.REGION) {
+                            DB_ENV = utils.loadDatabaseEnv(settings.PARAM_SECRET_PREFIX, settings.REGION)
+                        }
+                    }
+                }
+            }
+        }
+
+
         stage('Build Liquibase Image') {
             steps {
                 script {
-                    utils = load "scripts/liquibase/utils.groovy"
                     def buildArgs = "-f Dockerfile.migrate . --no-cache"
                     docker.build("${IMAGE_NAME}:${TAG}", buildArgs)
                    
@@ -34,7 +50,7 @@ pipeline {
         stage('Choose target tag') {
             steps {
                 script {
-                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"SELECT DISTINCT tag FROM databasechangelog WHERE tag IS NOT NULL;\"")
+                    def rawTags = utils.runLiquibaseAction("execute-sql --sql=\"SELECT DISTINCT tag FROM databasechangelog WHERE tag IS NOT NULL;\"", DB_ENV)
 
                     echo "Raw tags: ${rawTags}"
 
@@ -70,7 +86,7 @@ pipeline {
         stage('Rolling back database schema') {
             steps {
                 script {
-                    utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}")
+                    utils.runLiquibaseAction("rollback --tag=${CHOSEN_TAG}", DB_ENV)
                 }
             }
         }

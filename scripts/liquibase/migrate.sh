@@ -1,7 +1,6 @@
 #!/bin/sh
 
 export FULL_URL="jdbc:postgresql://$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
-echo "Full URL=$FULL_URL"
 
 liquibase_base_cmd="liquibase \
   --url=$FULL_URL \
