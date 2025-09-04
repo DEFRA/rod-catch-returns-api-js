@@ -26,6 +26,9 @@ jest.mock('../../../utils/server-utils.js')
 
 const [
   {
+    options: { handler: getAllGrilseProbabilitiesHandler }
+  },
+  {
     options: { handler: uploadGrilseProbabilitiesHandler }
   },
   {
@@ -40,6 +43,77 @@ handleNotFound.mockReturnValue(NOT_FOUND_SYMBOL)
 handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('grilse-probabilities.unit', () => {
+  describe('GET /grilseProbabilities', () => {
+    const getGrilseProbabilitiesData = () => [
+      {
+        id: '2',
+        season: 2025,
+        month: 4,
+        massInPounds: 6,
+        probability: '1.0000000000000000',
+        createdAt: '2025-09-01T08:57:34.479Z',
+        updatedAt: '2025-09-01T08:57:34.479Z',
+        version: '2025-09-01T08:57:34.479Z',
+        gate_id: '2'
+      },
+      {
+        id: '2',
+        season: 2025,
+        month: 5,
+        massInPounds: 6,
+        probability: '0.9920000000000000',
+        createdAt: '2025-09-01T08:57:34.479Z',
+        updatedAt: '2025-09-01T08:57:34.479Z',
+        version: '2025-09-01T08:57:34.479Z',
+        gate_id: '2'
+      }
+    ]
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return a 200 status code and the species if the call to fetch all species is successful', async () => {
+      GrilseProbability.findAll.mockResolvedValueOnce(
+        getGrilseProbabilitiesData()
+      )
+
+      const result = await getAllGrilseProbabilitiesHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.payload).toMatchSnapshot()
+      expect(result.statusCode).toBe(200)
+    })
+
+    it('should call handleServerError if an error occurs while fetching species', async () => {
+      const error = new Error('Database error')
+      GrilseProbability.findAll.mockRejectedValueOnce(error)
+      const h = getMockResponseToolkit()
+
+      await getAllGrilseProbabilitiesHandler(getServerDetails(), h)
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error fetching grilse probabilities',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response if an error occurs while fetching species', async () => {
+      const error = new Error('Database error')
+      GrilseProbability.findAll.mockRejectedValueOnce(error)
+
+      const result = await getAllGrilseProbabilitiesHandler(
+        getServerDetails(),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+  })
+
   describe('POST /reporting/reference/grilse-probabilities/{season}/{gate}', () => {
     const mockCsvData = 'Weight,January,February\n10,0.2,0.3\n15,0.5,0.6'
     const getMockRequest = ({
