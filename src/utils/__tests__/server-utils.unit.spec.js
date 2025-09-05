@@ -1,4 +1,9 @@
-import { handleNotFound, handleServerError } from '../server-utils.js'
+import {
+  handleNotFound,
+  handleServerError,
+  logRequest,
+  logResponse
+} from '../server-utils.js'
 import { getMockResponseToolkit } from '../../test-utils/server-test-utils.js'
 import logger from '../logger-utils.js'
 
@@ -48,6 +53,49 @@ describe('logger-utils.unit', () => {
         error: 'Server error'
       })
       expect(result.statusCode).toBe(500)
+    })
+  })
+
+  describe('logRequest', () => {
+    const getMockRequest = () => ({
+      method: 'get',
+      path: '/test'
+    })
+
+    it('should log the request', () => {
+      logRequest(getMockRequest(), getMockResponseToolkit())
+
+      expect(logger.info).toHaveBeenCalledWith('GET /test')
+    })
+
+    it('should return h.continue', () => {
+      const h = getMockResponseToolkit()
+      const result = logRequest(getMockRequest(), h)
+
+      expect(result).toBe(h.continue)
+    })
+  })
+
+  describe('logResponse', () => {
+    const getMockRequest = () => ({
+      method: 'get',
+      path: '/test',
+      response: {
+        statusCode: 200
+      }
+    })
+
+    it('should log the response', () => {
+      logResponse(getMockRequest(), getMockResponseToolkit())
+
+      expect(logger.info).toHaveBeenCalledWith('GET /test -> 200')
+    })
+
+    it('should return h.continue', () => {
+      const h = getMockResponseToolkit()
+      const result = logResponse(getMockRequest(), h)
+
+      expect(result).toBe(h.continue)
     })
   })
 })
