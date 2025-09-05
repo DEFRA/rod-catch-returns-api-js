@@ -12,3 +12,15 @@ export const handleServerError = (loggerMessage, error, h) => {
     .response({ error: loggerMessage })
     .code(StatusCodes.INTERNAL_SERVER_ERROR)
 }
+
+export const logRequest = (request, h) => {
+  logger.info(`${request.method.toUpperCase()} ${request.path}`)
+  return h.continue
+}
+
+export const logResponse = (request, h) => {
+  logger.info(
+    `${request.method.toUpperCase()} ${request.path} -> ${request.response?.statusCode}`
+  )
+  return h.continue
+}
