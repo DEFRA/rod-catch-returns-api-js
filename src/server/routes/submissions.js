@@ -16,6 +16,7 @@ import {
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
+import { isSubmissionExistsByUserAndSeason } from '../../services/submissions.service.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
@@ -46,6 +47,21 @@ export default [
             source,
             reportingExclude,
             version: new Date()
+          }
+
+          logger.info('Checking if submission exists', submissionData)
+
+          const foundSubmission = await isSubmissionExistsByUserAndSeason(
+            contactId,
+            season
+          )
+
+          if (foundSubmission) {
+            const errorMessage = `Submission already exists for contact=${contactId} and season=${season}`
+            logger.error(errorMessage)
+            return h
+              .response({ error: errorMessage })
+              .code(StatusCodes.CONFLICT)
           }
 
           logger.info('Creating submission with details', submissionData)

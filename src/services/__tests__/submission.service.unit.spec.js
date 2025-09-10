@@ -2,13 +2,14 @@ import { Catch, Submission } from '../../entities/index.js'
 import {
   getSubmission,
   getSubmissionByCatchId,
-  isSubmissionExists
+  isSubmissionExistsById,
+  isSubmissionExistsByUserAndSeason
 } from '../submissions.service.js'
 
 jest.mock('../../entities/index.js')
 
 describe('submission.service.unit', () => {
-  describe('isSubmissionExists', () => {
+  describe('isSubmissionExistsById', () => {
     const mockSubmissionId = 'abc123'
 
     afterEach(() => {
@@ -18,7 +19,7 @@ describe('submission.service.unit', () => {
     it('should return true if submission exists', async () => {
       Submission.count.mockResolvedValue(1)
 
-      const result = await isSubmissionExists(mockSubmissionId)
+      const result = await isSubmissionExistsById(mockSubmissionId)
 
       expect(result).toBe(true)
     })
@@ -26,7 +27,7 @@ describe('submission.service.unit', () => {
     it('should return false if submission does not exist', async () => {
       Submission.count.mockResolvedValue(0)
 
-      const result = await isSubmissionExists(mockSubmissionId)
+      const result = await isSubmissionExistsById(mockSubmissionId)
 
       expect(result).toBe(false)
     })
@@ -34,9 +35,48 @@ describe('submission.service.unit', () => {
     it('should handle errors thrown by Submission.count', async () => {
       Submission.count.mockRejectedValue(new Error('Database error'))
 
-      await expect(isSubmissionExists(mockSubmissionId)).rejects.toThrow(
+      await expect(isSubmissionExistsById(mockSubmissionId)).rejects.toThrow(
         'Database error'
       )
+    })
+  })
+
+  describe('isSubmissionExistsByUserAndSeason', () => {
+    const mockContactId = 'abc123'
+    const mockSeason = '2024'
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return true if submission exists', async () => {
+      Submission.count.mockResolvedValue(1)
+
+      const result = await isSubmissionExistsByUserAndSeason(
+        mockContactId,
+        mockSeason
+      )
+
+      expect(result).toBe(true)
+    })
+
+    it('should return false if submission does not exist', async () => {
+      Submission.count.mockResolvedValue(0)
+
+      const result = await isSubmissionExistsByUserAndSeason(
+        mockContactId,
+        mockSeason
+      )
+
+      expect(result).toBe(false)
+    })
+
+    it('should handle errors thrown by Submission.count', async () => {
+      Submission.count.mockRejectedValue(new Error('Database error'))
+
+      await expect(
+        isSubmissionExistsByUserAndSeason(mockContactId, mockSeason)
+      ).rejects.toThrow('Database error')
     })
   })
 
