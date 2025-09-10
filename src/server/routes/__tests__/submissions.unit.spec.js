@@ -18,6 +18,7 @@ import {
   handleServerError
 } from '../../../utils/server-utils.js'
 import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { isSubmissionExistsByUserAndSeason } from '../../../services/submissions.service.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 import { sequelize } from '../../../services/database.service.js'
@@ -41,6 +42,7 @@ jest.mock('../../../services/database.service.js', () => ({
     literal: jest.fn()
   }
 }))
+jest.mock('../../../services/submissions.service.js')
 
 const [
   {
@@ -117,6 +119,7 @@ describe('submissions.unit', () => {
     })
 
     it('should return a 201 status code if the submission is created successfully', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
 
@@ -129,6 +132,7 @@ describe('submissions.unit', () => {
     })
 
     it('should return the created submission in the response body', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       createActivityCRM.mockResolvedValueOnce(getCreateActivityResponse())
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
 
@@ -162,6 +166,7 @@ describe('submissions.unit', () => {
     })
 
     it('should call handleServerError if submission creation fails', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
@@ -177,6 +182,7 @@ describe('submissions.unit', () => {
     })
 
     it('should return a error response if an error occurs while creating submission', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       const error = new Error('Database error')
       Submission.create.mockRejectedValueOnce(error)
 
@@ -189,6 +195,7 @@ describe('submissions.unit', () => {
     })
 
     it('should log an error but still return 201 when the call to create an activity in CRM returns an ErrorMessage', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       createActivityCRM.mockResolvedValue({
         '@odata.context':
@@ -212,6 +219,7 @@ describe('submissions.unit', () => {
     })
 
     it('should call handleServerError when the call to create an activity in CRM returns an error', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
@@ -227,6 +235,7 @@ describe('submissions.unit', () => {
     })
 
     it('should return an error response when the call to create an activity in CRM returns an error', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
       createActivityCRM.mockRejectedValueOnce(error)
@@ -237,6 +246,21 @@ describe('submissions.unit', () => {
       )
 
       expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should return a 409 and error message if a submission exists for a given contactId and season', async () => {
+      isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(true)
+
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(409)
+      expect(result.payload).toStrictEqual({
+        error:
+          'Submission already exists for contact=contact-identifier-111 and season=2024'
+      })
     })
   })
 

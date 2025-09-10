@@ -6,8 +6,20 @@ import { Activity, Catch, Submission } from '../entities/index.js'
  * @param {number|string} submissionId - The ID of the submission to check.
  * @returns {Promise<boolean>} - A promise that resolves to `true` if the submission exists, otherwise `false`.
  */
-export const isSubmissionExists = async (submissionId) => {
+export const isSubmissionExistsById = async (submissionId) => {
   const count = await Submission.count({ where: { id: submissionId } })
+  return count > 0
+}
+
+/**
+ * Checks if a submission exists in the database by the contactId and season.
+ *
+ * @param {string} contactId - The ID of the contact retrieved from CRM
+ * @param {string} season - The season of the submission
+ * @returns {Promise<boolean>} - A promise that resolves to `true` if the submission exists, otherwise `false`.
+ */
+export const isSubmissionExistsByUserAndSeason = async (contactId, season) => {
+  const count = await Submission.count({ where: { contactId, season } })
   return count > 0
 }
 
