@@ -57,9 +57,14 @@ describe('logger-utils.unit', () => {
   })
 
   describe('logRequest', () => {
-    const getMockRequest = () => ({
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    const getMockRequest = (overrides = {}) => ({
       method: 'get',
-      path: '/test'
+      path: '/test',
+      ...overrides
     })
 
     it('should log the request', () => {
@@ -74,15 +79,30 @@ describe('logger-utils.unit', () => {
 
       expect(result).toBe(h.continue)
     })
+
+    it('should not log if path includes /service-status', () => {
+      const request = getMockRequest({
+        path: '/service-status'
+      })
+
+      logRequest(request, getMockResponseToolkit())
+
+      expect(logger.info).not.toHaveBeenCalled()
+    })
   })
 
   describe('logResponse', () => {
-    const getMockRequest = () => ({
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    const getMockRequest = (overrides = {}) => ({
       method: 'get',
       path: '/test',
       response: {
         statusCode: 200
-      }
+      },
+      ...overrides
     })
 
     it('should log the response', () => {
@@ -96,6 +116,16 @@ describe('logger-utils.unit', () => {
       const result = logResponse(getMockRequest(), h)
 
       expect(result).toBe(h.continue)
+    })
+
+    it('should not log if path includes /service-status', () => {
+      const request = getMockRequest({
+        path: '/service-status'
+      })
+
+      logResponse(request, getMockResponseToolkit())
+
+      expect(logger.info).not.toHaveBeenCalled()
     })
   })
 })
