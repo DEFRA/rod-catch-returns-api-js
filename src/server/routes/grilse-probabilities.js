@@ -16,8 +16,49 @@ import { GrilseProbability } from '../../entities/index.js'
 import { GrilseValidationError } from '../../models/grilse-validation-error.model.js'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger-utils.js'
+import { mapGrilseProbabilityToResponse } from '../../mappers/grilse-probabilities.mapper.js'
 
 export default [
+  {
+    method: 'GET',
+    path: '/grilseProbabilities',
+    options: {
+      /**
+       * Retrieve all the grilse probabilities in the database
+       *
+       * @param {import('@hapi/hapi').Request request - The Hapi request object
+       * @param {import('@hapi/hapi').ResponseToolkit} h - The Hapi response toolkit
+       * @returns {Promise<import('@hapi/hapi').ResponseObject>} - A response containing the target {@link GrilseProbability}
+       */
+      handler: async (_request, h) => {
+        try {
+          const foundGrilseProbabilities = await GrilseProbability.findAll()
+
+          const mappedGrilseProbabilities = foundGrilseProbabilities.map(
+            (grilseProbability) =>
+              mapGrilseProbabilityToResponse(grilseProbability)
+          )
+
+          return h
+            .response({
+              _embedded: {
+                grilseProbabilities: mappedGrilseProbabilities
+              }
+            })
+            .code(StatusCodes.OK)
+        } catch (error) {
+          return handleServerError(
+            'Error fetching grilse probabilities',
+            error,
+            h
+          )
+        }
+      },
+      description: 'Retrieve all the grilse probabilities in the database',
+      notes: 'Retrieve all the grilse probabilities in the database',
+      tags: ['api', 'grilseProbabilities']
+    }
+  },
   {
     method: 'POST',
     path: '/reporting/reference/grilse-probabilities/{season}/{gate}',
