@@ -211,6 +211,30 @@ describe('submissions.unit', () => {
       )
     })
 
+    it('should log info and return 201 when the call to create an activity in CRM returns "RCR Activity Already Exists For the Given Contact and Activity Status"', async () => {
+      Submission.create.mockResolvedValueOnce(getCreatedSubmission())
+      createActivityCRM.mockResolvedValue({
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage:
+          'RCR Activity Already Exists For the Given Contact and Activity Status'
+      })
+
+      const result = await postSubmissionHandler(
+        getSubmissionRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(201)
+      expect(logger.info).toHaveBeenCalledWith(
+        'failed to create activity in CRM for contact-identifier-111',
+        'RCR Activity Already Exists For the Given Contact and Activity Status'
+      )
+    })
+
     it('should call handleServerError when the call to create an activity in CRM returns an error', async () => {
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
