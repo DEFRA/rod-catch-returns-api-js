@@ -2,11 +2,16 @@ import { Catch, Submission } from '../../entities/index.js'
 import {
   getSubmission,
   getSubmissionByCatchId,
+  handleCrmActivity,
   isSubmissionExistsById,
   isSubmissionExistsByUserAndSeason
 } from '../submissions.service.js'
+import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
+import { getCreateActivityResponse } from '../../test-utils/test-data.js'
+import logger from '../../utils/logger-utils.js'
 
 jest.mock('../../entities/index.js')
+jest.mock('../../utils/logger-utils.js')
 
 describe('submission.service.unit', () => {
   describe('isSubmissionExistsById', () => {
@@ -191,6 +196,75 @@ describe('submission.service.unit', () => {
       await expect(getSubmissionByCatchId('2')).rejects.toThrow(
         'Failed to fetch submission for catch ID 2: Error: Database error'
       )
+    })
+  })
+
+  describe('handleCrmActivity', () => {
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should log info and return the result if the call to create an activity in CRM is successful', async () => {
+      const crmResponse = getCreateActivityResponse()
+      createActivityCRM.mockResolvedValue(crmResponse)
+
+      const result = await handleCrmActivity('contact-identifier-111', 2024)
+
+      expect(result).toBe(crmResponse)
+      expect(logger.info).toHaveBeenCalledWith(
+        'Created CRM activity with result:',
+        crmResponse
+      )
+    })
+
+    it('should log an error and return the result when the call to create an activity in CRM returns an ErrorMessage', async () => {
+      const crmResponse = {
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage: 'Failed to create activity'
+      }
+      createActivityCRM.mockResolvedValue(crmResponse)
+
+      const result = await handleCrmActivity('contact-identifier-111', 2024)
+
+      expect(result).toBe(crmResponse)
+      expect(logger.error).toHaveBeenCalledWith(
+        'Failed to create activity in CRM for contact-identifier-111',
+        'Failed to create activity'
+      )
+    })
+
+    it('should log info and return the result when the call to create an activity in CRM returns "RCR Activity Already Exists For the Given Contact and Activity Status"', async () => {
+      const crmResponse = {
+        '@odata.context':
+          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
+        RCRActivityId: null,
+        ReturnStatus: 'error',
+        SuccessMessage: '',
+        ErrorMessage:
+          'RCR Activity Already Exists For the Given Contact and Activity Status'
+      }
+      createActivityCRM.mockResolvedValue(crmResponse)
+
+      const result = await handleCrmActivity('contact-identifier-111', 2024)
+
+      expect(result).toBe(crmResponse)
+      expect(logger.info).toHaveBeenCalledWith(
+        'Failed to create activity in CRM for contact-identifier-111',
+        'RCR Activity Already Exists For the Given Contact and Activity Status'
+      )
+    })
+
+    it('should throw an error when the call to create an activity in CRM returns an error', async () => {
+      const error = new Error('CRM')
+      createActivityCRM.mockRejectedValueOnce(error)
+
+      await expect(
+        handleCrmActivity('contact-identifier-111', 2024)
+      ).rejects.toThrow(error)
     })
   })
 })
