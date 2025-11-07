@@ -130,7 +130,7 @@ jobs:
           git config --global --add versionsort.suffix -rc.
       - name: Generate raw tag
         id: raw-tag
-        run: echo "raw_tag=$(git tag --list --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-rc\.[0-9]*)?$' | tail -1)" >> $GITHUB_OUTPUT
+        run: echo "raw_tag=$(git tag --list --sort=version:refname | egrep '^v[0-9]*\.[0-9]*\.[0-9]*(-(rc|beta)\.[0-9]*)?$' | tail -1)" >> $GITHUB_OUTPUT
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
