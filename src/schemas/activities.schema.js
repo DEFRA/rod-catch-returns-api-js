@@ -15,6 +15,80 @@ import { isRiverInternal } from '../services/rivers.service.js'
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
 
+class ActivityValidationError extends Error {
+  constructor(code) {
+    super(code)
+    this.code = code
+  }
+}
+
+async function validateAllDaysFished(values, submission, ctx, helper) {
+  const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
+
+  const other = values.daysFishedOther
+  const withRelease = values.daysFishedWithMandatoryRelease
+
+  if (
+    !fmtOrAdmin &&
+    other !== undefined &&
+    withRelease !== undefined &&
+    other < 1 &&
+    withRelease < 1
+  ) {
+    throw new ActivityValidationError(
+      'ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO'
+    )
+  }
+
+  if (withRelease !== undefined) {
+    const maxDays = isLeapYear(submission.season)
+      ? MAX_DAYS_LEAP_YEAR
+      : MAX_DAYS_NON_LEAP_YEAR
+
+    if (withRelease > maxDays) {
+      throw new ActivityValidationError(
+        'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
+      )
+    }
+  }
+}
+
+async function validateAllRivers(values, submission, ctx, helper, activityId) {
+  if (values.river === undefined) return
+
+  try {
+    const riverId = extractRiverId(values.river)
+    const riverInternal = await isRiverInternal(riverId)
+    const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
+
+    if (riverInternal && !fmtOrAdmin) {
+      throw new ActivityValidationError('ACTIVITY_RIVER_FORBIDDEN')
+    }
+
+    const exists = await isActivityExists(submission.id, riverId, activityId)
+
+    if (exists) {
+      throw new ActivityValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND')
+    }
+  } catch (error) {
+    if (error.message === 'RIVER_NOT_FOUND') {
+      throw new ActivityValidationError('ACTIVITY_RIVER_NOT_FOUND')
+    }
+    throw error
+  }
+}
+
+async function validateAllSubmissions(values, helper) {
+  const submissionId = extractSubmissionId(values.submission)
+
+  const exists = await isSubmissionExistsById(submissionId)
+  if (!exists) {
+    throw new ActivityValidationError('ACTIVITY_SUBMISSION_NOT_FOUND')
+  }
+
+  return getSubmission(submissionId)
+}
+
 const validateDaysFished = (daysFishedOther, helper) => {
   const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
@@ -122,7 +196,6 @@ const riverField = Joi.string()
 export const createActivitySchema = Joi.object({
   submission: Joi.string()
     .required()
-    .external(validateSubmission)
     .pattern(/^submissions\//)
     .description('The submission id prefixed with submissions/')
     .messages({
@@ -131,81 +204,57 @@ export const createActivitySchema = Joi.object({
       'string.pattern.base': 'ACTIVITY_SUBMISSION_PATTERN_INVALID'
     }),
 
-  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
-    .required()
-    .external(async (value, helper) => {
-      const submissionId = extractSubmissionId(
-        helper.state.ancestors[0].submission
-      )
-      const submission = await getSubmission(submissionId)
-      return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    }),
+  daysFishedWithMandatoryRelease:
+    daysFishedWithMandatoryReleaseField.required(),
   daysFishedOther: daysFishedOtherField.required(),
 
-  river: riverField
-    .required()
-    .external(validateRiver)
-    .external(async (value, helper) => {
-      const submissionId = extractSubmissionId(
-        helper.state.ancestors[0].submission
-      )
-      const riverId = extractRiverId(value)
+  river: riverField.required()
+}).external(async (values, helper) => {
+  try {
+    const ctx = helper?.prefs?.context
 
-      const activityExists = await isActivityExists(submissionId, riverId)
+    const submission = await validateAllSubmissions(values)
+    await validateAllDaysFished(values, submission, ctx)
+    await validateAllRivers(values, submission, ctx, null)
 
-      if (activityExists) {
-        return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
-      }
-      return value
-    })
+    return values
+  } catch (error) {
+    if (error instanceof ActivityValidationError) {
+      return helper.message(error.code)
+    }
+    throw error
+  }
 })
 
 export const updateActivitySchema = Joi.object({
-  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
-    .optional()
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-
-      const activityId = helper.prefs.context.params.activityId
-      const submission = await getSubmissionByActivityId(activityId)
-      return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    }),
+  daysFishedWithMandatoryRelease:
+    daysFishedWithMandatoryReleaseField.optional(),
   daysFishedOther: daysFishedOtherField.optional(),
-  river: riverField
-    .optional()
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-      return validateRiver(value, helper)
-    })
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-      // Get activityId from the request context
-      const activityId = helper.prefs.context.params.activityId
+  river: riverField.optional()
+})
+  .external(async (values, helper) => {
+    try {
+      const ctx = helper?.prefs?.context
+      const activityId = ctx.params.activityId
 
-      const riverId = extractRiverId(value)
       const submission = await getSubmissionByActivityId(activityId)
 
-      const activityExists = await isActivityExists(
-        submission.id,
-        riverId,
-        activityId
-      )
-
-      if (activityExists) {
-        return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
+      if (!submission) {
+        throw new ActivityValidationError('ACTIVITY_SUBMISSION_NOT_FOUND')
       }
-      return value
-    })
-}).unknown()
+
+      await validateAllDaysFished(values, submission, ctx)
+      await validateAllRivers(values, submission, ctx, activityId)
+
+      return values
+    } catch (error) {
+      if (error instanceof ActivityValidationError) {
+        return helper.message(error.code)
+      }
+      throw error
+    }
+  })
+  .unknown()
 
 export const activityIdSchema = Joi.object({
   activityId: Joi.number().required().description('The id of the activity')
