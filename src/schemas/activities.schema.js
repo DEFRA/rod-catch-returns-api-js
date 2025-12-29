@@ -10,7 +10,8 @@ import {
 import Joi from 'joi'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
-import { isRiverInternal } from '../services/rivers.service.js'
+import { isRiverInternals } from '../services/rivers.service.js'
+import logger from '../utils/logger-utils.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
@@ -53,12 +54,12 @@ async function validateAllDaysFished(values, submission, ctx, helper) {
   }
 }
 
-async function validateAllRivers(values, submission, ctx, helper, activityId) {
+const validateAllRivers = async (values, submission, ctx, activityId) => {
   if (values.river === undefined) return
 
   try {
     const riverId = extractRiverId(values.river)
-    const riverInternal = await isRiverInternal(riverId)
+    const riverInternal = await isRiverInternals(riverId, ctx.cache)
     const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
 
     if (riverInternal && !fmtOrAdmin) {
@@ -138,7 +139,7 @@ const validateSubmission = async (value, helper) => {
 const validateRiver = async (value, helper) => {
   try {
     const riverId = extractRiverId(value)
-    const riverInternal = await isRiverInternal(riverId)
+    const riverInternal = await isRiverInternals(riverId)
     const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
     if (riverInternal && !fmtOrAdmin) {
@@ -244,6 +245,7 @@ export const updateActivitySchema = Joi.object({
       }
 
       await validateAllDaysFished(values, submission, ctx)
+
       await validateAllRivers(values, submission, ctx, activityId)
 
       return values
@@ -251,6 +253,7 @@ export const updateActivitySchema = Joi.object({
       if (error instanceof ActivityValidationError) {
         return helper.message(error.code)
       }
+      logger.error(error)
       throw error
     }
   })

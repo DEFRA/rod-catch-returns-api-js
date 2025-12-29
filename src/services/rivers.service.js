@@ -16,3 +16,31 @@ export const isRiverInternal = async (riverId) => {
   // Normal users cannot add internal rivers, but admin users can
   return foundRiver.toJSON().internal || false
 }
+
+export const isRiverInternals = async (riverId, cache) => {
+  const cacheKey = `river:${riverId}`
+
+  if (cache) {
+    const cached = await cache.get(cacheKey)
+    if (cached !== null) {
+      return cached
+    }
+  }
+
+  const river = await River.findByPk(riverId, {
+    attributes: ['internal'],
+    raw: true
+  })
+
+  if (!river) {
+    throw new Error('RIVER_NOT_FOUND')
+  }
+
+  const isInternal = Boolean(river.internal)
+
+  if (cache) {
+    await cache.set(cacheKey, isInternal)
+  }
+
+  return isInternal
+}

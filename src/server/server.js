@@ -56,7 +56,10 @@ export default async () => {
       validate: {
         failAction,
         options: {
-          abortEarly: true // Return on first validation error
+          abortEarly: true, // Return on first validation error
+          context: {
+            cache: undefined
+          }
         }
       }
     }
@@ -71,10 +74,12 @@ export default async () => {
     logger.error('Unable to connect to the database:', error)
   }
 
-  server.app.cache = server.cache({
+  const g = server.cache({
     segment: 'default-cache',
     expiresIn: CACHE_TTL_MS_DEFAULT
   })
+
+  server.app.cache = g
 
   await server.register([Inert, Vision, Swagger])
 
@@ -90,6 +95,16 @@ export default async () => {
   server.realm.modifiers.route.prefix = '/api'
 
   server.route(apiPrefixRoutes)
+
+  server.table().forEach((route) => {
+    if (route.settings.validate?.options?.context) {
+      route.settings.validate.options.context.cache = g
+      route.settings.validate.options.context.cache.set =
+        server.app.cache.set.bind(server.app.cache)
+      route.settings.validate.options.context.cache.get =
+        server.app.cache.get.bind(server.app.cache)
+    }
+  })
 
   await server.start()
   logger.info(
