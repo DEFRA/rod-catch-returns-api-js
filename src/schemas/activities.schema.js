@@ -10,7 +10,7 @@ import {
 import Joi from 'joi'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
-import { isRiverInternals } from '../services/rivers.service.js'
+import { isRiverInternal } from '../services/rivers.service.js'
 import logger from '../utils/logger-utils.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
@@ -23,7 +23,7 @@ class ActivityValidationError extends Error {
   }
 }
 
-async function validateAllDaysFished(values, submission, ctx, helper) {
+async function validateDaysFished(values, submission, ctx, helper) {
   const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
 
   const other = values.daysFishedOther
@@ -54,12 +54,12 @@ async function validateAllDaysFished(values, submission, ctx, helper) {
   }
 }
 
-const validateAllRivers = async (values, submission, ctx, activityId) => {
+const validateRiver = async (values, submission, ctx, activityId) => {
   if (values.river === undefined) return
 
   try {
     const riverId = extractRiverId(values.river)
-    const riverInternal = await isRiverInternals(riverId, ctx.cache)
+    const riverInternal = await isRiverInternal(riverId, ctx.cache)
     const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
 
     if (riverInternal && !fmtOrAdmin) {
@@ -79,7 +79,7 @@ const validateAllRivers = async (values, submission, ctx, activityId) => {
   }
 }
 
-async function validateAllSubmissions(values, helper) {
+async function validateSubmission(values, helper) {
   const submissionId = extractSubmissionId(values.submission)
 
   const exists = await isSubmissionExistsById(submissionId)
@@ -88,74 +88,6 @@ async function validateAllSubmissions(values, helper) {
   }
 
   return getSubmission(submissionId)
-}
-
-const validateDaysFished = (daysFishedOther, helper) => {
-  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-
-  const daysFishedWithMandatoryRelease =
-    helper.state.ancestors[0].daysFishedWithMandatoryRelease
-
-  if (
-    !fmtOrAdmin &&
-    daysFishedOther < 1 &&
-    daysFishedWithMandatoryRelease < 1
-  ) {
-    return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
-  }
-
-  return daysFishedOther
-}
-
-const validateDaysFishedWithMandatoryRelease = async (
-  value,
-  helper,
-  submission
-) => {
-  if (!submission) {
-    return helper.message('ACTIVITY_SUBMISSION_NOT_FOUND')
-  }
-
-  const maxDaysFished = isLeapYear(submission.season)
-    ? MAX_DAYS_LEAP_YEAR
-    : MAX_DAYS_NON_LEAP_YEAR
-
-  if (value > maxDaysFished) {
-    return helper.message(
-      'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
-    )
-  }
-  return value
-}
-
-const validateSubmission = async (value, helper) => {
-  const submissionId = extractSubmissionId(value)
-  const submissionExists = await isSubmissionExistsById(submissionId)
-  return submissionExists
-    ? value
-    : helper.message('ACTIVITY_SUBMISSION_NOT_FOUND')
-}
-
-const validateRiver = async (value, helper) => {
-  try {
-    const riverId = extractRiverId(value)
-    const riverInternal = await isRiverInternals(riverId)
-    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-
-    if (riverInternal && !fmtOrAdmin) {
-      return helper.message('ACTIVITY_RIVER_FORBIDDEN')
-    }
-
-    return value
-  } catch (error) {
-    // Handle the case where the river does not exist
-    if (error.message === 'RIVER_NOT_FOUND') {
-      return helper.message('ACTIVITY_RIVER_NOT_FOUND')
-    }
-
-    // Re-throw unexpected errors
-    throw error
-  }
 }
 
 const daysFishedWithMandatoryReleaseField = Joi.number()
@@ -214,9 +146,9 @@ export const createActivitySchema = Joi.object({
   try {
     const ctx = helper?.prefs?.context
 
-    const submission = await validateAllSubmissions(values)
-    await validateAllDaysFished(values, submission, ctx)
-    await validateAllRivers(values, submission, ctx, null)
+    const submission = await validateSubmission(values)
+    await validateDaysFished(values, submission, ctx)
+    await validateRiver(values, submission, ctx, null)
 
     return values
   } catch (error) {
@@ -244,9 +176,9 @@ export const updateActivitySchema = Joi.object({
         throw new ActivityValidationError('ACTIVITY_SUBMISSION_NOT_FOUND')
       }
 
-      await validateAllDaysFished(values, submission, ctx)
+      await validateDaysFished(values, submission, ctx)
 
-      await validateAllRivers(values, submission, ctx, activityId)
+      await validateRiver(values, submission, ctx, activityId)
 
       return values
     } catch (error) {

@@ -7,18 +7,8 @@ import { River } from '../entities/index.js'
  * @returns {Promise<boolean>} - A promise that resolves to `true` if the river is internal, otherwise `false`.
  * @throws {Error} - If the river does not exist in the database.
  */
-export const isRiverInternal = async (riverId) => {
-  const foundRiver = await River.findOne({ where: { id: riverId } })
-  if (foundRiver === null) {
-    throw new Error('RIVER_NOT_FOUND')
-  }
-
-  // Normal users cannot add internal rivers, but admin users can
-  return foundRiver.toJSON().internal || false
-}
-
-export const isRiverInternals = async (riverId, cache) => {
-  const cacheKey = `river:${riverId}`
+export const isRiverInternal = async (riverId, cache) => {
+  const cacheKey = `rivers/${riverId}-internal`
 
   if (cache) {
     const cached = await cache.get(cacheKey)
