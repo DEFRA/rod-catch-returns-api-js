@@ -82,12 +82,12 @@ const validateRiver = async (values, submission, ctx, activityId) => {
 async function validateSubmission(values, helper) {
   const submissionId = extractSubmissionId(values.submission)
 
-  const exists = await isSubmissionExistsById(submissionId)
-  if (!exists) {
+  const submission = await getSubmission(submissionId)
+  if (!submission) {
     throw new ActivityValidationError('ACTIVITY_SUBMISSION_NOT_FOUND')
   }
 
-  return getSubmission(submissionId)
+  return submission
 }
 
 const daysFishedWithMandatoryReleaseField = Joi.number()
