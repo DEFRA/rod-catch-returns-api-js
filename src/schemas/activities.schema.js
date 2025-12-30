@@ -1,13 +1,10 @@
 import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
 import {
-  getSubmission,
-  isSubmissionExistsById
-} from '../services/submissions.service.js'
-import {
   getSubmissionByActivityId,
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
+import { getSubmission } from '../services/submissions.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
