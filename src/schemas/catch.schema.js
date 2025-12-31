@@ -14,59 +14,101 @@ import { isMethodInternal } from '../services/methods.service.js'
 import { isSpeciesExists } from '../services/species.service.js'
 import logger from '../utils/logger-utils.js'
 
-const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
-const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG) // 1763.698097oz
+const MAX_FISH_MASS_KG = 50
+const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG)
 const MIN_FISH_MASS = 0
 
-const validateMethod = async (value, helper) => {
-  const methodId = extractMethodId(value)
-  const methodInternal = await isMethodInternal(methodId)
-  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-
-  if (!fmtOrAdmin && methodInternal) {
-    return helper.message('CATCH_METHOD_FORBIDDEN')
-  }
-
-  return value
-}
-
-const validateSpecies = async (value, helper) => {
-  const speciesId = extractSpeciesId(value)
-  const speciesExists = await isSpeciesExists(speciesId)
-  return speciesExists ? value : helper.message('CATCH_SPECIES_REQUIRED')
-}
-
-const validateDateCaughtYear = (dateCaught, season) => {
-  const parsedDate = new Date(dateCaught)
-  const currentDate = new Date()
-
-  if (parsedDate > currentDate) {
-    throw new Error('CATCH_DATE_IN_FUTURE')
-  }
-
-  const yearCaught = parsedDate.getFullYear()
-  if (season !== yearCaught) {
-    throw new Error('CATCH_YEAR_MISMATCH')
+class CatchValidationError extends Error {
+  constructor(code) {
+    super(code)
+    this.code = code
   }
 }
 
-const validateDateCaughtRequired = ({
+function checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded) {
+  if (onlyMonthRecorded && noDateRecorded) {
+    throw new CatchValidationError(
+      'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
+    )
+  }
+}
+
+function validateDateCaughtRequired(
   dateCaught,
   noDateRecorded,
   onlyMonthRecorded
-}) => {
+) {
   if (!dateCaught) {
     if (noDateRecorded || onlyMonthRecorded) {
-      throw new Error('CATCH_DEFAULT_DATE_REQUIRED')
-    } else {
-      throw new Error('CATCH_DATE_REQUIRED')
+      throw new CatchValidationError('CATCH_DEFAULT_DATE_REQUIRED')
     }
+    throw new CatchValidationError('CATCH_DATE_REQUIRED')
   }
 }
 
-const checkDefaultFlagConflict = (onlyMonthRecorded, noDateRecorded) => {
-  if (onlyMonthRecorded && noDateRecorded) {
-    throw new Error('CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED')
+function validateDateCaughtYear(dateCaught, season) {
+  const parsed = new Date(dateCaught)
+  const now = new Date()
+
+  if (parsed > now) {
+    throw new CatchValidationError('CATCH_DATE_IN_FUTURE')
+  }
+
+  if (parsed.getFullYear() !== season) {
+    throw new CatchValidationError('CATCH_YEAR_MISMATCH')
+  }
+}
+
+async function validateCreateDate(values) {
+  const activityId = extractActivityId(values.activity)
+  const submission = await getSubmissionByActivityId(activityId)
+
+  if (!submission) {
+    throw new CatchValidationError('CATCH_ACTIVITY_INVALID')
+  }
+
+  checkDefaultFlagConflict(values.onlyMonthRecorded, values.noDateRecorded)
+  validateDateCaughtRequired(
+    values.dateCaught,
+    values.noDateRecorded,
+    values.onlyMonthRecorded
+  )
+  validateDateCaughtYear(values.dateCaught, submission.season)
+}
+
+async function validateUpdateDate(values, catchId) {
+  const found = await getCatchById(catchId)
+  const submission = await getSubmissionByCatchId(catchId)
+
+  const noDateRecorded = values.noDateRecorded ?? found.noDateRecorded
+  const onlyMonthRecorded = values.onlyMonthRecorded ?? found.onlyMonthRecorded
+  const dateCaught = values.dateCaught ?? found.dateCaught
+
+  checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
+  validateDateCaughtRequired(dateCaught, noDateRecorded, onlyMonthRecorded)
+  validateDateCaughtYear(dateCaught, submission.season)
+}
+
+async function validateSpecies(values) {
+  if (values.species === undefined) return
+
+  const speciesId = extractSpeciesId(values.species)
+  const exists = await isSpeciesExists(speciesId)
+
+  if (!exists) {
+    throw new CatchValidationError('CATCH_SPECIES_REQUIRED')
+  }
+}
+
+async function validateMethod(values, ctx) {
+  if (values.method === undefined) return
+
+  const methodId = extractMethodId(values.method)
+  const internal = await isMethodInternal(methodId)
+  const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
+
+  if (internal && !fmtOrAdmin) {
+    throw new CatchValidationError('CATCH_METHOD_FORBIDDEN')
   }
 }
 
@@ -160,113 +202,69 @@ const reportingExcludeField = Joi.boolean().description(
 export const createCatchSchema = Joi.object({
   activity: Joi.string()
     .required()
-    .pattern(/^activities\//)
-    .messages({
-      'any.required': 'CATCH_ACTIVITY_REQUIRED',
-      'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
-    })
-    .description('The activity associated with this catch'),
-  dateCaught: dateCaughtField
-    .external(async (value, helper) => {
-      const activityId = extractActivityId(helper.state.ancestors[0].activity)
-
-      const submission = await getSubmissionByActivityId(activityId)
-
-      const noDateRecorded = helper.state.ancestors[0]?.noDateRecorded
-      const onlyMonthRecorded = helper.state.ancestors[0]?.onlyMonthRecorded
-
-      try {
-        checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
-        validateDateCaughtRequired({
-          dateCaught: value,
-          noDateRecorded,
-          onlyMonthRecorded
-        })
-        validateDateCaughtYear(value, submission?.season)
-      } catch (error) {
-        if (error.message !== 'CATCH_DATE_IN_FUTURE') {
-          logger.error(error)
-        }
-        return helper.message(error.message)
-      }
-      return value
-    })
-    .messages({
-      'string.base': 'CATCH_DATE_REQUIRED'
-    }),
+    .pattern(/^activities\//),
+  dateCaught: dateCaughtField,
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField.required().external(validateSpecies),
+  species: speciesField.required(),
   mass: massField.required(),
-  method: methodField.required().external(validateMethod),
+  method: methodField.required(),
   released: releasedField.required(),
   reportingExclude: reportingExcludeField.default(false)
-}).unknown()
+})
+  .external(async (values, helper) => {
+    try {
+      const ctx = helper?.prefs?.context
+
+      await validateCreateDate(values)
+      await validateSpecies(values)
+      await validateMethod(values, ctx)
+
+      return values
+    } catch (error) {
+      if (error instanceof CatchValidationError) {
+        if (error.code !== 'CATCH_DATE_IN_FUTURE') logger.error(error)
+        return helper.message(error.code)
+      }
+      throw error
+    }
+  })
+  .unknown()
 
 export const updateCatchSchema = Joi.object({
-  dateCaught: dateCaughtField.optional().external(async (value, helper) => {
-    // We do not want to skip validation as this validates multiple fields
-    // Get catchId from the request context
-    const catchId = helper.prefs.context.params.catchId
-
-    // get noDateRecorded and onlyMonthRecorded either from the request or from the database
-    const foundCatch = await getCatchById(catchId)
-    const noDateRecorded =
-      helper.state.ancestors[0]?.noDateRecorded ?? foundCatch.noDateRecorded
-    const onlyMonthRecorded =
-      helper.state.ancestors[0]?.onlyMonthRecorded ??
-      foundCatch.onlyMonthRecorded
-    const dateCaught = value ?? foundCatch.dateCaught
-
-    const submission = await getSubmissionByCatchId(catchId)
-
-    try {
-      checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded)
-      validateDateCaughtRequired({
-        dateCaught,
-        noDateRecorded,
-        onlyMonthRecorded
-      })
-
-      validateDateCaughtYear(dateCaught, submission.season)
-    } catch (error) {
-      return helper.message(error.message)
-    }
-
-    return value
-  }),
+  dateCaught: dateCaughtField.optional(),
   onlyMonthRecorded: onlyMonthRecordedField,
   noDateRecorded: noDateRecordedField,
-  species: speciesField.optional().external(async (value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-
-    return validateSpecies(value, helper)
-  }),
+  species: speciesField.optional(),
   mass: massField.optional(),
-  method: methodField.optional().external(async (value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-
-    return validateMethod(value, helper)
-  }),
+  method: methodField.optional(),
   released: releasedField.optional(),
   reportingExclude: reportingExcludeField
-}).unknown()
+})
+  .external(async (values, helper) => {
+    try {
+      const ctx = helper?.prefs?.context
+      const catchId = ctx.params.catchId
+
+      await validateUpdateDate(values, catchId)
+      await validateSpecies(values)
+      await validateMethod(values, ctx)
+
+      return values
+    } catch (error) {
+      if (error instanceof CatchValidationError) {
+        return helper.message(error.code)
+      }
+      logger.error(error)
+      throw error
+    }
+  })
+  .unknown()
 
 export const catchIdSchema = Joi.object({
-  catchId: Joi.number().required().description('The id of the catch')
+  catchId: Joi.number().required()
 })
 
 export const updateCatchActivityIdSchema = Joi.string()
   .required()
   .pattern(/^activities\/\d+$/)
-  .messages({
-    'any.required': 'CATCH_ACTIVITY_REQUIRED',
-    'string.pattern.base': 'CATCH_ACTIVITY_INVALID'
-  })
-  .description('The activity associated with this catch')
