@@ -5,19 +5,108 @@ import {
   updateCatchActivityIdSchema,
   updateCatchSchema
 } from '../../schemas/catch.schema.js'
+import {
+  extractActivityId,
+  extractMethodId,
+  extractSpeciesId
+} from '../../utils/entity-utils.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import {
   mapCatchToResponse,
   mapRequestToCatch
 } from '../../mappers/catches.mapper.js'
 import { StatusCodes } from 'http-status-codes'
-import { extractActivityId } from '../../utils/entity-utils.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapMethodToResponse } from '../../mappers/methods.mapper.js'
 import { mapSpeciesToResponse } from '../../mappers/species.mapper.js'
+import { getSubmissionByActivityId } from '../../services/activities.service.js'
+import { isSpeciesExists } from '../../services/species.service.js'
+import { isMethodInternal } from '../../services/methods.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 
 const BASE_CATCHES_URL = '/catches/{catchId}'
+
+class CatchValidationError extends Error {
+  constructor(code) {
+    super(code)
+    this.code = code
+  }
+}
+
+function checkDefaultFlagConflict(onlyMonthRecorded, noDateRecorded) {
+  if (onlyMonthRecorded && noDateRecorded) {
+    throw new CatchValidationError(
+      'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED'
+    )
+  }
+}
+
+function validateDateCaughtRequired(
+  dateCaught,
+  noDateRecorded,
+  onlyMonthRecorded
+) {
+  if (!dateCaught) {
+    if (noDateRecorded || onlyMonthRecorded) {
+      throw new CatchValidationError('CATCH_DEFAULT_DATE_REQUIRED')
+    }
+    throw new CatchValidationError('CATCH_DATE_REQUIRED')
+  }
+}
+
+function validateDateCaughtYear(dateCaught, season) {
+  const parsed = new Date(dateCaught)
+  const now = new Date()
+
+  if (parsed > now) {
+    throw new CatchValidationError('CATCH_DATE_IN_FUTURE')
+  }
+
+  if (parsed.getFullYear() !== season) {
+    throw new CatchValidationError('CATCH_YEAR_MISMATCH')
+  }
+}
+
+async function validateCreateDate(values) {
+  const activityId = extractActivityId(values.activity)
+  const submission = await getSubmissionByActivityId(activityId)
+
+  if (!submission) {
+    throw new CatchValidationError('CATCH_ACTIVITY_INVALID')
+  }
+
+  checkDefaultFlagConflict(values.onlyMonthRecorded, values.noDateRecorded)
+  validateDateCaughtRequired(
+    values.dateCaught,
+    values.noDateRecorded,
+    values.onlyMonthRecorded
+  )
+  validateDateCaughtYear(values.dateCaught, submission.season)
+}
+
+async function validateSpecies(values) {
+  if (values.species === undefined) return
+
+  const speciesId = extractSpeciesId(values.species)
+  const exists = await isSpeciesExists(speciesId)
+
+  if (!exists) {
+    throw new CatchValidationError('CATCH_SPECIES_REQUIRED')
+  }
+}
+
+async function validateMethod(values, ctx) {
+  if (values.method === undefined) return
+
+  const methodId = extractMethodId(values.method)
+  const internal = await isMethodInternal(methodId)
+  const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
+
+  if (internal && !fmtOrAdmin) {
+    throw new CatchValidationError('CATCH_METHOD_FORBIDDEN')
+  }
+}
 
 export default [
   {
@@ -45,6 +134,19 @@ export default [
        */
       handler: async (request, h) => {
         try {
+          try {
+            await validateCreateDate(request.payload)
+            await validateSpecies(request.payload)
+            await validateMethod(request.payload, request.auth.role)
+          } catch (error) {
+            if (error instanceof CatchValidationError) {
+              if (error.code !== 'CATCH_DATE_IN_FUTURE') logger.error(error)
+              // return helper.message(error.code)
+              throw error
+            }
+            throw error
+          }
+
           const catchData = mapRequestToCatch(request.payload)
 
           logger.info('Creating catch with details', catchData)

@@ -212,23 +212,23 @@ export const createCatchSchema = Joi.object({
   released: releasedField.required(),
   reportingExclude: reportingExcludeField.default(false)
 })
-  .external(async (values, helper) => {
-    try {
-      const ctx = helper?.prefs?.context
+  // .external(async (values, helper) => {
+  //   try {
+  //     const ctx = helper?.prefs?.context
 
-      await validateCreateDate(values)
-      await validateSpecies(values)
-      await validateMethod(values, ctx)
+  //     await validateCreateDate(values)
+  //     await validateSpecies(values)
+  //     await validateMethod(values, ctx)
 
-      return values
-    } catch (error) {
-      if (error instanceof CatchValidationError) {
-        if (error.code !== 'CATCH_DATE_IN_FUTURE') logger.error(error)
-        return helper.message(error.code)
-      }
-      throw error
-    }
-  })
+  //     return values
+  //   } catch (error) {
+  //     if (error instanceof CatchValidationError) {
+  //       if (error.code !== 'CATCH_DATE_IN_FUTURE') logger.error(error)
+  //       return helper.message(error.code)
+  //     }
+  //     throw error
+  //   }
+  // })
   .unknown()
 
 export const updateCatchSchema = Joi.object({
