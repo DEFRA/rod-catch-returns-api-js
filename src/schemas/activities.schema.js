@@ -139,22 +139,21 @@ export const createActivitySchema = Joi.object({
   daysFishedOther: daysFishedOtherField.required(),
 
   river: riverField.required()
-}).external(async (values, helper) => {
-  try {
-    const ctx = helper?.prefs?.context
-
-    const submission = await validateSubmission(values)
-    await validateDaysFished(values, submission, ctx)
-    await validateRiver(values, submission, ctx, null)
-
-    return values
-  } catch (error) {
-    if (error instanceof ActivityValidationError) {
-      return helper.message(error.code)
-    }
-    throw error
-  }
 })
+//.external(async (values, helper) => {
+// try {
+//   const ctx = helper?.prefs?.context
+//   const submission = await validateSubmission(values)
+//   await validateDaysFished(values, submission, ctx)
+//   await validateRiver(values, submission, ctx, null)
+//   return values
+// } catch (error) {
+//   if (error instanceof ActivityValidationError) {
+//     return helper.message(error.code)
+//   }
+//   throw error
+// }
+//})
 
 export const updateActivitySchema = Joi.object({
   daysFishedWithMandatoryRelease:

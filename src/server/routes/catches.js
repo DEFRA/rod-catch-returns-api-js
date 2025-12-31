@@ -96,12 +96,12 @@ async function validateSpecies(values, cache) {
   }
 }
 
-async function validateMethod(values, ctx, cache) {
+async function validateMethod(values, role, cache) {
   if (values.method === undefined) return
 
   const methodId = extractMethodId(values.method)
   const internal = await isMethodInternal(methodId, cache)
-  const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
+  const fmtOrAdmin = isFMTOrAdmin(role)
 
   if (internal && !fmtOrAdmin) {
     throw new CatchValidationError('CATCH_METHOD_FORBIDDEN')
