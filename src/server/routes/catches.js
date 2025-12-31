@@ -85,22 +85,22 @@ async function validateCreateDate(values) {
   validateDateCaughtYear(values.dateCaught, submission.season)
 }
 
-async function validateSpecies(values) {
+async function validateSpecies(values, cache) {
   if (values.species === undefined) return
 
   const speciesId = extractSpeciesId(values.species)
-  const exists = await isSpeciesExists(speciesId)
+  const exists = await isSpeciesExists(speciesId, cache)
 
   if (!exists) {
     throw new CatchValidationError('CATCH_SPECIES_REQUIRED')
   }
 }
 
-async function validateMethod(values, ctx) {
+async function validateMethod(values, ctx, cache) {
   if (values.method === undefined) return
 
   const methodId = extractMethodId(values.method)
-  const internal = await isMethodInternal(methodId)
+  const internal = await isMethodInternal(methodId, cache)
   const fmtOrAdmin = isFMTOrAdmin(ctx?.auth?.role)
 
   if (internal && !fmtOrAdmin) {
@@ -135,9 +135,10 @@ export default [
       handler: async (request, h) => {
         try {
           try {
+            const cache = request.server.app.cache
             await validateCreateDate(request.payload)
-            await validateSpecies(request.payload)
-            await validateMethod(request.payload, request.auth.role)
+            await validateSpecies(request.payload, cache)
+            await validateMethod(request.payload, request.auth.role, cache)
           } catch (error) {
             if (error instanceof CatchValidationError) {
               if (error.code !== 'CATCH_DATE_IN_FUTURE') logger.error(error)

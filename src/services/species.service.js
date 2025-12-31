@@ -6,7 +6,23 @@ import { Species } from '../entities/index.js'
  * @param {number|string} speciesId - The ID of the species to check.
  * @returns {Promise<boolean>} - A promise that resolves to `true` if the species exists, otherwise `false`.
  */
-export const isSpeciesExists = async (speciesId) => {
+export const isSpeciesExists = async (speciesId, cache) => {
+  const cacheKey = `species/${speciesId}-count`
+
+  if (cache) {
+    const cached = await cache.get(cacheKey)
+    if (cached !== null) {
+      return cached
+    }
+  }
+
   const count = await Species.count({ where: { id: speciesId } })
-  return count > 0
+
+  const result = count > 0
+
+  if (cache) {
+    await cache.set(cacheKey, result)
+  }
+
+  return result
 }
