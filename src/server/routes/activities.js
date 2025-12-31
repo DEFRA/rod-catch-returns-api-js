@@ -24,8 +24,90 @@ import { mapRiverToResponse } from '../../mappers/river.mapper.js'
 import { mapSmallCatchToResponse } from '../../mappers/small-catches.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 import { sequelize } from '../../services/database.service.js'
+import { getSubmission } from '../../services/submissions.service.js'
+import { isLeapYear } from '../../utils/date-utils.js'
+import { isRiverInternal } from '../../services/rivers.service.js'
+import { isFMTOrAdmin } from '../../utils/auth-utils.js'
+import { isActivityExists } from '../../services/activities.service.js'
 
 const BASE_ACTIVITIES_URL = '/activities/{activityId}'
+
+const MAX_DAYS_LEAP_YEAR = 168
+const MAX_DAYS_NON_LEAP_YEAR = 167
+
+class ActivityValidationError extends Error {
+  constructor(code) {
+    super(code)
+    this.code = code
+  }
+}
+
+async function validateDaysFished(values, submission, role, helper) {
+  const fmtOrAdmin = isFMTOrAdmin(role)
+
+  const other = values.daysFishedOther
+  const withRelease = values.daysFishedWithMandatoryRelease
+
+  if (
+    !fmtOrAdmin &&
+    other !== undefined &&
+    withRelease !== undefined &&
+    other < 1 &&
+    withRelease < 1
+  ) {
+    throw new ActivityValidationError(
+      'ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO'
+    )
+  }
+
+  if (withRelease !== undefined) {
+    const maxDays = isLeapYear(submission.season)
+      ? MAX_DAYS_LEAP_YEAR
+      : MAX_DAYS_NON_LEAP_YEAR
+
+    if (withRelease > maxDays) {
+      throw new ActivityValidationError(
+        'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
+      )
+    }
+  }
+}
+
+const validateRiver = async (values, submission, role, activityId, cache) => {
+  if (values.river === undefined) return
+
+  try {
+    const riverId = extractRiverId(values.river)
+    const riverInternal = await isRiverInternal(riverId, cache)
+    const fmtOrAdmin = isFMTOrAdmin(role)
+
+    if (riverInternal && !fmtOrAdmin) {
+      throw new ActivityValidationError('ACTIVITY_RIVER_FORBIDDEN')
+    }
+
+    const exists = await isActivityExists(submission.id, riverId, activityId)
+
+    if (exists) {
+      throw new ActivityValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND')
+    }
+  } catch (error) {
+    if (error.message === 'RIVER_NOT_FOUND') {
+      throw new ActivityValidationError('ACTIVITY_RIVER_NOT_FOUND')
+    }
+    throw error
+  }
+}
+
+async function validateSubmission(values, helper) {
+  const submissionId = extractSubmissionId(values.submission)
+
+  const submission = await getSubmission(submissionId)
+  if (!submission) {
+    throw new ActivityValidationError('ACTIVITY_SUBMISSION_NOT_FOUND')
+  }
+
+  return submission
+}
 
 export default [
   {
@@ -45,6 +127,25 @@ export default [
        */
       handler: async (request, h) => {
         try {
+          try {
+            const submission = await validateSubmission(request.payload)
+            await validateDaysFished(
+              request.payload,
+              submission,
+              request.auth.role
+            )
+            await validateRiver(
+              request.payload,
+              submission,
+              request.auth.role,
+              null
+            )
+          } catch (error) {
+            if (error instanceof ActivityValidationError) {
+              throw error
+            }
+            throw error
+          }
           const {
             submission,
             daysFishedWithMandatoryRelease,
