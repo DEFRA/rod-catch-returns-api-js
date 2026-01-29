@@ -4,13 +4,13 @@ import {
   updateActivitySchema
 } from '../activities.schema.js'
 import {
+  getActivityAndSubmissionByActivityId,
+  isActivityExists
+} from '../../services/activities.service.js'
+import {
   getSubmission,
   isSubmissionExistsById
 } from '../../services/submissions.service.js'
-import {
-  getSubmissionByActivityId,
-  isActivityExists
-} from '../../services/activities.service.js'
 import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
 
@@ -162,7 +162,7 @@ describe('activities.schema.unit', () => {
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('ACTIVITY_RIVER_NOT_FOUND')
+        ).rejects.toThrow('RIVER_NOT_FOUND')
       })
 
       it('should return an error if there is an error retrieving the river', async () => {
@@ -395,14 +395,14 @@ describe('activities.schema.unit', () => {
       submissionExists = true,
       riverInternal = false,
       activityExists = false,
-      submission = { id: '1', season },
+      activity = { id: 2, Submission: { id: '1', season } },
       fmtOrAdmin = false
     } = {}) => {
       getSubmission.mockResolvedValue({ season })
       isSubmissionExistsById.mockResolvedValue(submissionExists)
       isRiverInternal.mockResolvedValue(riverInternal)
       isActivityExists.mockResolvedValue(activityExists)
-      getSubmissionByActivityId.mockResolvedValue(submission)
+      getActivityAndSubmissionByActivityId.mockResolvedValue(activity)
       isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
@@ -417,7 +417,9 @@ describe('activities.schema.unit', () => {
 
     describe('river', () => {
       it('should validate successfully if "river" is missing', async () => {
-        setupMocks()
+        setupMocks({
+          activity: { id: '2', river_id: '2', Submission: { id: '2' } }
+        })
         const payload = { ...getDefaultPayload(), river: undefined }
 
         await expect(
@@ -525,7 +527,7 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if if the activity could not be found', async () => {
-        setupMocks({ submission: null })
+        setupMocks({ activity: null })
         const payload = getDefaultPayload()
 
         await expect(

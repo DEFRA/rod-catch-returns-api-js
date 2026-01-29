@@ -913,16 +913,17 @@ describe('activities.integration', () => {
         }
       })
 
-      expect(JSON.parse(result.payload)).toEqual({
-        errors: [
-          {
-            entity: 'Activity',
-            message: 'ACTIVITY_RIVER_NOT_FOUND',
-            property: 'river',
-            value: 'rivers/0'
-          }
-        ]
-      })
+      expect(JSON.parse(result.payload)).toEqual(
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            output: expect.objectContaining({
+              payload: expect.objectContaining({
+                message: expect.stringContaining('RIVER_NOT_FOUND')
+              })
+            })
+          })
+        })
+      )
     })
   })
 

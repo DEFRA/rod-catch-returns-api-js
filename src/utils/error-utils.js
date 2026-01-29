@@ -23,7 +23,7 @@ export const failAction = (request, h, err) => {
       return {
         entity,
         message: detail?.message,
-        property: detail?.context?.label,
+        property: detail?.context?.property || detail?.context?.label,
         value: detail?.context?.value
       }
     }) || err

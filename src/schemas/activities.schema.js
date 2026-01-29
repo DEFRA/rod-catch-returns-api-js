@@ -5,6 +5,7 @@ import {
 } from '../services/submissions.service.js'
 import {
   getSubmissionByActivityId,
+  getActivityAndSubmissionByActivityId,
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
@@ -14,6 +15,170 @@ import { isRiverInternal } from '../services/rivers.service.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
+
+class JoiExternalValidationError extends Error {
+  constructor(code, context = {}) {
+    super(code)
+    this.code = code
+    this.context = context
+  }
+}
+
+const validateDaysFishedOther = (values, fmtOrAdmin) => {
+  if (
+    !fmtOrAdmin &&
+    values.daysFishedOther < 1 &&
+    values.daysFishedWithMandatoryRelease < 1
+  ) {
+    throw new JoiExternalValidationError(
+      'ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO',
+      {
+        property: 'daysFishedOther',
+        value: values.daysFishedOther
+      }
+    )
+  }
+}
+
+const validateDaysFished2 = (values, submission) => {
+  const maxDaysFished = isLeapYear(submission.season)
+    ? MAX_DAYS_LEAP_YEAR
+    : MAX_DAYS_NON_LEAP_YEAR
+
+  if (values.daysFishedWithMandatoryRelease > maxDaysFished) {
+    throw new JoiExternalValidationError(
+      'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED',
+      {
+        property: 'daysFishedWithMandatoryRelease',
+        value: values.daysFishedWithMandatoryRelease
+      }
+    )
+  }
+}
+
+const unwrap = (result) => {
+  if (result.status === 'rejected') {
+    throw result.reason
+  }
+  return result.value
+}
+
+export const validateActivityAsync = async (values, helper) => {
+  try {
+    const submissionId = extractSubmissionId(values.submission)
+    const riverId = extractRiverId(values.river)
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    const results = await Promise.allSettled([
+      getSubmission(submissionId),
+      isRiverInternal(riverId),
+      isActivityExists(submissionId, riverId)
+    ])
+
+    const [submission, riverInternal, activityExists] = results.map(unwrap)
+
+    if (!submission) {
+      throw new JoiExternalValidationError('ACTIVITY_SUBMISSION_NOT_FOUND', {
+        value: values.submission,
+        property: 'submission'
+      })
+    }
+
+    validateDaysFished2(values, submission)
+    validateDaysFishedOther(values, fmtOrAdmin)
+
+    if (riverInternal && !fmtOrAdmin) {
+      throw new JoiExternalValidationError('ACTIVITY_RIVER_FORBIDDEN', {
+        property: 'river',
+        value: values.river
+      })
+    }
+
+    if (activityExists) {
+      throw new JoiExternalValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND', {
+        property: 'river',
+        value: values.river
+      })
+    }
+
+    return values
+  } catch (err) {
+    if (err instanceof JoiExternalValidationError) {
+      console.log(err.context)
+      return helper.message(err.code, err.context)
+    }
+    throw err
+  }
+}
+
+export const validateUpdateActivityAsync = async (values, helper) => {
+  try {
+    const activityId = helper.prefs.context.params.activityId
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    const activity = await getActivityAndSubmissionByActivityId(activityId)
+
+    if (!activity) {
+      throw new JoiExternalValidationError('ACTIVITY_SUBMISSION_NOT_FOUND', {
+        value: values.submission,
+        property: 'submission'
+      })
+    }
+
+    const submission = activity.Submission
+
+    const combinedValues = {
+      daysFishedWithMandatoryRelease:
+        values.daysFishedWithMandatoryRelease ??
+        activity.daysFishedWithMandatoryRelease,
+      daysFishedOther: values.daysFishedOther ?? activity.daysFishedOther,
+      river: values.river ?? activity.river_id
+    }
+
+    const riverId = extractRiverId(combinedValues.river)
+
+    if (values.river !== undefined) {
+      const riverInternal = await isRiverInternal(riverId)
+      if (riverInternal && !fmtOrAdmin) {
+        throw new JoiExternalValidationError('ACTIVITY_RIVER_FORBIDDEN', {
+          property: 'river',
+          value: values.river
+        })
+      }
+    }
+
+    if (
+      values.daysFishedOther !== undefined ||
+      values.daysFishedWithMandatoryRelease !== undefined
+    ) {
+      console.log('here')
+      validateDaysFished2(combinedValues, submission)
+      validateDaysFishedOther(combinedValues, fmtOrAdmin)
+    }
+
+    const activityExists = await isActivityExists(
+      submission.id,
+      riverId,
+      activityId
+    )
+
+    if (activityExists) {
+      throw new JoiExternalValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND', {
+        property: 'river',
+        value: values.river
+      })
+    }
+
+    return values
+  } catch (err) {
+    if (err instanceof JoiExternalValidationError) {
+      console.log(err.context)
+      return helper.message(err.code, err.context)
+    }
+    console.log(err)
+    throw err
+  }
+}
 
 const validateDaysFished = (daysFishedOther, helper) => {
   const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
@@ -107,7 +272,7 @@ const daysFishedOtherField = Joi.number()
     'number.base': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER',
     'number.integer': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER'
   })
-  .external(validateDaysFished)
+// .external(validateDaysFished)
 
 const riverField = Joi.string()
 
@@ -122,7 +287,7 @@ const riverField = Joi.string()
 export const createActivitySchema = Joi.object({
   submission: Joi.string()
     .required()
-    .external(validateSubmission)
+    // .external(validateSubmission)
     .pattern(/^submissions\//)
     .description('The submission id prefixed with submissions/')
     .messages({
@@ -134,78 +299,74 @@ export const createActivitySchema = Joi.object({
   daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
     .required()
     .external(async (value, helper) => {
-      const submissionId = extractSubmissionId(
-        helper.state.ancestors[0].submission
-      )
-      const submission = await getSubmission(submissionId)
-      return validateDaysFishedWithMandatoryRelease(value, helper, submission)
+      // const submissionId = extractSubmissionId(
+      //   helper.state.ancestors[0].submission
+      // )
+      // const submission = await getSubmission(submissionId)
+      // return validateDaysFishedWithMandatoryRelease(value, helper, submission)
     }),
   daysFishedOther: daysFishedOtherField.required(),
 
   river: riverField
     .required()
-    .external(validateRiver)
+    //.external(validateRiver)
     .external(async (value, helper) => {
-      const submissionId = extractSubmissionId(
-        helper.state.ancestors[0].submission
-      )
-      const riverId = extractRiverId(value)
-
-      const activityExists = await isActivityExists(submissionId, riverId)
-
-      if (activityExists) {
-        return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
-      }
-      return value
+      // const submissionId = extractSubmissionId(
+      //   helper.state.ancestors[0].submission
+      // )
+      // const riverId = extractRiverId(value)
+      // const activityExists = await isActivityExists(submissionId, riverId)
+      // if (activityExists) {
+      //   return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
+      // }
+      // return value
     })
-})
+}).external(validateActivityAsync)
 
 export const updateActivitySchema = Joi.object({
   daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
     .optional()
     .external(async (value, helper) => {
       // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-
-      const activityId = helper.prefs.context.params.activityId
-      const submission = await getSubmissionByActivityId(activityId)
-      return validateDaysFishedWithMandatoryRelease(value, helper, submission)
+      // if (value === undefined) {
+      //   return value
+      // }
+      // const activityId = helper.prefs.context.params.activityId
+      // const submission = await getSubmissionByActivityId(activityId)
+      // return validateDaysFishedWithMandatoryRelease(value, helper, submission)
     }),
   daysFishedOther: daysFishedOtherField.optional(),
   river: riverField
     .optional()
     .external(async (value, helper) => {
       // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-      return validateRiver(value, helper)
+      // if (value === undefined) {
+      //   return value
+      // }
+      // return validateRiver(value, helper)
     })
     .external(async (value, helper) => {
       // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      if (value === undefined) {
-        return value
-      }
-      // Get activityId from the request context
-      const activityId = helper.prefs.context.params.activityId
-
-      const riverId = extractRiverId(value)
-      const submission = await getSubmissionByActivityId(activityId)
-
-      const activityExists = await isActivityExists(
-        submission.id,
-        riverId,
-        activityId
-      )
-
-      if (activityExists) {
-        return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
-      }
-      return value
+      // if (value === undefined) {
+      //   return value
+      // }
+      // // Get activityId from the request context
+      // const activityId = helper.prefs.context.params.activityId
+      // const riverId = extractRiverId(value)
+      // const submission = await getSubmissionByActivityId(activityId)
+      // const activityExists = await isActivityExists(
+      //   submission.id,
+      //   riverId,
+      //   activityId
+      // )
+      // if (activityExists) {
+      //   return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
+      // }
+      // return value
     })
-}).unknown()
+})
+  .external(validateUpdateActivityAsync)
+  .unknown()
 
 export const activityIdSchema = Joi.object({
   activityId: Joi.number().required().description('The id of the activity')
