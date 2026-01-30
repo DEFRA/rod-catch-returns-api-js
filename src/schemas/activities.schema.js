@@ -106,7 +106,6 @@ export const validateActivityAsync = async (values, helper) => {
     return values
   } catch (err) {
     if (err instanceof JoiExternalValidationError) {
-      console.log(err.context)
       return helper.message(err.code, err.context)
     }
     throw err
@@ -163,7 +162,6 @@ export const validateUpdateActivityAsync = async (values, helper) => {
     return values
   } catch (err) {
     if (err instanceof JoiExternalValidationError) {
-      console.log(err.context)
       return helper.message(err.code, err.context)
     }
     throw err
