@@ -1,11 +1,5 @@
 import { River } from '../entities/index.js'
 
-// todo change to
-// const river = await River.findByPk(riverId, {
-//    attributes: ['internal'],
-//raw: true
-//})
-
 /**
  * Checks if a river is marked as internal in the database by its ID.
  *
@@ -14,11 +8,14 @@ import { River } from '../entities/index.js'
  * @throws {Error} - If the river does not exist in the database.
  */
 export const isRiverInternal = async (riverId) => {
-  const foundRiver = await River.findOne({ where: { id: riverId } })
+  const foundRiver = await River.findByPk(riverId, {
+    attributes: ['internal'],
+    raw: true
+  })
+
   if (foundRiver === null) {
     throw new Error('RIVER_NOT_FOUND')
   }
 
-  // Normal users cannot add internal rivers, but admin users can
-  return foundRiver.toJSON().internal || false
+  return Boolean(foundRiver.internal)
 }
