@@ -12,7 +12,7 @@ describe('rivers.service.unit', () => {
     })
 
     it('should return true if the river is internal', async () => {
-      River.findOne.mockResolvedValue({ toJSON: () => ({ internal: true }) })
+      River.findByPk.mockResolvedValue({ internal: true })
 
       const result = await isRiverInternal(mockRiverId)
 
@@ -20,7 +20,7 @@ describe('rivers.service.unit', () => {
     })
 
     it('should return false if the river is not internal', async () => {
-      River.findOne.mockResolvedValue({ toJSON: () => ({ internal: false }) })
+      River.findByPk.mockResolvedValue({ internal: false })
 
       const result = await isRiverInternal(mockRiverId)
 
@@ -28,9 +28,7 @@ describe('rivers.service.unit', () => {
     })
 
     it('should return false if internal is undefined', async () => {
-      River.findOne.mockResolvedValue({
-        toJSON: () => ({ internal: undefined })
-      })
+      River.findByPk.mockResolvedValue({ internal: undefined })
 
       const result = await isRiverInternal(mockRiverId)
 
@@ -38,7 +36,7 @@ describe('rivers.service.unit', () => {
     })
 
     it('should throw an error if the river does not exist', async () => {
-      River.findOne.mockResolvedValue(null)
+      River.findByPk.mockResolvedValue(null)
 
       await expect(isRiverInternal(mockRiverId)).rejects.toThrow(
         'RIVER_NOT_FOUND'
