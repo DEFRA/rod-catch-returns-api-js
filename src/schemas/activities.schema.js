@@ -139,8 +139,15 @@ export const validateUpdateActivityAsync = async (values, helper) => {
     const riverId = extractRiverId(combinedValues.river)
 
     if (values.river !== undefined) {
-      const riverInternal = await isRiverInternal(riverId)
+      const results = await Promise.allSettled([
+        isRiverInternal(riverId),
+        isActivityExists(submission.id, riverId)
+      ])
+
+      const [riverInternal, activityExists] = results.map(unwrap)
+
       validateRiver(values, riverInternal, fmtOrAdmin)
+      validateActivityExists(values, activityExists)
     }
 
     if (
@@ -150,14 +157,6 @@ export const validateUpdateActivityAsync = async (values, helper) => {
       validateDaysFishedWithMandatoryRelease(combinedValues, submission)
       validateDaysFishedOther(combinedValues, fmtOrAdmin)
     }
-
-    const activityExists = await isActivityExists(
-      submission.id,
-      riverId,
-      activityId
-    )
-
-    validateActivityExists(values, activityExists)
 
     return values
   } catch (err) {
