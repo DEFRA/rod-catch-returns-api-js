@@ -66,7 +66,7 @@ export const getSubmissionByActivityId = async (activityId) => {
  *
  * @param {number} activityId - The ID of the activity for which to fetch.
  * @returns {Promise<Activity>} - A promise that resolves to the activity with the submission linked.
- * @throws {Error} - Throws an error if no submission is found or if the query fails.
+ * @throws {Error} - Throws an error if the query fails.
  */
 export const getActivityAndSubmissionByActivityId = async (activityId) => {
   try {

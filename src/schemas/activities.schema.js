@@ -1,14 +1,10 @@
 import { extractRiverId, extractSubmissionId } from '../utils/entity-utils.js'
 import {
-  getSubmission,
-  isSubmissionExistsById
-} from '../services/submissions.service.js'
-import {
-  getSubmissionByActivityId,
   getActivityAndSubmissionByActivityId,
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
+import { getSubmission } from '../services/submissions.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
@@ -40,7 +36,7 @@ const validateDaysFishedOther = (values, fmtOrAdmin) => {
   }
 }
 
-const validateDaysFished2 = (values, submission) => {
+const validateDaysFishedWithMandatoryRelease = (values, submission) => {
   const maxDaysFished = isLeapYear(submission.season)
     ? MAX_DAYS_LEAP_YEAR
     : MAX_DAYS_NON_LEAP_YEAR
@@ -53,6 +49,24 @@ const validateDaysFished2 = (values, submission) => {
         value: values.daysFishedWithMandatoryRelease
       }
     )
+  }
+}
+
+const validateRiver = (values, riverInternal, fmtOrAdmin) => {
+  if (riverInternal && !fmtOrAdmin) {
+    throw new JoiExternalValidationError('ACTIVITY_RIVER_FORBIDDEN', {
+      property: 'river',
+      value: values.river
+    })
+  }
+}
+
+const validateActivityExists = (values, activityExists) => {
+  if (activityExists) {
+    throw new JoiExternalValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND', {
+      property: 'river',
+      value: values.river
+    })
   }
 }
 
@@ -84,22 +98,10 @@ export const validateActivityAsync = async (values, helper) => {
       })
     }
 
-    validateDaysFished2(values, submission)
+    validateDaysFishedWithMandatoryRelease(values, submission)
     validateDaysFishedOther(values, fmtOrAdmin)
-
-    if (riverInternal && !fmtOrAdmin) {
-      throw new JoiExternalValidationError('ACTIVITY_RIVER_FORBIDDEN', {
-        property: 'river',
-        value: values.river
-      })
-    }
-
-    if (activityExists) {
-      throw new JoiExternalValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND', {
-        property: 'river',
-        value: values.river
-      })
-    }
+    validateRiver(values, riverInternal, fmtOrAdmin)
+    validateActivityExists(values, activityExists)
 
     return values
   } catch (err) {
@@ -139,20 +141,14 @@ export const validateUpdateActivityAsync = async (values, helper) => {
 
     if (values.river !== undefined) {
       const riverInternal = await isRiverInternal(riverId)
-      if (riverInternal && !fmtOrAdmin) {
-        throw new JoiExternalValidationError('ACTIVITY_RIVER_FORBIDDEN', {
-          property: 'river',
-          value: values.river
-        })
-      }
+      validateRiver(values, riverInternal, fmtOrAdmin)
     }
 
     if (
       values.daysFishedOther !== undefined ||
       values.daysFishedWithMandatoryRelease !== undefined
     ) {
-      console.log('here')
-      validateDaysFished2(combinedValues, submission)
+      validateDaysFishedWithMandatoryRelease(combinedValues, submission)
       validateDaysFishedOther(combinedValues, fmtOrAdmin)
     }
 
@@ -162,12 +158,7 @@ export const validateUpdateActivityAsync = async (values, helper) => {
       activityId
     )
 
-    if (activityExists) {
-      throw new JoiExternalValidationError('ACTIVITY_RIVER_DUPLICATE_FOUND', {
-        property: 'river',
-        value: values.river
-      })
-    }
+    validateActivityExists(values, activityExists)
 
     return values
   } catch (err) {
@@ -175,76 +166,7 @@ export const validateUpdateActivityAsync = async (values, helper) => {
       console.log(err.context)
       return helper.message(err.code, err.context)
     }
-    console.log(err)
     throw err
-  }
-}
-
-const validateDaysFished = (daysFishedOther, helper) => {
-  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-
-  const daysFishedWithMandatoryRelease =
-    helper.state.ancestors[0].daysFishedWithMandatoryRelease
-
-  if (
-    !fmtOrAdmin &&
-    daysFishedOther < 1 &&
-    daysFishedWithMandatoryRelease < 1
-  ) {
-    return helper.message('ACTIVITY_DAYS_FISHED_NOT_GREATER_THAN_ZERO')
-  }
-
-  return daysFishedOther
-}
-
-const validateDaysFishedWithMandatoryRelease = async (
-  value,
-  helper,
-  submission
-) => {
-  if (!submission) {
-    return helper.message('ACTIVITY_SUBMISSION_NOT_FOUND')
-  }
-
-  const maxDaysFished = isLeapYear(submission.season)
-    ? MAX_DAYS_LEAP_YEAR
-    : MAX_DAYS_NON_LEAP_YEAR
-
-  if (value > maxDaysFished) {
-    return helper.message(
-      'ACTIVITY_DAYS_FISHED_WITH_MANDATORY_RELEASE_MAX_EXCEEDED'
-    )
-  }
-  return value
-}
-
-const validateSubmission = async (value, helper) => {
-  const submissionId = extractSubmissionId(value)
-  const submissionExists = await isSubmissionExistsById(submissionId)
-  return submissionExists
-    ? value
-    : helper.message('ACTIVITY_SUBMISSION_NOT_FOUND')
-}
-
-const validateRiver = async (value, helper) => {
-  try {
-    const riverId = extractRiverId(value)
-    const riverInternal = await isRiverInternal(riverId)
-    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-
-    if (riverInternal && !fmtOrAdmin) {
-      return helper.message('ACTIVITY_RIVER_FORBIDDEN')
-    }
-
-    return value
-  } catch (error) {
-    // Handle the case where the river does not exist
-    if (error.message === 'RIVER_NOT_FOUND') {
-      return helper.message('ACTIVITY_RIVER_NOT_FOUND')
-    }
-
-    // Re-throw unexpected errors
-    throw error
   }
 }
 
@@ -272,10 +194,8 @@ const daysFishedOtherField = Joi.number()
     'number.base': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_A_NUMBER',
     'number.integer': 'ACTIVITY_DAYS_FISHED_OTHER_NOT_AN_INTEGER'
   })
-// .external(validateDaysFished)
 
 const riverField = Joi.string()
-
   .pattern(/^rivers\//)
   .description('The river id prefixed with rivers/')
   .messages({
@@ -287,7 +207,6 @@ const riverField = Joi.string()
 export const createActivitySchema = Joi.object({
   submission: Joi.string()
     .required()
-    // .external(validateSubmission)
     .pattern(/^submissions\//)
     .description('The submission id prefixed with submissions/')
     .messages({
@@ -295,75 +214,17 @@ export const createActivitySchema = Joi.object({
       'string.empty': 'ACTIVITY_SUBMISSION_REQUIRED',
       'string.pattern.base': 'ACTIVITY_SUBMISSION_PATTERN_INVALID'
     }),
-
-  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
-    .required()
-    .external(async (value, helper) => {
-      // const submissionId = extractSubmissionId(
-      //   helper.state.ancestors[0].submission
-      // )
-      // const submission = await getSubmission(submissionId)
-      // return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    }),
+  daysFishedWithMandatoryRelease:
+    daysFishedWithMandatoryReleaseField.required(),
   daysFishedOther: daysFishedOtherField.required(),
-
-  river: riverField
-    .required()
-    //.external(validateRiver)
-    .external(async (value, helper) => {
-      // const submissionId = extractSubmissionId(
-      //   helper.state.ancestors[0].submission
-      // )
-      // const riverId = extractRiverId(value)
-      // const activityExists = await isActivityExists(submissionId, riverId)
-      // if (activityExists) {
-      //   return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
-      // }
-      // return value
-    })
+  river: riverField.required()
 }).external(validateActivityAsync)
 
 export const updateActivitySchema = Joi.object({
-  daysFishedWithMandatoryRelease: daysFishedWithMandatoryReleaseField
-    .optional()
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      // if (value === undefined) {
-      //   return value
-      // }
-      // const activityId = helper.prefs.context.params.activityId
-      // const submission = await getSubmissionByActivityId(activityId)
-      // return validateDaysFishedWithMandatoryRelease(value, helper, submission)
-    }),
+  daysFishedWithMandatoryRelease:
+    daysFishedWithMandatoryReleaseField.optional(),
   daysFishedOther: daysFishedOtherField.optional(),
-  river: riverField
-    .optional()
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      // if (value === undefined) {
-      //   return value
-      // }
-      // return validateRiver(value, helper)
-    })
-    .external(async (value, helper) => {
-      // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-      // if (value === undefined) {
-      //   return value
-      // }
-      // // Get activityId from the request context
-      // const activityId = helper.prefs.context.params.activityId
-      // const riverId = extractRiverId(value)
-      // const submission = await getSubmissionByActivityId(activityId)
-      // const activityExists = await isActivityExists(
-      //   submission.id,
-      //   riverId,
-      //   activityId
-      // )
-      // if (activityExists) {
-      //   return helper.message('ACTIVITY_RIVER_DUPLICATE_FOUND')
-      // }
-      // return value
-    })
+  river: riverField.optional()
 })
   .external(validateUpdateActivityAsync)
   .unknown()

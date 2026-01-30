@@ -1,5 +1,11 @@
 import { River } from '../entities/index.js'
 
+// todo change to
+// const river = await River.findByPk(riverId, {
+//    attributes: ['internal'],
+//raw: true
+//})
+
 /**
  * Checks if a river is marked as internal in the database by its ID.
  *
