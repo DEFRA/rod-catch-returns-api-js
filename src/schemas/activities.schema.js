@@ -4,6 +4,7 @@ import {
   isActivityExists
 } from '../services/activities.service.js'
 import Joi from 'joi'
+import { JoiExternalValidationError } from '../models/joi-external-validation-error.model.js'
 import { getSubmission } from '../services/submissions.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
@@ -11,14 +12,6 @@ import { isRiverInternal } from '../services/rivers.service.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
-
-class JoiExternalValidationError extends Error {
-  constructor(code, context = {}) {
-    super(code)
-    this.code = code
-    this.context = context
-  }
-}
 
 const validateDaysFishedOther = (values, fmtOrAdmin) => {
   if (
