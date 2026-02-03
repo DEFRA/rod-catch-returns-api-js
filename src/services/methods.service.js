@@ -7,6 +7,7 @@ import { Method } from '../entities/index.js'
  * @returns {Promise<boolean>} - A promise that resolves to `true` if the method is internal, otherwise `false`.
  * @throws {Error} - If the method does not exist in the database.
  */
+// TODO clean up
 export const isMethodInternal = async (methodId) => {
   const foundMethod = await Method.findOne({ where: { id: methodId } })
   if (foundMethod === null) {
