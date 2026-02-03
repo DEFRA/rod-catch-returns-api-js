@@ -4,13 +4,10 @@ import {
   updateActivitySchema
 } from '../activities.schema.js'
 import {
-  getSubmission,
-  isSubmissionExistsById
-} from '../../services/submissions.service.js'
-import {
-  getSubmissionByActivityId,
+  getActivityAndSubmissionByActivityId,
   isActivityExists
 } from '../../services/activities.service.js'
+import { getSubmission } from '../../services/submissions.service.js'
 import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
 
@@ -39,13 +36,11 @@ describe('activities.schema.unit', () => {
 
     const setupMocks = ({
       season = 2024,
-      submissionExists = true,
       riverInternal = false,
       activityExists = false,
       fmtOrAdmin = false
     } = {}) => {
       getSubmission.mockResolvedValue({ season })
-      isSubmissionExistsById.mockResolvedValue(submissionExists)
       isRiverInternal.mockResolvedValue(riverInternal)
       isActivityExists.mockResolvedValue(activityExists)
       isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
@@ -98,12 +93,22 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if submission does not exist', async () => {
-        isSubmissionExistsById.mockResolvedValue(false)
+        getSubmission.mockResolvedValue(null)
         const payload = getDefaultPayload()
 
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow('ACTIVITY_SUBMISSION_NOT_FOUND')
+      })
+
+      it('should throw if one Promise.allSettled dependency rejects', async () => {
+        const error = new Error('DB failure')
+        getSubmission.mockRejectedValue(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow(error)
       })
     })
 
@@ -155,19 +160,17 @@ describe('activities.schema.unit', () => {
 
       it('should return an error if the river could not be found', async () => {
         getSubmission.mockResolvedValue({ season: 2024 })
-        isSubmissionExistsById.mockResolvedValue(true)
         const error = new Error('RIVER_NOT_FOUND')
         isRiverInternal.mockRejectedValueOnce(error)
         const payload = getDefaultPayload()
 
         await expect(
           createActivitySchema.validateAsync(payload)
-        ).rejects.toThrow('ACTIVITY_RIVER_NOT_FOUND')
+        ).rejects.toThrow('RIVER_NOT_FOUND')
       })
 
       it('should return an error if there is an error retrieving the river', async () => {
         getSubmission.mockResolvedValue({ season: 2024 })
-        isSubmissionExistsById.mockResolvedValue(true)
         const error = new Error('Database error')
         isRiverInternal.mockRejectedValueOnce(error)
         const payload = getDefaultPayload()
@@ -392,17 +395,15 @@ describe('activities.schema.unit', () => {
 
     const setupMocks = ({
       season = 2024,
-      submissionExists = true,
       riverInternal = false,
       activityExists = false,
-      submission = { id: '1', season },
+      activity = { id: 2, Submission: { id: '1', season } },
       fmtOrAdmin = false
     } = {}) => {
       getSubmission.mockResolvedValue({ season })
-      isSubmissionExistsById.mockResolvedValue(submissionExists)
       isRiverInternal.mockResolvedValue(riverInternal)
       isActivityExists.mockResolvedValue(activityExists)
-      getSubmissionByActivityId.mockResolvedValue(submission)
+      getActivityAndSubmissionByActivityId.mockResolvedValue(activity)
       isFMTOrAdmin.mockReturnValue(fmtOrAdmin)
     }
 
@@ -417,7 +418,9 @@ describe('activities.schema.unit', () => {
 
     describe('river', () => {
       it('should validate successfully if "river" is missing', async () => {
-        setupMocks()
+        setupMocks({
+          activity: { id: '2', river_id: '2', Submission: { id: '2' } }
+        })
         const payload = { ...getDefaultPayload(), river: undefined }
 
         await expect(
@@ -525,7 +528,7 @@ describe('activities.schema.unit', () => {
       })
 
       it('should return an error if if the activity could not be found', async () => {
-        setupMocks({ submission: null })
+        setupMocks({ activity: null })
         const payload = getDefaultPayload()
 
         await expect(

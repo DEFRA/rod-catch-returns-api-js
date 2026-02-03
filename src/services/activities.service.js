@@ -60,3 +60,30 @@ export const getSubmissionByActivityId = async (activityId) => {
     )
   }
 }
+
+/**
+ * Fetches the associated Activity and Submission by the given Activity ID.
+ *
+ * @param {number} activityId - The ID of the activity for which to fetch.
+ * @returns {Promise<Activity>} - A promise that resolves to the activity with the submission linked.
+ * @throws {Error} - Throws an error if the query fails.
+ */
+export const getActivityAndSubmissionByActivityId = async (activityId) => {
+  try {
+    const activity = await Activity.findOne({
+      where: { id: activityId },
+      include: [
+        {
+          model: Submission,
+          required: true
+        }
+      ]
+    })
+
+    return activity
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch activity or linked submission for activity ID ${activityId}: ${error}`
+    )
+  }
+}
