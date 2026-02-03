@@ -118,6 +118,18 @@ export const validateActivityAsync = async (values, helper) => {
   }
 }
 
+/**
+ * Joi external async validator for updating an activity.
+ *
+ * @async
+ * @param {Object} values - The already schema-validated activity payload.
+ * @param {number} values.daysFishedWithMandatoryRelease - Number of days fished during the mandatory release period.
+ * @param {number} values.daysFishedOther - Number of days fished outside the mandatory release period.
+ * @param {string} values.river - River reference (prefixed with `rivers/`).
+ * @param {Object} helper - Joi validation helper object.
+ * @returns {Promise<Object>} Resolves with the original values if validation passes.
+ * @throws {Error} Rethrows unexpected errors that are not {@link JoiExternalValidationError}.
+ */
 export const validateUpdateActivityAsync = async (values, helper) => {
   try {
     const activityId = helper.prefs.context.params.activityId
