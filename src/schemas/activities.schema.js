@@ -70,6 +70,19 @@ const unwrap = (result) => {
   return result.value
 }
 
+/**
+ * Joi external async validator for creating an activity.
+ *
+ * @async
+ * @param {Object} values - The already schema-validated activity payload.
+ * @param {string} values.submission - Submission reference (prefixed with `submissions/`).
+ * @param {number} values.daysFishedWithMandatoryRelease - Number of days fished during the mandatory release period.
+ * @param {number} values.daysFishedOther - Number of days fished outside the mandatory release period.
+ * @param {string} values.river - River reference (prefixed with `rivers/`).
+ * @param {Object} helper - Joi validation helper object.
+ * @returns {Promise<Object>} Resolves with the original values if validation passes.
+ * @throws {Error} Rethrows unexpected errors that are not {@link JoiExternalValidationError}.
+ */
 export const validateActivityAsync = async (values, helper) => {
   try {
     const submissionId = extractSubmissionId(values.submission)
