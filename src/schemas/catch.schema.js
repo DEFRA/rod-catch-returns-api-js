@@ -92,6 +92,27 @@ const unwrap = (result) => {
   return result.value
 }
 
+/**
+ * Joi external async validator for creating a catch.
+ *
+ * @async
+ * @param {Object} values - The validated catch payload from Joi.
+ * @param {string} values.activity - Activity reference in the form `activities/{id}`.
+ * @param {string} values.dateCaught - ISO date string representing when the catch occurred.
+ * @param {boolean} values.onlyMonthRecorded - Indicates only the month is known.
+ * @param {boolean} values.noDateRecorded]- Indicates no date was recorded.
+ * @param {string} values.species - Species reference in the form `species/{id}`.
+ * @param {Object} values.mass - Mass measurement object.
+ * @param {number} values.mass.kg - Mass in kilograms (metric).
+ * @param {number} values.mass.oz - Mass in ounces (imperial).
+ * @param {string} values.mass.type - Measurement system (`METRIC` or `IMPERIAL`).
+ * @param {string} values.method - Method reference in the form `methods/{id}`.
+ * @param {boolean} values.released - Whether the catch was released.
+ * @param {boolean} values.reportingExclude - Whether this catch is excluded from reporting.
+ * @param {Object} helper - Joi external validation helper.
+ * @returns {Promise<Object>} Resolves with nothing on success, or a Joi validation message object on failure.
+ * @throws {Error} Rethrows unexpected errors that are not {@link JoiExternalValidationError}.
+ */
 export const validateCreateCatchAsync = async (values, helper) => {
   try {
     const activityId = extractActivityId(values.activity)
@@ -123,7 +144,26 @@ export const validateCreateCatchAsync = async (values, helper) => {
   }
 }
 
-// TODO add jsdoc
+/**
+ * Joi external async validator for updating a catch.
+ *
+ * @async
+ * @param {Object} values - The validated catch payload from Joi.
+ * @param {string} values.dateCaught - ISO date string representing when the catch occurred.
+ * @param {boolean} values.onlyMonthRecorded - Indicates only the month is known.
+ * @param {boolean} values.noDateRecorded]- Indicates no date was recorded.
+ * @param {string} values.species - Species reference in the form `species/{id}`.
+ * @param {Object} values.mass - Mass measurement object.
+ * @param {number} values.mass.kg - Mass in kilograms (metric).
+ * @param {number} values.mass.oz - Mass in ounces (imperial).
+ * @param {string} values.mass.type - Measurement system (`METRIC` or `IMPERIAL`).
+ * @param {string} values.method - Method reference in the form `methods/{id}`.
+ * @param {boolean} values.released - Whether the catch was released.
+ * @param {boolean} values.reportingExclude - Whether this catch is excluded from reporting.
+ * @param {Object} helper - Joi external validation helper.
+ * @returns {Promise<Object>} Resolves with nothing on success, or a Joi validation message object on failure.
+ * @throws {Error} Rethrows unexpected errors that are not {@link JoiExternalValidationError}.
+ */
 export const validateUpdateCatchAsync = async (values, helper) => {
   try {
     const catchId = helper.prefs.context.params.catchId

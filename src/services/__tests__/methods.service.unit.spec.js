@@ -12,7 +12,7 @@ describe('methods.service.unit', () => {
     })
 
     it('should return true if the method is internal', async () => {
-      Method.findOne.mockResolvedValue({ toJSON: () => ({ internal: true }) })
+      Method.findByPk.mockResolvedValue({ internal: true })
 
       const result = await isMethodInternal(mockMethodId)
 
@@ -20,7 +20,7 @@ describe('methods.service.unit', () => {
     })
 
     it('should return false if the method is not internal', async () => {
-      Method.findOne.mockResolvedValue({ toJSON: () => ({ internal: false }) })
+      Method.findByPk.mockResolvedValue({ internal: false })
 
       const result = await isMethodInternal(mockMethodId)
 
@@ -28,9 +28,7 @@ describe('methods.service.unit', () => {
     })
 
     it('should return false if internal is undefined', async () => {
-      Method.findOne.mockResolvedValue({
-        toJSON: () => ({ internal: undefined })
-      })
+      Method.findByPk.mockResolvedValue({ internal: undefined })
 
       const result = await isMethodInternal(mockMethodId)
 
@@ -38,7 +36,7 @@ describe('methods.service.unit', () => {
     })
 
     it('should throw an error if the method does not exist', async () => {
-      Method.findOne.mockResolvedValue(null)
+      Method.findByPk.mockResolvedValue(null)
 
       await expect(isMethodInternal(mockMethodId)).rejects.toThrow(
         'Method does not exist'
