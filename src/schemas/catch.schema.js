@@ -134,10 +134,10 @@ export const validateCreateCatchAsync = async (values, helper) => {
     validateSpecies(values, speciesExists)
     validateMethod(values, methodInternal, fmtOrAdmin)
   } catch (err) {
+    if (err.code === 'CATCH_YEAR_MISMATCH') {
+      logger.error(err)
+    }
     if (err instanceof JoiExternalValidationError) {
-      if (err.code === 'CATCH_YEAR_MISMATCH') {
-        logger.error(err)
-      }
       return helper.message(err.code, err.context)
     }
     throw err
@@ -194,10 +194,10 @@ export const validateUpdateCatchAsync = async (values, helper) => {
       validateMethod(values, methodInternal, fmtOrAdmin)
     }
   } catch (err) {
+    if (err.code === 'CATCH_YEAR_MISMATCH') {
+      logger.error(err)
+    }
     if (err instanceof JoiExternalValidationError) {
-      if (err.code === 'CATCH_YEAR_MISMATCH') {
-        logger.error(err)
-      }
       return helper.message(err.code, err.context)
     }
     throw err
