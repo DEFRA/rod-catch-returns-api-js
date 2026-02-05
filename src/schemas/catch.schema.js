@@ -14,6 +14,7 @@ import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodInternal } from '../services/methods.service.js'
 import { isSpeciesExists } from '../services/species.service.js'
 import logger from '../utils/logger-utils.js'
+import { unwrap } from '../utils/promise-utils.js'
 
 const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (world record is about 48kg)
 const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG) // 1763.698097oz
@@ -85,13 +86,6 @@ const checkDefaultFlagConflict = (values) => {
   }
 }
 
-const unwrap = (result) => {
-  if (result.status === 'rejected') {
-    throw result.reason
-  }
-  return result.value
-}
-
 /**
  * Joi external async validator for creating a catch.
  *
@@ -134,10 +128,10 @@ export const validateCreateCatchAsync = async (values, helper) => {
     validateSpecies(values, speciesExists)
     validateMethod(values, methodInternal, fmtOrAdmin)
   } catch (err) {
-    if (err.code === 'CATCH_YEAR_MISMATCH') {
-      logger.error(err)
-    }
     if (err instanceof JoiExternalValidationError) {
+      if (err.code === 'CATCH_YEAR_MISMATCH') {
+        logger.error(err)
+      }
       return helper.message(err.code, err.context)
     }
     throw err
@@ -194,10 +188,10 @@ export const validateUpdateCatchAsync = async (values, helper) => {
       validateMethod(values, methodInternal, fmtOrAdmin)
     }
   } catch (err) {
-    if (err.code === 'CATCH_YEAR_MISMATCH') {
-      logger.error(err)
-    }
     if (err instanceof JoiExternalValidationError) {
+      if (err.code === 'CATCH_YEAR_MISMATCH') {
+        logger.error(err)
+      }
       return helper.message(err.code, err.context)
     }
     throw err
