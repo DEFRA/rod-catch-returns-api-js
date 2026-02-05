@@ -707,7 +707,8 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
-            property: 'dateCaught'
+            property: 'dateCaught',
+            value: '2023-06-24'
           }
         ]
       })
@@ -738,7 +739,8 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
-            property: 'dateCaught'
+            property: 'dateCaught',
+            value: '2023-06-24'
           }
         ]
       })

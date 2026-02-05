@@ -8,13 +8,17 @@ import { Method } from '../entities/index.js'
  * @throws {Error} - If the method does not exist in the database.
  */
 export const isMethodInternal = async (methodId) => {
-  const foundMethod = await Method.findOne({ where: { id: methodId } })
+  const foundMethod = await Method.findByPk(methodId, {
+    attributes: ['internal'],
+    raw: true
+  })
+
   if (foundMethod === null) {
     throw new Error(`Method does not exist: ${methodId}`)
   }
 
   // Normal users cannot add internal methods, but admin users can
-  return foundMethod.toJSON().internal || false
+  return Boolean(foundMethod.internal)
 }
 
 /**
