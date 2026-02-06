@@ -275,6 +275,7 @@ describe('smallCatch.schema.unit', () => {
       })
 
       it('should return an error if released exceeds the sum of counts', async () => {
+        setupMocks({ season: currentYear })
         const payload = getValidPayload({
           counts: [
             { method: 'methods/1', count: 3 },

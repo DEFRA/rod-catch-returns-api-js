@@ -10,6 +10,7 @@ import {
 } from '../services/small-catch.service.js'
 import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
+import { JoiExternalValidationError } from '../models/joi-external-validation-error.model.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
@@ -67,6 +68,115 @@ const validateCounts = async (value, helper) => {
   return value
 }
 
+const validateDuplicateMethods = (values, methods) => {
+  const hasDuplicates = new Set(methods).size !== methods.length
+  if (hasDuplicates) {
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
+      {
+        property: 'counts',
+        value: values.counts
+      }
+    )
+  }
+}
+
+const unwrap = (result) => {
+  if (result.status === 'rejected') {
+    throw result.reason
+  }
+  return result.value
+}
+
+const validateDuplicateSmallCatch = (values, duplicateExists) => {
+  if (duplicateExists) {
+    throw new JoiExternalValidationError('SMALL_CATCH_DUPLICATE_FOUND', {
+      property: 'month',
+      value: values.month
+    })
+  }
+}
+
+const validateMonthInFuture2 = (values, monthNumber, season) => {
+  const currentYearAndMonth = set(new Date(), {
+    date: 1,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0
+  }) // Reset to the start of the first day of the current month
+
+  const inputDate = new Date(season, monthNumber - 1) // Month is not one-based in our app, Month is zero-based in js Date
+
+  if (isAfter(inputDate, currentYearAndMonth)) {
+    throw new JoiExternalValidationError('SMALL_CATCH_MONTH_IN_FUTURE', {
+      property: 'month',
+      value: values.month
+    })
+  }
+}
+
+const validateMethod = (values, fmtOrAdmin, methodInternal) => {
+  if (!fmtOrAdmin && methodInternal) {
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_COUNTS_METHOD_FORBIDDEN',
+      {
+        property: 'counts',
+        value: values.counts
+      }
+    )
+  }
+}
+
+const validateReleased = (values) => {
+  const totalCaught = sumCounts(values.counts)
+
+  if (values.released > totalCaught) {
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
+      {
+        property: 'released',
+        value: values.released
+      }
+    )
+  }
+}
+const validateCreateSmallCatchAsync = async (values, helper) => {
+  try {
+    const activityId = extractActivityId(values.activity)
+    const monthNumber = getMonthNumberFromName(values.month)
+    const methods = values.counts.map((item) => item.method)
+    const methodIds = methods.map((method) => extractMethodId(method))
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    validateDuplicateMethods(values, methods)
+
+    const results = await Promise.allSettled([
+      getSubmissionByActivityId(activityId),
+      isDuplicateSmallCatch(activityId, monthNumber),
+      isMethodsInternal(methodIds)
+    ])
+
+    const [submission, duplicateExists, methodInternal] = results.map(unwrap)
+
+    validateDuplicateSmallCatch(values, duplicateExists)
+    validateMonthInFuture2(values, monthNumber, submission.season)
+    validateMethod(values, fmtOrAdmin, methodInternal)
+    validateReleased(values)
+  } catch (err) {
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+    if (
+      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
+      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
+    ) {
+      logger.error(err)
+    }
+    throw err
+  }
+}
+
 const monthField = Joi.string()
   .invalid(null)
   .messages({
@@ -119,53 +229,55 @@ export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
     'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED'
   }),
-  month: monthField
-    .required()
-    .when('noMonthRecorded', {
-      is: true,
-      then: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED',
-        'string.base': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
-      }),
-      otherwise: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_MONTH_REQUIRED',
-        'string.base': 'SMALL_CATCH_MONTH_REQUIRED'
-      })
-    })
-    .external(async (value, helper) => {
-      const activityId = extractActivityId(helper.state.ancestors[0].activity)
-      const submission = await getSubmissionByActivityId(activityId)
-
-      try {
-        await validateUniqueActivityAndMonth(value, activityId)
-        validateMonthInFuture(value, submission.season)
-      } catch (error) {
-        if (
-          error.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
-          error.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
-        ) {
-          logger.error(error)
-        }
-        return helper.message(error.message)
-      }
-      return value
+  month: monthField.required().when('noMonthRecorded', {
+    is: true,
+    then: Joi.required().messages({
+      'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED',
+      'string.base': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
     }),
-  counts: countsField.required().external((value, helper) => {
-    return validateCounts(value, helper)
+    otherwise: Joi.required().messages({
+      'any.required': 'SMALL_CATCH_MONTH_REQUIRED',
+      'string.base': 'SMALL_CATCH_MONTH_REQUIRED'
+    })
   }),
-  released: releasedField.required().custom((value, helper) => {
-    const countsArray = helper.state.ancestors[0].counts
-    const totalCaught = sumCounts(countsArray)
+  // .external(async (value, helper) => {
+  //   const activityId = extractActivityId(helper.state.ancestors[0].activity)
+  //   const submission = await getSubmissionByActivityId(activityId)
 
-    if (value > totalCaught) {
-      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-    }
+  //   try {
+  //     await validateUniqueActivityAndMonth(value, activityId)
+  //     validateMonthInFuture(value, submission.season)
+  //   } catch (error) {
+  //     if (
+  //       error.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
+  //       error.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
+  //     ) {
+  //       logger.error(error)
+  //     }
+  //     return helper.message(error.message)
+  //   }
+  //   return value
+  // }),
+  counts: countsField.required(),
+  // .external((value, helper) => {
+  //   return validateCounts(value, helper)
+  // }),
+  released: releasedField.required(),
+  // .custom((value, helper) => {
+  //   const countsArray = helper.state.ancestors[0].counts
+  //   const totalCaught = sumCounts(countsArray)
 
-    return value
-  }),
+  //   if (value > totalCaught) {
+  //     return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+  //   }
+
+  //   return value
+  // }),
   noMonthRecorded: noMonthRecordedField,
   reportingExclude: reportingExcludeField
-}).unknown()
+})
+  .external(validateCreateSmallCatchAsync)
+  .unknown()
 
 export const updateSmallCatchSchema = Joi.object({
   month: monthField.optional().external(async (value, helper) => {
