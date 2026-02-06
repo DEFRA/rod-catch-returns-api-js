@@ -159,7 +159,7 @@ export const validateUpdateActivityAsync = async (values, helper) => {
     if (values.river !== undefined) {
       const results = await Promise.allSettled([
         isRiverInternal(riverId),
-        isActivityExists(submission.id, riverId)
+        isActivityExists(submission.id, riverId, activityId)
       ])
 
       const [riverInternal, activityExists] = results.map(unwrap)

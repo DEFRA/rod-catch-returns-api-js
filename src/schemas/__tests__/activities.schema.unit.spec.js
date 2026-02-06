@@ -463,6 +463,15 @@ describe('activities.schema.unit', () => {
           updateActivitySchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('ACTIVITY_RIVER_DUPLICATE_FOUND')
       })
+
+      it('should call isActivityExists with the activityId to ignore', async () => {
+        setupMocks()
+        const payload = getDefaultPayload()
+
+        await updateActivitySchema.validateAsync(payload, getDefaultContext())
+
+        expect(isActivityExists).toHaveBeenCalledWith('1', '456', '12345')
+      })
     })
 
     describe('daysFishedWithMandatoryRelease', () => {
