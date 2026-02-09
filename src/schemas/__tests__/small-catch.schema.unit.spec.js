@@ -5,7 +5,7 @@ import {
 } from '../small-catch.schema.js'
 import {
   getSmallCatchById,
-  getTotalSmallCatchCountsBySmallCatchId,
+  getSmallCatchCountsBySmallCatchId,
   isDuplicateSmallCatch
 } from '../../services/small-catch.service.js'
 import { getMonthNameFromNumber } from '../../utils/date-utils.js'
@@ -493,7 +493,13 @@ describe('smallCatch.schema.unit', () => {
 
       it('should validate successfully if "month" is valid', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+          {
+            id: '1',
+            method_id: '1',
+            count: 1
+          }
+        ])
         const payload = { month: 'JANUARY' }
 
         await expect(
@@ -608,7 +614,23 @@ describe('smallCatch.schema.unit', () => {
 
       it('should return an error if released exceeds the sum of counts from the database', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(5)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+          {
+            id: '1',
+            method_id: '1',
+            count: 1
+          },
+          {
+            id: '2',
+            method_id: '2',
+            count: 3
+          },
+          {
+            id: '3',
+            method_id: '3',
+            count: 1
+          }
+        ])
         const payload = {
           released: 6
         }
@@ -618,9 +640,9 @@ describe('smallCatch.schema.unit', () => {
         ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
       })
 
-      it('should return an error the sum of the counts from the database returns undefined', async () => {
+      it('should return an error if the small catch counts from the database returns undefined', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(undefined)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(undefined)
         const payload = {
           released: 6
         }
@@ -634,7 +656,13 @@ describe('smallCatch.schema.unit', () => {
     describe('counts', () => {
       it('should validate successfully if "counts" is missing', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+          {
+            id: '1',
+            method_id: '1',
+            count: 1
+          }
+        ])
         const payload = getValidPayload({ counts: undefined })
 
         await expect(
@@ -704,6 +732,12 @@ describe('smallCatch.schema.unit', () => {
       })
 
       it('should return an error if duplicate methods are present in counts', async () => {
+        getSubmissionByActivityId.mockResolvedValueOnce({ season: 2024 })
+        getSmallCatchById.mockResolvedValue({
+          activity_id: '1',
+          month: 2,
+          released: true
+        })
         const payload = {
           counts: [
             { method: 'methods/1', count: 1 },
@@ -758,7 +792,13 @@ describe('smallCatch.schema.unit', () => {
         'should successfully validate if "reportingExclude" is %s',
         async (value) => {
           setupMocks()
-          getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+          getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+            {
+              id: '1',
+              method_id: '1',
+              count: 1
+            }
+          ])
           const payload = { reportingExclude: value }
 
           await expect(
@@ -769,7 +809,13 @@ describe('smallCatch.schema.unit', () => {
 
       it('should return an error if "reportingExclude" is invalid', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+          {
+            id: '1',
+            method_id: '1',
+            count: 1
+          }
+        ])
         const payload = { reportingExclude: 'test' }
 
         await expect(
@@ -783,7 +829,13 @@ describe('smallCatch.schema.unit', () => {
         'should successfully validate if "noMonthRecorded" is %s',
         async (value) => {
           setupMocks()
-          getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+          getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+            {
+              id: '1',
+              method_id: '1',
+              count: 1
+            }
+          ])
           const payload = { noMonthRecorded: value }
 
           await expect(
@@ -794,7 +846,13 @@ describe('smallCatch.schema.unit', () => {
 
       it('should return an error if "noMonthRecorded" is invalid', async () => {
         setupMocks()
-        getTotalSmallCatchCountsBySmallCatchId.mockResolvedValueOnce(1)
+        getSmallCatchCountsBySmallCatchId.mockResolvedValueOnce([
+          {
+            id: '1',
+            method_id: '1',
+            count: 1
+          }
+        ])
         const payload = { noMonthRecorded: 'test' }
 
         await expect(

@@ -5,6 +5,7 @@ import {
 } from '../utils/entity-utils.js'
 import {
   getSmallCatchById,
+  getSmallCatchCountsBySmallCatchId,
   getTotalSmallCatchCountsBySmallCatchId,
   isDuplicateSmallCatch
 } from '../services/small-catch.service.js'
@@ -129,8 +130,7 @@ const validateMethod = (values, fmtOrAdmin, methodInternal) => {
 }
 
 const validateReleased = (values) => {
-  const totalCaught = sumCounts(values.counts)
-
+  const totalCaught = values.counts ? sumCounts(values.counts) : 0
   if (values.released > totalCaught) {
     throw new JoiExternalValidationError(
       'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
@@ -141,6 +141,8 @@ const validateReleased = (values) => {
     )
   }
 }
+
+// todo add jsdoc
 const validateCreateSmallCatchAsync = async (values, helper) => {
   try {
     const activityId = extractActivityId(values.activity)
@@ -151,6 +153,7 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
 
     validateDuplicateMethods(values, methods)
 
+    // todo write tests for all settled
     const results = await Promise.allSettled([
       getSubmissionByActivityId(activityId),
       isDuplicateSmallCatch(activityId, monthNumber),
@@ -163,7 +166,76 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
     validateMonthInFuture2(values, monthNumber, submission.season)
     validateMethod(values, fmtOrAdmin, methodInternal)
     validateReleased(values)
+
+    return values
   } catch (err) {
+    // todo add tests for error
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+    if (
+      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
+      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
+    ) {
+      logger.error(err)
+    }
+    throw err
+  }
+}
+
+// todo add jsdoc
+const validateUpdateSmallCatchAsync = async (values, helper) => {
+  try {
+    const smallCatchId = helper.prefs.context.params.smallCatchId
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    const smallCatch = await getSmallCatchById(smallCatchId) // todo get smallcatchcounts too
+
+    const combinedValues = {
+      month: values.month
+        ? getMonthNumberFromName(values.month)
+        : smallCatch.month,
+      released: values.released ?? smallCatch.released
+    }
+
+    // todo write tests for all settled
+    const results = await Promise.allSettled([
+      getSubmissionByActivityId(smallCatch.activity_id),
+      isDuplicateSmallCatch(
+        smallCatch.activity_id,
+        combinedValues.month,
+        smallCatch.month
+      ),
+      getSmallCatchCountsBySmallCatchId(smallCatchId)
+    ])
+
+    const [submission, duplicateExists, smallCatchCounts] = results.map(unwrap)
+
+    combinedValues.counts = values.counts ?? smallCatchCounts
+
+    validateDuplicateSmallCatch(combinedValues, duplicateExists)
+    validateMonthInFuture2(
+      combinedValues,
+      combinedValues.month,
+      submission.season
+    )
+
+    if (values.counts) {
+      const methods = values.counts.map((item) => item.method)
+      const methodIds = methods.map((method) => extractMethodId(method))
+      validateDuplicateMethods(values, methods)
+
+      const methodInternal = await isMethodsInternal(methodIds)
+      validateMethod(values, fmtOrAdmin, methodInternal)
+    }
+
+    if (values.counts || values.released) {
+      validateReleased(combinedValues)
+    }
+
+    return values
+  } catch (err) {
+    // todo add tests for error
     if (err instanceof JoiExternalValidationError) {
       return helper.message(err.code, err.context)
     }
@@ -280,59 +352,62 @@ export const createSmallCatchSchema = Joi.object({
   .unknown()
 
 export const updateSmallCatchSchema = Joi.object({
-  month: monthField.optional().external(async (value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-    // Get catchId from the request context
-    const smallCatchId = helper.prefs.context.params.smallCatchId
-    const smallCatch = await getSmallCatchById(smallCatchId)
-    const submission = await getSubmissionByActivityId(smallCatch.activity_id)
+  month: monthField.optional(),
+  // .external(async (value, helper) => {
+  //   // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+  //   if (value === undefined) {
+  //     return value
+  //   }
+  //   // Get catchId from the request context
+  //   const smallCatchId = helper.prefs.context.params.smallCatchId
+  //   const smallCatch = await getSmallCatchById(smallCatchId)
+  //   const submission = await getSubmissionByActivityId(smallCatch.activity_id)
 
-    try {
-      await validateUniqueActivityAndMonth(
-        value,
-        smallCatch.activity_id,
-        smallCatch.month
-      )
-      validateMonthInFuture(value, submission.season)
-    } catch (error) {
-      logger.error(error)
-      return helper.message(error.message)
-    }
+  //   try {
+  //     await validateUniqueActivityAndMonth(
+  //       value,
+  //       smallCatch.activity_id,
+  //       smallCatch.month
+  //     )
+  //     validateMonthInFuture(value, submission.season)
+  //   } catch (error) {
+  //     logger.error(error)
+  //     return helper.message(error.message)
+  //   }
 
-    return value
-  }),
-  counts: countsField.optional().external((value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-    return validateCounts(value, helper)
-  }),
-  released: releasedField.optional().external(async (value, helper) => {
-    // We do not want to skip validation as this validates multiple fields
-    const smallCatchId = helper.prefs.context.params.smallCatchId
-    const foundTotalCaught =
-      await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
+  //   return value
+  // }),
+  counts: countsField.optional(),
+  // .external((value, helper) => {
+  //   // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
+  //   if (value === undefined) {
+  //     return value
+  //   }
+  //   return validateCounts(value, helper)
+  // }),
+  released: releasedField.optional(),
+  // .external(async (value, helper) => {
+  //   // We do not want to skip validation as this validates multiple fields
+  //   const smallCatchId = helper.prefs.context.params.smallCatchId
+  //   const foundTotalCaught =
+  //     await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
 
-    const foundSmallCatch = await getSmallCatchById(smallCatchId)
+  //   const foundSmallCatch = await getSmallCatchById(smallCatchId)
 
-    const releasedValue = value ?? foundSmallCatch.released
-    const countsArray = helper.state.ancestors[0]?.counts
+  //   const releasedValue = value ?? foundSmallCatch.released
+  //   const countsArray = helper.state.ancestors[0]?.counts
 
-    const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
+  //   const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
 
-    if (totalCaught === undefined || releasedValue > totalCaught) {
-      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-    }
+  //   if (totalCaught === undefined || releasedValue > totalCaught) {
+  //     return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+  //   }
 
-    return value
-  }),
+  //   return value
+  // }),
   noMonthRecorded: noMonthRecordedField,
   reportingExclude: reportingExcludeField
-})
+}).external(validateUpdateSmallCatchAsync)
 
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
