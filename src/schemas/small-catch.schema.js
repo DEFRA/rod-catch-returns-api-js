@@ -167,7 +167,7 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
     validateMethod(values, fmtOrAdmin, methodInternal)
     validateReleased(values)
 
-    return values
+    return values // remember to return values in catch
   } catch (err) {
     // todo add tests for error
     if (err instanceof JoiExternalValidationError) {
