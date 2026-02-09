@@ -204,6 +204,15 @@ describe('catch.schema.unit', () => {
           error
         )
       })
+
+      it('should log an error if there is any other error', async () => {
+        const error = new Error('DB failure')
+        getSubmissionByActivityId.mockRejectedValue(error)
+        const payload = getValidPayload()
+
+        await expect(createCatchSchema.validateAsync(payload)).rejects.toThrow()
+        expect(logger.error).toHaveBeenCalledWith(error)
+      })
     })
 
     describe('onlyMonthRecorded', () => {
@@ -596,6 +605,17 @@ describe('catch.schema.unit', () => {
         await expect(
           updateCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow(error)
+      })
+
+      it('should log an error if there is any other error', async () => {
+        const error = new Error('DB failure')
+        getSubmissionByCatchId.mockRejectedValue(error)
+        const payload = getValidPayload()
+
+        await expect(
+          updateCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow()
+        expect(logger.error).toHaveBeenCalledWith(error)
       })
     })
 

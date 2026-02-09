@@ -136,6 +136,7 @@ export const validateCreateCatchAsync = async (values, helper) => {
       }
       return helper.message(err.code, err.context)
     }
+    logger.error(err)
     throw err
   }
 }
@@ -198,6 +199,7 @@ export const validateUpdateCatchAsync = async (values, helper) => {
       }
       return helper.message(err.code, err.context)
     }
+    logger.error(err)
     throw err
   }
 }
