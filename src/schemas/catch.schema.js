@@ -20,32 +20,32 @@ const MAX_FISH_MASS_KG = 50 // Maximum possible mass of a salmon/sea trout (worl
 const MAX_FISH_MASS_OZ = convertKgtoOz(MAX_FISH_MASS_KG) // 1763.698097oz
 const MIN_FISH_MASS = 0
 
-const validateMethod = (values, methodInternal, fmtOrAdmin) => {
+const validateMethod = ({ method }, methodInternal, fmtOrAdmin) => {
   if (!fmtOrAdmin && methodInternal) {
     throw new JoiExternalValidationError('CATCH_METHOD_FORBIDDEN', {
       property: 'method',
-      value: values.method
+      value: method
     })
   }
 }
 
-const validateSpecies = (values, speciesExists) => {
+const validateSpecies = ({ species }, speciesExists) => {
   if (!speciesExists) {
     throw new JoiExternalValidationError('CATCH_SPECIES_REQUIRED', {
       property: 'species',
-      value: values.species
+      value: species
     })
   }
 }
 
-const validateDateCaughtYear = (values, season) => {
-  const parsedDate = new Date(values.dateCaught)
+const validateDateCaughtYear = ({ dateCaught }, season) => {
+  const parsedDate = new Date(dateCaught)
   const currentDate = new Date()
 
   if (parsedDate > currentDate) {
     throw new JoiExternalValidationError('CATCH_DATE_IN_FUTURE', {
       property: 'dateCaught',
-      value: values.dateCaught
+      value: dateCaught
     })
   }
 
@@ -53,7 +53,7 @@ const validateDateCaughtYear = (values, season) => {
   if (season !== yearCaught) {
     throw new JoiExternalValidationError('CATCH_YEAR_MISMATCH', {
       property: 'dateCaught',
-      value: values.dateCaught
+      value: dateCaught
     })
   }
 }
@@ -127,6 +127,8 @@ export const validateCreateCatchAsync = async (values, helper) => {
     validateDateCaughtYear(values, submission?.season)
     validateSpecies(values, speciesExists)
     validateMethod(values, methodInternal, fmtOrAdmin)
+
+    return values
   } catch (err) {
     if (err instanceof JoiExternalValidationError) {
       if (err.code === 'CATCH_YEAR_MISMATCH') {
@@ -187,6 +189,8 @@ export const validateUpdateCatchAsync = async (values, helper) => {
       const methodInternal = await isMethodInternal(methodId)
       validateMethod(values, methodInternal, fmtOrAdmin)
     }
+
+    return values
   } catch (err) {
     if (err instanceof JoiExternalValidationError) {
       if (err.code === 'CATCH_YEAR_MISMATCH') {
