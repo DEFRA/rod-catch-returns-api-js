@@ -120,7 +120,6 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
 
     validateDuplicateMethods(values, methods)
 
-    // todo write tests for all settled
     const results = await Promise.allSettled([
       getSubmissionByActivityId(activityId),
       isDuplicateSmallCatch(activityId, monthNumber),
@@ -136,16 +135,16 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
 
     return values // remember to return values in catch
   } catch (err) {
-    // todo add tests for error
-    if (err instanceof JoiExternalValidationError) {
-      return helper.message(err.code, err.context)
-    }
     if (
       err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
       err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
     ) {
       logger.error(err)
     }
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+
     throw err
   }
 }
@@ -183,7 +182,6 @@ const validateUpdateSmallCatchAsync = async (values, helper) => {
       released: values.released ?? smallCatch.released
     }
 
-    // todo write tests for all settled
     const results = await Promise.allSettled([
       getSubmissionByActivityId(smallCatch.activity_id),
       isDuplicateSmallCatch(
@@ -220,16 +218,16 @@ const validateUpdateSmallCatchAsync = async (values, helper) => {
 
     return values
   } catch (err) {
-    // todo add tests for error
-    if (err instanceof JoiExternalValidationError) {
-      return helper.message(err.code, err.context)
-    }
     if (
       err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
       err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
     ) {
       logger.error(err)
     }
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+
     throw err
   }
 }

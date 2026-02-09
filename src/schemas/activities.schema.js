@@ -9,6 +9,7 @@ import { getSubmission } from '../services/submissions.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
+import logger from '../utils/logger-utils.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
@@ -114,6 +115,7 @@ export const validateActivityAsync = async (values, helper) => {
     if (err instanceof JoiExternalValidationError) {
       return helper.message(err.code, err.context)
     }
+    logger.error(err)
     throw err
   }
 }
@@ -181,6 +183,7 @@ export const validateUpdateActivityAsync = async (values, helper) => {
     if (err instanceof JoiExternalValidationError) {
       return helper.message(err.code, err.context)
     }
+    logger.error(err)
     throw err
   }
 }

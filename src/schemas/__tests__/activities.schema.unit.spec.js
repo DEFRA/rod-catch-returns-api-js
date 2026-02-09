@@ -10,11 +10,13 @@ import {
 import { getSubmission } from '../../services/submissions.service.js'
 import { isFMTOrAdmin } from '../../utils/auth-utils.js'
 import { isRiverInternal } from '../../services/rivers.service.js'
+import logger from '../../utils/logger-utils.js'
 
 jest.mock('../../services/activities.service.js')
 jest.mock('../../services/rivers.service.js')
 jest.mock('../../services/submissions.service.js')
 jest.mock('../../utils/auth-utils.js')
+jest.mock('../../utils/logger-utils.js')
 
 describe('activities.schema.unit', () => {
   describe('createActivitySchema', () => {
@@ -109,6 +111,17 @@ describe('activities.schema.unit', () => {
         await expect(
           createActivitySchema.validateAsync(payload)
         ).rejects.toThrow(error)
+      })
+
+      it('should log an error if there is any other error', async () => {
+        const error = new Error('DB failure')
+        getSubmission.mockRejectedValue(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          createActivitySchema.validateAsync(payload)
+        ).rejects.toThrow(error)
+        expect(logger.error).toHaveBeenCalledWith(error)
       })
     })
 
@@ -400,7 +413,6 @@ describe('activities.schema.unit', () => {
       activity = { id: 2, Submission: { id: '1', season } },
       fmtOrAdmin = false
     } = {}) => {
-      getSubmission.mockResolvedValue({ season })
       isRiverInternal.mockResolvedValue(riverInternal)
       isActivityExists.mockResolvedValue(activityExists)
       getActivityAndSubmissionByActivityId.mockResolvedValue(activity)
@@ -471,6 +483,17 @@ describe('activities.schema.unit', () => {
         await updateActivitySchema.validateAsync(payload, getDefaultContext())
 
         expect(isActivityExists).toHaveBeenCalledWith('1', '456', '12345')
+      })
+
+      it('should log an error if there is any other error', async () => {
+        const error = new Error('DB failure')
+        getActivityAndSubmissionByActivityId.mockRejectedValue(error)
+        const payload = getDefaultPayload()
+
+        await expect(
+          updateActivitySchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow(error)
+        expect(logger.error).toHaveBeenCalledWith(error)
       })
     })
 

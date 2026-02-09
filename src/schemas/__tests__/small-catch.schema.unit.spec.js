@@ -132,6 +132,18 @@ describe('smallCatch.schema.unit', () => {
         expect(logger.error).not.toHaveBeenCalled()
       })
 
+      it('should throw if one Promise.allSettled dependency rejects', async () => {
+        setupMocks({ season: currentYear })
+        const error = new Error('error')
+        isDuplicateSmallCatch.mockRejectedValueOnce(error)
+
+        const payload = getValidPayload()
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow()
+      })
+
       it('should log an error if there is any other error', async () => {
         setupMocks({ season: currentYear })
         const error = new Error('error')
@@ -439,7 +451,7 @@ describe('smallCatch.schema.unit', () => {
   })
 
   describe('updateSmallCatchSchema', () => {
-    afterEach(() => {
+    beforeEach(() => {
       jest.resetAllMocks()
     })
 
@@ -528,13 +540,26 @@ describe('smallCatch.schema.unit', () => {
 
       it('should return SMALL_CATCH_DUPLICATE_FOUND error if a duplicate activity and month combination exists', async () => {
         setupMocks({ season: currentYear })
-        isDuplicateSmallCatch.mockResolvedValue(true)
+        isDuplicateSmallCatch.mockResolvedValueOnce(true)
 
         const payload = { month: 'JANUARY' }
 
         await expect(
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_DUPLICATE_FOUND')
+      })
+
+      it('should log an error if there is any other error', async () => {
+        setupMocks({ season: currentYear })
+        const error = new Error('error')
+        isDuplicateSmallCatch.mockRejectedValueOnce(error)
+
+        const payload = getValidPayload()
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow()
+        expect(logger.error).toHaveBeenCalledWith(error)
       })
     })
 
