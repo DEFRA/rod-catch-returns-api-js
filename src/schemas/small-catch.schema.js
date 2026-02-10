@@ -133,7 +133,7 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
     validateMethod(values, fmtOrAdmin, methodInternal)
     validateReleased(values)
 
-    return values // remember to return values in catch
+    return values
   } catch (err) {
     if (
       err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
@@ -173,7 +173,7 @@ const validateUpdateSmallCatchAsync = async (values, helper) => {
     const smallCatchId = helper.prefs.context.params.smallCatchId
     const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
 
-    const smallCatch = await getSmallCatchById(smallCatchId) // todo get smallcatchcounts too
+    const smallCatch = await getSmallCatchById(smallCatchId)
 
     const combinedValues = {
       month: values.month
