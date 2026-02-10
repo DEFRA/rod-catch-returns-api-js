@@ -16,37 +16,31 @@ import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
+import { unwrap } from '../utils/promise-utils.js'
 
-const validateDuplicateMethods = (values, methods) => {
+const validateDuplicateMethods = ({ counts }, methods) => {
   const hasDuplicates = new Set(methods).size !== methods.length
   if (hasDuplicates) {
     throw new JoiExternalValidationError(
       'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
       {
         property: 'counts',
-        value: values.counts
+        value: counts
       }
     )
   }
 }
 
-const unwrap = (result) => {
-  if (result.status === 'rejected') {
-    throw result.reason
-  }
-  return result.value
-}
-
-const validateDuplicateSmallCatch = (values, duplicateExists) => {
+const validateDuplicateSmallCatch = ({ month }, duplicateExists) => {
   if (duplicateExists) {
     throw new JoiExternalValidationError('SMALL_CATCH_DUPLICATE_FOUND', {
       property: 'month',
-      value: values.month
+      value: month
     })
   }
 }
 
-const validateMonthInFuture = (values, monthNumber, season) => {
+const validateMonthInFuture = ({ month }, monthNumber, season) => {
   const currentYearAndMonth = set(new Date(), {
     date: 1,
     hours: 0,
@@ -60,18 +54,18 @@ const validateMonthInFuture = (values, monthNumber, season) => {
   if (isAfter(inputDate, currentYearAndMonth)) {
     throw new JoiExternalValidationError('SMALL_CATCH_MONTH_IN_FUTURE', {
       property: 'month',
-      value: values.month
+      value: month
     })
   }
 }
 
-const validateMethod = (values, fmtOrAdmin, methodInternal) => {
+const validateMethod = ({ counts }, fmtOrAdmin, methodInternal) => {
   if (!fmtOrAdmin && methodInternal) {
     throw new JoiExternalValidationError(
       'SMALL_CATCH_COUNTS_METHOD_FORBIDDEN',
       {
         property: 'counts',
-        value: values.counts
+        value: counts
       }
     )
   }

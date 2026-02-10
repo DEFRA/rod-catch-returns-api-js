@@ -10,6 +10,7 @@ import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isLeapYear } from '../utils/date-utils.js'
 import { isRiverInternal } from '../services/rivers.service.js'
 import logger from '../utils/logger-utils.js'
+import { unwrap } from '../utils/promise-utils.js'
 
 const MAX_DAYS_LEAP_YEAR = 168
 const MAX_DAYS_NON_LEAP_YEAR = 167
@@ -62,13 +63,6 @@ const validateActivityExists = (values, activityExists) => {
       value: values.river
     })
   }
-}
-
-const unwrap = (result) => {
-  if (result.status === 'rejected') {
-    throw result.reason
-  }
-  return result.value
 }
 
 /**
