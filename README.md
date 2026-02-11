@@ -153,6 +153,11 @@ To run only unit tests, do
 npm run test:unit
 ```
 
+To run only integration tests, do
+```shell script
+npm run test:integration
+```
+
 ## Contributing to this project
 
 Please read our [contribution guidelines](CONTRIBUTING.md).
