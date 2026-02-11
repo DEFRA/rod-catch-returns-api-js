@@ -142,7 +142,7 @@ npm run docker:stop
 ```
 
 ## Testing
-The unit test files end in unit.spec.js whereas the intergation tests end in integration.spec.js. As the integration tests modify the database, the `DATABASE_HOST` environment variable is hardcoded to localhost in [global-setup.js](src/test-utils/global-setup.js). This ensures that they are only run against a local instance of PostgreSQL, either on a user's machine or in a CI environment. It does also mean that there should be a local instance of postgres running, so ensure you've followed instructions in Running > Infrastructure and Running > Migrations, above.
+The unit test files end in unit.spec.js whereas the intergation tests end in integration.spec.js. As the integration tests modify the database, the `DATABASE_HOST` environment variable is hardcoded to localhost in [global-setup.js](src/test-utils/global-setup.js). This ensures that they are only run against a local instance of PostgreSQL, either on a user's machine or in a CI environment. It does also mean that there should be a local instance of Postgres running, so ensure you've followed instructions in Running > Infrastructure and Running > Migrations, above.
 
 ```shell script
 npm run test
