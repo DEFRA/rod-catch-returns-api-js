@@ -5,34 +5,42 @@ import {
 } from '../utils/entity-utils.js'
 import {
   getSmallCatchById,
-  getTotalSmallCatchCountsBySmallCatchId,
+  getSmallCatchCountsBySmallCatchId,
   isDuplicateSmallCatch
 } from '../services/small-catch.service.js'
 import { isAfter, set } from 'date-fns'
 import Joi from 'joi'
+import { JoiExternalValidationError } from '../models/joi-external-validation-error.model.js'
 import { getMonthNumberFromName } from '../utils/date-utils.js'
 import { getSubmissionByActivityId } from '../services/activities.service.js'
 import { isFMTOrAdmin } from '../utils/auth-utils.js'
 import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
+import { unwrap } from '../utils/promise-utils.js'
 
-const validateUniqueActivityAndMonth = async (
-  monthName,
-  activityId,
-  ignoreMonth
-) => {
-  const month = getMonthNumberFromName(monthName)
-  const duplicateExists = await isDuplicateSmallCatch(
-    activityId,
-    month,
-    ignoreMonth
-  )
-  if (duplicateExists) {
-    throw new Error('SMALL_CATCH_DUPLICATE_FOUND')
+const validateDuplicateMethods = ({ counts }, methods) => {
+  const hasDuplicates = new Set(methods).size !== methods.length
+  if (hasDuplicates) {
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND',
+      {
+        property: 'counts',
+        value: counts
+      }
+    )
   }
 }
 
-const validateMonthInFuture = (monthName, season) => {
+const validateDuplicateSmallCatch = ({ month }, duplicateExists) => {
+  if (duplicateExists) {
+    throw new JoiExternalValidationError('SMALL_CATCH_DUPLICATE_FOUND', {
+      property: 'month',
+      value: month
+    })
+  }
+}
+
+const validateMonthInFuture = ({ month }, monthNumber, season) => {
   const currentYearAndMonth = set(new Date(), {
     date: 1,
     hours: 0,
@@ -41,30 +49,181 @@ const validateMonthInFuture = (monthName, season) => {
     milliseconds: 0
   }) // Reset to the start of the first day of the current month
 
-  const inputMonth = getMonthNumberFromName(monthName) // Month is not one-based in our app
-  const inputDate = new Date(season, inputMonth - 1) // Month is zero-based in js Date
+  const inputDate = new Date(season, monthNumber - 1) // Month is not one-based in our app, Month is zero-based in js Date
 
   if (isAfter(inputDate, currentYearAndMonth)) {
-    throw new Error('SMALL_CATCH_MONTH_IN_FUTURE')
+    throw new JoiExternalValidationError('SMALL_CATCH_MONTH_IN_FUTURE', {
+      property: 'month',
+      value: month
+    })
   }
 }
 
-const validateCounts = async (value, helper) => {
-  const methods = value.map((item) => item.method)
-  const hasDuplicates = new Set(methods).size !== methods.length
-  if (hasDuplicates) {
-    return helper.message('SMALL_CATCH_COUNTS_METHOD_DUPLICATE_FOUND')
-  }
-
-  const methodIds = methods.map((method) => extractMethodId(method))
-
-  const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
-  const methodInternal = await isMethodsInternal(methodIds)
+const validateMethod = ({ counts }, fmtOrAdmin, methodInternal) => {
   if (!fmtOrAdmin && methodInternal) {
-    return helper.message('SMALL_CATCH_COUNTS_METHOD_FORBIDDEN')
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_COUNTS_METHOD_FORBIDDEN',
+      {
+        property: 'counts',
+        value: counts
+      }
+    )
   }
+}
 
-  return value
+const validateReleased = (values) => {
+  const totalCaught = values.counts ? sumCounts(values.counts) : 0
+  if (values.released > totalCaught) {
+    throw new JoiExternalValidationError(
+      'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS',
+      {
+        property: 'released',
+        value: values.released
+      }
+    )
+  }
+}
+
+/**
+ * Joi external async validator for creating a small catch record.
+ *
+ * @async
+ * @param {Object} values - The validated small catch payload from Joi.
+ * @param {string} values.activity - Activity reference in the form `activities/{id}`.
+ * @param {string} values.month - Month name (e.g. "January", "February").
+ * @param {Array<Object>} values.counts - Array of method/count pairs.
+ * @param {string} values.counts[].method - Method reference in the form `methods/{id}`.
+ * @param {number} values.counts[].count - Number of small catches for the method.
+ * @param {number} values.released - Number of released small catches.
+ * @param {boolean} values.noMonthRecorded - Indicates the month was not recorded.
+ * @param {boolean} values.reportingExclude - Whether this record is excluded from reporting.
+ * @param {Object} helper - Joi external validation helper, including request context.
+ *
+ * @returns {Promise<Object|void>} Resolves with the original values on success, or
+ * returns a Joi validation message object on validation failure.
+ *
+ * @throws {Error} Rethrows unexpected or system-level errors.
+ */
+const validateCreateSmallCatchAsync = async (values, helper) => {
+  try {
+    const activityId = extractActivityId(values.activity)
+    const monthNumber = getMonthNumberFromName(values.month)
+    const methods = values.counts.map((item) => item.method)
+    const methodIds = methods.map((method) => extractMethodId(method))
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    validateDuplicateMethods(values, methods)
+
+    const results = await Promise.allSettled([
+      getSubmissionByActivityId(activityId),
+      isDuplicateSmallCatch(activityId, monthNumber),
+      isMethodsInternal(methodIds)
+    ])
+
+    const [submission, duplicateExists, methodInternal] = results.map(unwrap)
+
+    validateDuplicateSmallCatch(values, duplicateExists)
+    validateMonthInFuture(values, monthNumber, submission.season)
+    validateMethod(values, fmtOrAdmin, methodInternal)
+    validateReleased(values)
+
+    return values
+  } catch (err) {
+    if (
+      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
+      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
+    ) {
+      logger.error(err)
+    }
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+
+    throw err
+  }
+}
+
+/**
+ * Joi external async validator for updating an existing small catch record.
+ *
+ * @async
+ * @param {Object} values - The partial small catch update payload from Joi.
+ * @param {string} values.month - Updated month name.
+ * @param {Array<Object>} values.counts - Updated array of method/count pairs.
+ * @param {string} values.counts[].method - Method reference in the form `methods/{id}`.
+ * @param {number} values.counts[].count - Number of small catches for the method.
+ * @param {number} values.released - Updated number of released small catches.
+ * @param {boolean} values.noMonthRecorded - Indicates the month was not recorded.
+ * @param {boolean} values.reportingExclude - Whether this record is excluded from reporting.
+ * @param {Object} helper - Joi external validation helper, including request context
+ *
+ * @returns {Promise<Object|void>} Resolves with the original values on success, or
+ * returns a Joi validation message object on validation failure.
+ *
+ * @throws {Error} Rethrows unexpected or system-level errors.
+ */
+const validateUpdateSmallCatchAsync = async (values, helper) => {
+  try {
+    const smallCatchId = helper.prefs.context.params.smallCatchId
+    const fmtOrAdmin = isFMTOrAdmin(helper?.prefs?.context?.auth?.role)
+
+    const smallCatch = await getSmallCatchById(smallCatchId)
+
+    const combinedValues = {
+      month: values.month
+        ? getMonthNumberFromName(values.month)
+        : smallCatch.month,
+      released: values.released ?? smallCatch.released
+    }
+
+    const results = await Promise.allSettled([
+      getSubmissionByActivityId(smallCatch.activity_id),
+      isDuplicateSmallCatch(
+        smallCatch.activity_id,
+        combinedValues.month,
+        smallCatch.month
+      ),
+      getSmallCatchCountsBySmallCatchId(smallCatchId)
+    ])
+
+    const [submission, duplicateExists, smallCatchCounts] = results.map(unwrap)
+
+    combinedValues.counts = values.counts ?? smallCatchCounts
+
+    validateDuplicateSmallCatch(combinedValues, duplicateExists)
+    validateMonthInFuture(
+      combinedValues,
+      combinedValues.month,
+      submission.season
+    )
+
+    if (values.counts) {
+      const methods = values.counts.map((item) => item.method)
+      const methodIds = methods.map((method) => extractMethodId(method))
+      validateDuplicateMethods(values, methods)
+
+      const methodInternal = await isMethodsInternal(methodIds)
+      validateMethod(values, fmtOrAdmin, methodInternal)
+    }
+
+    if (values.counts || values.released) {
+      validateReleased(combinedValues)
+    }
+
+    return values
+  } catch (err) {
+    if (
+      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
+      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
+    ) {
+      logger.error(err)
+    }
+    if (err instanceof JoiExternalValidationError) {
+      return helper.message(err.code, err.context)
+    }
+
+    throw err
+  }
 }
 
 const monthField = Joi.string()
@@ -119,108 +278,32 @@ export const createSmallCatchSchema = Joi.object({
   activity: Joi.string().required().messages({
     'any.required': 'SMALL_CATCH_ACTIVITY_REQUIRED'
   }),
-  month: monthField
-    .required()
-    .when('noMonthRecorded', {
-      is: true,
-      then: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED',
-        'string.base': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
-      }),
-      otherwise: Joi.required().messages({
-        'any.required': 'SMALL_CATCH_MONTH_REQUIRED',
-        'string.base': 'SMALL_CATCH_MONTH_REQUIRED'
-      })
-    })
-    .external(async (value, helper) => {
-      const activityId = extractActivityId(helper.state.ancestors[0].activity)
-      const submission = await getSubmissionByActivityId(activityId)
-
-      try {
-        await validateUniqueActivityAndMonth(value, activityId)
-        validateMonthInFuture(value, submission.season)
-      } catch (error) {
-        if (
-          error.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
-          error.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
-        ) {
-          logger.error(error)
-        }
-        return helper.message(error.message)
-      }
-      return value
+  month: monthField.required().when('noMonthRecorded', {
+    is: true,
+    then: Joi.required().messages({
+      'any.required': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED',
+      'string.base': 'SMALL_CATCH_DEFAULT_MONTH_REQUIRED'
     }),
-  counts: countsField.required().external((value, helper) => {
-    return validateCounts(value, helper)
+    otherwise: Joi.required().messages({
+      'any.required': 'SMALL_CATCH_MONTH_REQUIRED',
+      'string.base': 'SMALL_CATCH_MONTH_REQUIRED'
+    })
   }),
-  released: releasedField.required().custom((value, helper) => {
-    const countsArray = helper.state.ancestors[0].counts
-    const totalCaught = sumCounts(countsArray)
-
-    if (value > totalCaught) {
-      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-    }
-
-    return value
-  }),
-  noMonthRecorded: noMonthRecordedField,
-  reportingExclude: reportingExcludeField
-}).unknown()
-
-export const updateSmallCatchSchema = Joi.object({
-  month: monthField.optional().external(async (value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-    // Get catchId from the request context
-    const smallCatchId = helper.prefs.context.params.smallCatchId
-    const smallCatch = await getSmallCatchById(smallCatchId)
-    const submission = await getSubmissionByActivityId(smallCatch.activity_id)
-
-    try {
-      await validateUniqueActivityAndMonth(
-        value,
-        smallCatch.activity_id,
-        smallCatch.month
-      )
-      validateMonthInFuture(value, submission.season)
-    } catch (error) {
-      logger.error(error)
-      return helper.message(error.message)
-    }
-
-    return value
-  }),
-  counts: countsField.optional().external((value, helper) => {
-    // Skip validation if the field is undefined (Joi runs external validation, even if the field is not supplied)
-    if (value === undefined) {
-      return value
-    }
-    return validateCounts(value, helper)
-  }),
-  released: releasedField.optional().external(async (value, helper) => {
-    // We do not want to skip validation as this validates multiple fields
-    const smallCatchId = helper.prefs.context.params.smallCatchId
-    const foundTotalCaught =
-      await getTotalSmallCatchCountsBySmallCatchId(smallCatchId)
-
-    const foundSmallCatch = await getSmallCatchById(smallCatchId)
-
-    const releasedValue = value ?? foundSmallCatch.released
-    const countsArray = helper.state.ancestors[0]?.counts
-
-    const totalCaught = countsArray ? sumCounts(countsArray) : foundTotalCaught
-
-    if (totalCaught === undefined || releasedValue > totalCaught) {
-      return helper.message('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
-    }
-
-    return value
-  }),
+  counts: countsField.required(),
+  released: releasedField.required(),
   noMonthRecorded: noMonthRecordedField,
   reportingExclude: reportingExcludeField
 })
+  .external(validateCreateSmallCatchAsync)
+  .unknown()
+
+export const updateSmallCatchSchema = Joi.object({
+  month: monthField.optional(),
+  counts: countsField.optional(),
+  released: releasedField.optional(),
+  noMonthRecorded: noMonthRecordedField,
+  reportingExclude: reportingExcludeField
+}).external(validateUpdateSmallCatchAsync)
 
 export const smallCatchIdSchema = Joi.object({
   smallCatchId: Joi.number().required().description('The id of the small catch')
