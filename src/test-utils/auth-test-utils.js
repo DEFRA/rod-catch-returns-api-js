@@ -1,4 +1,3 @@
-import fetch from 'node-fetch'
 import { getSystemUserByOid } from '../services/system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
@@ -8,7 +7,7 @@ jest.mock('jwks-rsa')
 jest.mock('../services/system-users.service.js')
 
 export const getMockAuthAndUser = (userOverrides) => {
-  fetch.mockResolvedValueOnce({
+  global.fetch = jest.fn().mockResolvedValueOnce({
     json: () =>
       Promise.resolve({
         jwks_uri: 'https://example.com/jwks'

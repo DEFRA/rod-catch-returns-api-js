@@ -1,12 +1,12 @@
 import { ROLE_MAP } from '../utils/auth-utils.js'
 import { StatusCodes } from 'http-status-codes'
-import fetch from 'node-fetch'
 import { getSystemUserByOid } from './system-users.service.js'
 import jwksClient from 'jwks-rsa'
 import jwt from 'jsonwebtoken'
 import logger from '../utils/logger-utils.js'
 
 const CACHE_TTL_MS_WELL_KNOWN = 3600000 // cache for 1 hour
+const FETCH_TIMEOUT_MS = 5000
 
 const getOpenIdConfigDocument = async (cache) => {
   const cachedResponse = await cache.get('OIDC_WELL_KNOWN_RESULT')
@@ -14,7 +14,12 @@ const getOpenIdConfigDocument = async (cache) => {
     return cachedResponse
   }
 
-  const response = await fetch(process.env.OIDC_WELL_KNOWN_URL)
+  const response = await fetch(process.env.OIDC_WELL_KNOWN_URL, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    headers: {
+      Accept: 'application/json'
+    }
+  })
   if (!response.ok) {
     throw new Error(`HTTP error status: ${response.status}`)
   }

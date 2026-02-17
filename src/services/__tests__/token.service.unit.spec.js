@@ -1,5 +1,4 @@
 import { ROLES } from '../../utils/auth-utils.js'
-import fetch from 'node-fetch'
 import { getMockResponseToolkit } from '../../test-utils/server-test-utils.js'
 import { getSystemUserByOid } from '../system-users.service.js'
 import jwksClient from 'jwks-rsa'
@@ -14,12 +13,11 @@ describe('token.service.unit', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    fetch.mockResolvedValue({
-      json: () =>
-        Promise.resolve({
-          jwks_uri: 'https://example.com/jwks'
-        }),
-      ok: true
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        jwks_uri: 'https://example.com/jwks'
+      })
     })
 
     process.env.OIDC_WELL_KNOWN_URL =
@@ -80,7 +78,7 @@ describe('token.service.unit', () => {
     })
 
     it('should throw an error if it is unable to fetch the openid config document', async () => {
-      fetch.mockResolvedValue({
+      global.fetch = jest.fn().mockResolvedValue({
         json: () => Promise.reject(new Error('error')),
         ok: false,
         status: 500
