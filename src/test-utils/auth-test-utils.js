@@ -7,7 +7,7 @@ jest.mock('jwks-rsa')
 jest.mock('../services/system-users.service.js')
 
 export const getMockAuthAndUser = (userOverrides) => {
-  global.fetch = jest.fn().mockResolvedValueOnce({
+  globalThis.fetch = jest.fn().mockResolvedValueOnce({
     json: () =>
       Promise.resolve({
         jwks_uri: 'https://example.com/jwks'

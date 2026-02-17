@@ -13,7 +13,7 @@ describe('token.service.unit', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    global.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         jwks_uri: 'https://example.com/jwks'
@@ -78,7 +78,7 @@ describe('token.service.unit', () => {
     })
 
     it('should throw an error if it is unable to fetch the openid config document', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         json: () => Promise.reject(new Error('error')),
         ok: false,
         status: 500
