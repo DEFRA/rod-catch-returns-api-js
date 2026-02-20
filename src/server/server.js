@@ -82,7 +82,7 @@ export default async () => {
 
   server.route(rootRoutes)
 
-  server.ext('onRequest', logRequest)
+  server.ext('onPostAuth', logRequest)
 
   server.ext('onPreResponse', logResponse)
 
