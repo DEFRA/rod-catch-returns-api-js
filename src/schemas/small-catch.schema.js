@@ -18,6 +18,12 @@ import { isMethodsInternal } from '../services/methods.service.js'
 import logger from '../utils/logger-utils.js'
 import { unwrap } from '../utils/promise-utils.js'
 
+const IGNORE_ERRORS = new Set([
+  'SMALL_CATCH_MONTH_IN_FUTURE',
+  'SMALL_CATCH_DUPLICATE_FOUND',
+  'SMALL_CATCH_RELEASED_EXCEEDS_COUNTS'
+])
+
 const validateDuplicateMethods = ({ counts }, methods) => {
   const hasDuplicates = new Set(methods).size !== methods.length
   if (hasDuplicates) {
@@ -129,10 +135,7 @@ const validateCreateSmallCatchAsync = async (values, helper) => {
 
     return values
   } catch (err) {
-    if (
-      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
-      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
-    ) {
+    if (!IGNORE_ERRORS.has(err.message)) {
       logger.error(err)
     }
     if (err instanceof JoiExternalValidationError) {
@@ -212,10 +215,7 @@ const validateUpdateSmallCatchAsync = async (values, helper) => {
 
     return values
   } catch (err) {
-    if (
-      err.message !== 'SMALL_CATCH_MONTH_IN_FUTURE' &&
-      err.message !== 'SMALL_CATCH_DUPLICATE_FOUND'
-    ) {
+    if (!IGNORE_ERRORS.has(err.message)) {
       logger.error(err)
     }
     if (err instanceof JoiExternalValidationError) {
