@@ -300,6 +300,22 @@ describe('smallCatch.schema.unit', () => {
           createSmallCatchSchema.validateAsync(payload)
         ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
       })
+
+      it('should not log an error if released exceeds the sum of counts', async () => {
+        setupMocks({ season: currentYear })
+        const payload = getValidPayload({
+          counts: [
+            { method: 'methods/1', count: 3 },
+            { method: 'methods/2', count: 2 }
+          ],
+          released: 6 // Exceeds total caught (3 + 2 = 5)
+        })
+
+        await expect(
+          createSmallCatchSchema.validateAsync(payload)
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+        expect(logger.error).not.toHaveBeenCalled()
+      })
     })
 
     describe('counts', () => {
@@ -635,6 +651,22 @@ describe('smallCatch.schema.unit', () => {
         await expect(
           updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
         ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+      })
+
+      it('should not log an error if released exceeds the sum of counts in the request', async () => {
+        setupMocks()
+        const payload = {
+          counts: [
+            { method: 'methods/1', count: 3 },
+            { method: 'methods/2', count: 2 }
+          ],
+          released: 6 // Exceeds total caught (3 + 2 = 5)
+        }
+
+        await expect(
+          updateSmallCatchSchema.validateAsync(payload, getDefaultContext())
+        ).rejects.toThrow('SMALL_CATCH_RELEASED_EXCEEDS_COUNTS')
+        expect(logger.error).not.toHaveBeenCalled()
       })
 
       it('should return an error if released exceeds the sum of counts from the database', async () => {
