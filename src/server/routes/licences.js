@@ -1,5 +1,4 @@
 import {
-  contactForLicensee,
   executeQuery,
   permissionForFullReferenceNumber
 } from '@defra-fish/dynamics-lib'
@@ -15,6 +14,7 @@ import {
 import { Contact } from '../../models/contact.model.js'
 import { Licence } from '../../models/licence.model.js'
 import { StatusCodes } from 'http-status-codes'
+import { getContactForLicensee } from '../../services/licences.service.js'
 import { handleServerError } from '../../utils/server-utils.js'
 import logger from '../../utils/logger-utils.js'
 
@@ -42,12 +42,13 @@ export default [
             permissionReferenceNumberLast6Characters,
             licenseePostcode
           )
-          const result = await contactForLicensee(
+
+          const result = await getContactForLicensee(
             permissionReferenceNumberLast6Characters,
             licenseePostcode
           )
 
-          if (result.ReturnStatus !== 'success') {
+          if (!result.length || !result[0]?.expanded?.licensee?.entity?.id) {
             logger.info(
               'Login unsuccessful with request %s and %s. Response: %s',
               permissionReferenceNumberLast6Characters,
@@ -56,16 +57,22 @@ export default [
             )
             return h.response().code(StatusCodes.FORBIDDEN)
           } else {
+            const crmPermission = result[0]
+            const crmContact = crmPermission.expanded.licensee.entity
+
             logger.info(
               'Contact found with licence ending:%s, postcode:%s and contact id:%s',
               permissionReferenceNumberLast6Characters,
               licenseePostcode,
-              result.ContactId
+              crmPermission.entity.id
             )
             const contact = new Contact()
-            contact.id = result.ContactId
-            contact.postcode = result.Postcode
-            const licence = new Licence(result.ReturnPermissionNumber, contact)
+            contact.id = crmContact.id
+            contact.postcode = crmContact.postcode
+            const licence = new Licence(
+              crmPermission.entity.referenceNumber,
+              contact
+            )
             return h.response(licence).code(StatusCodes.OK)
           }
         } catch (error) {
