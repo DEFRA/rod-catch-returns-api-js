@@ -2,7 +2,6 @@ import {
   contactAndPermissionForLicensee,
   executeQuery
 } from '@defra-fish/dynamics-lib'
-import logger from '../utils/logger-utils.js'
 
 /**
  * Calls CRM to retrieve a permission (and its associated licensee contact)
@@ -42,27 +41,12 @@ export const getContactForLicensee = async (
   permissionReferenceNumberLast6Characters,
   licenseePostcode
 ) => {
-  let result
-  try {
-    const query = contactAndPermissionForLicensee(
-      permissionReferenceNumberLast6Characters,
-      licenseePostcode
-    )
+  const query = contactAndPermissionForLicensee(
+    permissionReferenceNumberLast6Characters,
+    licenseePostcode
+  )
 
-    result = await executeQuery(query)
+  const result = await executeQuery(query)
 
-    console.log(JSON.stringify(result, null, 2))
-
-    logger.info('Result from CRM %s', JSON.stringify(result))
-
-    return result
-  } catch (error) {
-    logger.info(
-      'Error with CRM query with request %s and %s. Response: %s',
-      permissionReferenceNumberLast6Characters,
-      licenseePostcode,
-      JSON.stringify(result)
-    )
-    throw error
-  }
+  return result
 }
