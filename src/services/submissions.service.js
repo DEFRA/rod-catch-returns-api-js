@@ -1,5 +1,9 @@
 import { Activity, Catch, Submission } from '../entities/index.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
+import {
+  createActivity as createActivityCRM,
+  executeQuery,
+  rcrActivityForContact
+} from '@defra-fish/dynamics-lib'
 import logger from '../utils/logger-utils.js'
 
 /**
@@ -102,3 +106,12 @@ export const handleCrmActivity = async (contactId, season) => {
 
   return result
 }
+
+export const getContactById = async (contactId, season) => {
+  const query = rcrActivityForContact(contactId, season)
+  console.log(JSON.stringify(query, null, 2))
+  const result = await executeQuery(query)
+  return result
+}
+
+export const createRCRCRMActivity = (contactId, season) => {}
