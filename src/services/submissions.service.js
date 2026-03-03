@@ -1,9 +1,14 @@
 import { Activity, Catch, Submission } from '../entities/index.js'
 import {
-  createActivity as createActivityCRM,
+  Contact,
   executeQuery,
+  persist,
   rcrActivityForContact
 } from '@defra-fish/dynamics-lib'
+import {
+  RCRActivity,
+  RCR_ACTIVITY_STATUS
+} from '@defra-fish/dynamics-lib/src/entities/rcr-activity.entity.js'
 import logger from '../utils/logger-utils.js'
 
 /**
@@ -85,33 +90,66 @@ export const getSubmissionByCatchId = async (catchId) => {
  * @param {string|number} season
  */
 export const handleCrmActivity = async (contactId, season) => {
-  logger.info('Creating CRM activity with request:', contactId, season)
+  logger.info(
+    `Fetching RCR CRM Activities for: contactId=${contactId}, season=${season}`
+  )
 
-  const result = await createActivityCRM(contactId, season)
+  const getActivitiesResult = await getRCRCRMActivitiesContactById(
+    contactId,
+    season
+  )
 
-  if (result?.ErrorMessage) {
-    const logFn =
-      result.ErrorMessage ===
-      'RCR Activity Already Exists For the Given Contact and Activity Status'
-        ? logger.info
-        : logger.error
+  logger.info(
+    `RCR CRM Activities found for contactId=${contactId}, season=${season}, result=${JSON.stringify(getActivitiesResult)}`
+  )
 
-    logFn(
-      `Failed to create activity in CRM for ${contactId}`,
-      result.ErrorMessage
+  if (getActivitiesResult.length === 0) {
+    logger.info(
+      `No RCR CRM activities found for contactId=${contactId}, season=${season} creating now`
+    )
+
+    try {
+      createRCRCRMActivity(contactId, season)
+    } catch (err) {
+      logger.error(
+        `Error creating RCR Activity for contactId=${contactId}, season=${season}, please check the database and crm to see if the details match`
+      )
+      throw err
+    }
+
+    logger.info(
+      `RCR Activity created for contactId=${contactId}, season=${season}`
     )
   } else {
-    logger.info('Created CRM activity with result:', result)
+    logger.info(
+      `RCR CRM activities already found for contactId=${contactId}, season=${season} doing nothing`
+    )
   }
-
-  return result
 }
 
-export const getContactById = async (contactId, season) => {
+export const getRCRCRMActivitiesContactById = async (contactId, season) => {
   const query = rcrActivityForContact(contactId, season)
-  console.log(JSON.stringify(query, null, 2))
   const result = await executeQuery(query)
   return result
 }
 
-export const createRCRCRMActivity = (contactId, season) => {}
+export const createRCRCRMActivity = async (contactId, season) => {
+  const rcrActivity = new RCRActivity()
+  rcrActivity.season = season
+  rcrActivity.startDate = new Date()
+  rcrActivity.status = RCR_ACTIVITY_STATUS.STARTED
+
+  const contact = Contact.fromResponse({ contactid: contactId })
+  rcrActivity.bindToEntity(
+    RCRActivity.definition.relationships.licensee,
+    contact
+  )
+
+  logger.info(
+    `Creating RCR CRM Activity with details ${JSON.stringify(rcrActivity)} and contactId=${contactId}`
+  )
+
+  const result = await persist([rcrActivity])
+
+  return result
+}

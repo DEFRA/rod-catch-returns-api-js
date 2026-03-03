@@ -6,17 +6,18 @@ import {
   Submission
 } from '../../entities/index.js'
 import {
+  createRCRCRMActivity,
+  getRCRCRMActivitiesContactById,
+  handleCrmActivity,
+  isSubmissionExistsByUserAndSeason
+} from '../../services/submissions.service.js'
+import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
   getSubmissionByContactAndSeasonSchema,
   getSubmissionsByContactSchema,
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
-import {
-  getContactById,
-  handleCrmActivity,
-  isSubmissionExistsByUserAndSeason
-} from '../../services/submissions.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
@@ -29,27 +30,6 @@ import { updateActivity } from '@defra-fish/dynamics-lib'
 const BASE_SUBMISSIONS_URL = '/submissions/{submissionId}'
 
 export default [
-  {
-    method: 'POST',
-    path: '/bob',
-    options: {
-      handler: async (request, h) => {
-        try {
-          const contactId = '16950545-dca8-eb11-b1ac-000d3adcc454'
-          const response = await getContactById(contactId, 2025)
-
-          // TODO, get works, now nood to do create
-
-          return h.response(response).code(StatusCodes.CREATED)
-        } catch (error) {
-          return handleServerError('Error creating submission', error, h)
-        }
-      },
-      description: 'Create a submission',
-      notes: 'Create a submission',
-      tags: ['api', 'submissions']
-    }
-  },
   {
     method: 'POST',
     path: '/submissions',
