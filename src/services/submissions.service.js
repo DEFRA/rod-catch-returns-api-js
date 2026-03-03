@@ -94,7 +94,7 @@ export const handleCrmActivity = async (contactId, season) => {
     `Fetching RCR CRM Activities for: contactId=${contactId}, season=${season}`
   )
 
-  const getActivitiesResult = await getRCRCRMActivitiesContactById(
+  const getActivitiesResult = await getCRMActivitiesContactById(
     contactId,
     season
   )
@@ -105,35 +105,35 @@ export const handleCrmActivity = async (contactId, season) => {
 
   if (getActivitiesResult.length === 0) {
     logger.info(
-      `No RCR CRM activities found for contactId=${contactId}, season=${season} creating now`
+      `No RCR CRM Activities found for contactId=${contactId}, season=${season} creating now`
     )
 
     try {
-      createRCRCRMActivity(contactId, season)
+      await createCRMActivity(contactId, season)
     } catch (err) {
       logger.error(
-        `Error creating RCR Activity for contactId=${contactId}, season=${season}, please check the database and crm to see if the details match`
+        `Error creating RCR CRM Activity for contactId=${contactId}, season=${season}, please check the database and crm to see if the details match`
       )
       throw err
     }
 
     logger.info(
-      `RCR Activity created for contactId=${contactId}, season=${season}`
+      `RCR CRM Activity created for contactId=${contactId}, season=${season}`
     )
   } else {
     logger.info(
-      `RCR CRM activities already found for contactId=${contactId}, season=${season} doing nothing`
+      `RCR CRM Activity already found for contactId=${contactId}, season=${season} doing nothing`
     )
   }
 }
 
-export const getRCRCRMActivitiesContactById = async (contactId, season) => {
+export const getCRMActivitiesContactById = async (contactId, season) => {
   const query = rcrActivityForContact(contactId, season)
   const result = await executeQuery(query)
   return result
 }
 
-export const createRCRCRMActivity = async (contactId, season) => {
+export const createCRMActivity = async (contactId, season) => {
   const rcrActivity = new RCRActivity()
   rcrActivity.season = season
   rcrActivity.startDate = new Date()

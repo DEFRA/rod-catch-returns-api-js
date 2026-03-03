@@ -6,18 +6,16 @@ import {
   Submission
 } from '../../entities/index.js'
 import {
-  createRCRCRMActivity,
-  getRCRCRMActivitiesContactById,
-  handleCrmActivity,
-  isSubmissionExistsByUserAndSeason
-} from '../../services/submissions.service.js'
-import {
   createSubmissionSchema,
   getBySubmissionIdSchema,
   getSubmissionByContactAndSeasonSchema,
   getSubmissionsByContactSchema,
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
+import {
+  handleCrmActivity,
+  isSubmissionExistsByUserAndSeason
+} from '../../services/submissions.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
