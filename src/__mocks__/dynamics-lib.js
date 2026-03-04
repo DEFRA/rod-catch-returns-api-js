@@ -10,6 +10,19 @@ class SystemUserRole {
   }
 }
 
+const RCRActivity = jest.fn().mockImplementation(() => ({
+  bindToEntity: jest.fn(),
+  season: null,
+  startDate: null,
+  status: null
+}))
+
+RCRActivity.definition = {
+  relationships: {
+    licensee: 'licensee'
+  }
+}
+
 module.exports = {
   dynamicsClient: {
     executeUnboundFunction: jest.fn()
@@ -19,9 +32,11 @@ module.exports = {
   executeQuery: jest.fn(),
   permissionForFullReferenceNumber: jest.fn(),
   updateActivity: jest.fn(),
+  rcrActivityForContact: jest.fn(),
   retrieveMultipleAsMap: jest.fn().mockReturnValue({
     cached: jest.fn()
   }),
+  persist: jest.fn(),
   Role: {
     definition: {
       localCollection: 'roles'
@@ -29,5 +44,12 @@ module.exports = {
   },
   SystemUser,
   SystemUserRole,
-  findByExample: jest.fn()
+  findByExample: jest.fn(),
+  RCRActivity,
+  RCR_ACTIVITY_STATUS: {
+    STARTED: 'STARTED'
+  },
+  Contact: {
+    fromResponse: jest.fn()
+  }
 }

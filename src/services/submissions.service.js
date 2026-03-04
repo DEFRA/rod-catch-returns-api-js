@@ -1,14 +1,12 @@
 import { Activity, Catch, Submission } from '../entities/index.js'
 import {
   Contact,
+  RCRActivity,
+  RCR_ACTIVITY_STATUS,
   executeQuery,
   persist,
   rcrActivityForContact
 } from '@defra-fish/dynamics-lib'
-import {
-  RCRActivity,
-  RCR_ACTIVITY_STATUS
-} from '@defra-fish/dynamics-lib/src/entities/rcr-activity.entity.js'
 import logger from '../utils/logger-utils.js'
 
 /**

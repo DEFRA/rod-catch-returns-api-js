@@ -1,12 +1,10 @@
 import { Catch, Submission } from '../../entities/index.js'
+import * as submissionService from '../submissions.service.js'
 import {
-  getSubmission,
-  getSubmissionByCatchId,
-  handleCrmActivity,
-  isSubmissionExistsById,
-  isSubmissionExistsByUserAndSeason
-} from '../submissions.service.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
+  executeQuery,
+  persist,
+  rcrActivityForContact
+} from '@defra-fish/dynamics-lib'
 import { getCreateActivityResponse } from '../../test-utils/test-data.js'
 import logger from '../../utils/logger-utils.js'
 
@@ -24,7 +22,8 @@ describe('submission.service.unit', () => {
     it('should return true if submission exists', async () => {
       Submission.count.mockResolvedValue(1)
 
-      const result = await isSubmissionExistsById(mockSubmissionId)
+      const result =
+        await submissionService.isSubmissionExistsById(mockSubmissionId)
 
       expect(result).toBe(true)
     })
@@ -32,7 +31,8 @@ describe('submission.service.unit', () => {
     it('should return false if submission does not exist', async () => {
       Submission.count.mockResolvedValue(0)
 
-      const result = await isSubmissionExistsById(mockSubmissionId)
+      const result =
+        await submissionService.isSubmissionExistsById(mockSubmissionId)
 
       expect(result).toBe(false)
     })
@@ -40,9 +40,9 @@ describe('submission.service.unit', () => {
     it('should handle errors thrown by Submission.count', async () => {
       Submission.count.mockRejectedValue(new Error('Database error'))
 
-      await expect(isSubmissionExistsById(mockSubmissionId)).rejects.toThrow(
-        'Database error'
-      )
+      await expect(
+        submissionService.isSubmissionExistsById(mockSubmissionId)
+      ).rejects.toThrow('Database error')
     })
   })
 
@@ -57,7 +57,7 @@ describe('submission.service.unit', () => {
     it('should return true if submission exists', async () => {
       Submission.count.mockResolvedValue(1)
 
-      const result = await isSubmissionExistsByUserAndSeason(
+      const result = await submissionService.isSubmissionExistsByUserAndSeason(
         mockContactId,
         mockSeason
       )
@@ -68,7 +68,7 @@ describe('submission.service.unit', () => {
     it('should return false if submission does not exist', async () => {
       Submission.count.mockResolvedValue(0)
 
-      const result = await isSubmissionExistsByUserAndSeason(
+      const result = await submissionService.isSubmissionExistsByUserAndSeason(
         mockContactId,
         mockSeason
       )
@@ -80,7 +80,10 @@ describe('submission.service.unit', () => {
       Submission.count.mockRejectedValue(new Error('Database error'))
 
       await expect(
-        isSubmissionExistsByUserAndSeason(mockContactId, mockSeason)
+        submissionService.isSubmissionExistsByUserAndSeason(
+          mockContactId,
+          mockSeason
+        )
       ).rejects.toThrow('Database error')
     })
   })
@@ -104,7 +107,7 @@ describe('submission.service.unit', () => {
       }
       Submission.findOne.mockResolvedValue(mockSubmission)
 
-      const result = await getSubmission('123')
+      const result = await submissionService.getSubmission('123')
 
       expect(result).toEqual({
         id: '1',
@@ -122,7 +125,7 @@ describe('submission.service.unit', () => {
     it('should return null if submission is not found', async () => {
       Submission.findOne.mockResolvedValue(null)
 
-      const result = await getSubmission('123')
+      const result = await submissionService.getSubmission('123')
 
       expect(result).toBeNull()
     })
@@ -130,7 +133,9 @@ describe('submission.service.unit', () => {
     it('should handle errors thrown by Submission.findOne', async () => {
       Submission.findOne.mockRejectedValue(new Error('Database error'))
 
-      await expect(getSubmission('123')).rejects.toThrow('Database error')
+      await expect(submissionService.getSubmission('123')).rejects.toThrow(
+        'Database error'
+      )
     })
   })
 
@@ -159,7 +164,7 @@ describe('submission.service.unit', () => {
         }
       })
 
-      const result = await getSubmissionByCatchId('1')
+      const result = await submissionService.getSubmissionByCatchId('1')
 
       expect(result).toStrictEqual({
         id: '1',
@@ -177,7 +182,9 @@ describe('submission.service.unit', () => {
     it('should throw an error if no catch is found for the catch ID', async () => {
       Catch.findOne.mockResolvedValue(null)
 
-      await expect(getSubmissionByCatchId('2')).rejects.toThrow(
+      await expect(
+        submissionService.getSubmissionByCatchId('2')
+      ).rejects.toThrow(
         'Failed to fetch submission for catch ID 2: Error: No Catch found for catch ID 2'
       )
     })
@@ -185,7 +192,9 @@ describe('submission.service.unit', () => {
     it('should throw an error if no activity is found for the catch ID', async () => {
       Catch.findOne.mockResolvedValue({})
 
-      await expect(getSubmissionByCatchId('2')).rejects.toThrow(
+      await expect(
+        submissionService.getSubmissionByCatchId('2')
+      ).rejects.toThrow(
         'Failed to fetch submission for catch ID 2: Error: No Activity found for catch ID 2'
       )
     })
@@ -193,78 +202,146 @@ describe('submission.service.unit', () => {
     it('should throw an error if Catch.findOne fails', async () => {
       Catch.findOne.mockRejectedValue(new Error('Database error'))
 
-      await expect(getSubmissionByCatchId('2')).rejects.toThrow(
+      await expect(
+        submissionService.getSubmissionByCatchId('2')
+      ).rejects.toThrow(
         'Failed to fetch submission for catch ID 2: Error: Database error'
       )
     })
   })
 
   describe('handleCrmActivity', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
     beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2026-03-04T12:12:33.353Z'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
       jest.clearAllMocks()
     })
 
-    it('should log info and return the result if the call to create an activity in CRM is successful', async () => {
-      const crmResponse = getCreateActivityResponse()
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should not creare an RCR CRM Activity if one already exists', async () => {
+      executeQuery.mockResolvedValue([{ id: 'existing' }])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
+      await submissionService.handleCrmActivity(mockContactId, mockSeason)
 
-      expect(result).toBe(crmResponse)
-      expect(logger.info).toHaveBeenCalledWith(
-        'Created CRM activity with result:',
-        crmResponse
+      expect(persist).not.toHaveBeenCalled()
+      expect(logger.info).toHaveBeenNthCalledWith(
+        3,
+        'RCR CRM Activity already found for contactId=contact-123, season=2024 doing nothing'
       )
     })
 
-    it('should log an error and return the result when the call to create an activity in CRM returns an ErrorMessage', async () => {
-      const crmResponse = {
-        '@odata.context':
-          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage: 'Failed to create activity'
-      }
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should create CRM activity if none exist', async () => {
+      executeQuery.mockResolvedValue([])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
+      await submissionService.handleCrmActivity(mockContactId, mockSeason)
 
-      expect(result).toBe(crmResponse)
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to create activity in CRM for contact-identifier-111',
-        'Failed to create activity'
+      expect(persist).toHaveBeenCalledWith([
+        {
+          bindToEntity: expect.any(Function),
+          season: '2024',
+          startDate: new Date('2026-03-04T12:12:33.353Z'),
+          status: 'STARTED'
+        }
+      ])
+      expect(logger.info).toHaveBeenNthCalledWith(
+        3,
+        'No RCR CRM Activities found for contactId=contact-123, season=2024 creating now'
       )
     })
 
-    it('should log info and return the result when the call to create an activity in CRM returns "RCR Activity Already Exists For the Given Contact and Activity Status"', async () => {
-      const crmResponse = {
-        '@odata.context':
-          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage:
-          'RCR Activity Already Exists For the Given Contact and Activity Status'
-      }
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should log error and rethrow if createCRMActivity fails', async () => {
+      executeQuery.mockResolvedValue([])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
-
-      expect(result).toBe(crmResponse)
-      expect(logger.info).toHaveBeenCalledWith(
-        'Failed to create activity in CRM for contact-identifier-111',
-        'RCR Activity Already Exists For the Given Contact and Activity Status'
-      )
-    })
-
-    it('should throw an error when the call to create an activity in CRM returns an error', async () => {
-      const error = new Error('CRM')
-      createActivityCRM.mockRejectedValueOnce(error)
+      persist.mockRejectedValue(new Error('CRM failure'))
 
       await expect(
-        handleCrmActivity('contact-identifier-111', 2024)
-      ).rejects.toThrow(error)
+        submissionService.handleCrmActivity(mockContactId, mockSeason)
+      ).rejects.toThrow('CRM failure')
+
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error creating RCR CRM Activity for contactId=${mockContactId}, season=${mockSeason}, please check the database and crm to see if the details match`
+      )
+    })
+  })
+
+  describe('getCRMActivitiesContactById', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
+    it('should return activities from executeQuery', async () => {
+      const mockActivities = [{ id: 'activity1' }, { id: 'activity2' }]
+      executeQuery.mockResolvedValue(mockActivities)
+
+      const result = await submissionService.getCRMActivitiesContactById(
+        mockContactId,
+        mockSeason
+      )
+
+      expect(rcrActivityForContact).toHaveBeenCalledWith(
+        mockContactId,
+        mockSeason
+      )
+      expect(result).toEqual(mockActivities)
+    })
+
+    it('should throw if executeQuery rejects', async () => {
+      executeQuery.mockRejectedValue(new Error('Database failure'))
+
+      await expect(
+        submissionService.getCRMActivitiesContactById(mockContactId, mockSeason)
+      ).rejects.toThrow('Database failure')
+    })
+  })
+
+  describe('createCRMActivity', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2026-03-04T12:12:33.353Z'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('should create and persist a new RCRActivity', async () => {
+      const mockPersistResult = [{ id: 'new-activity' }]
+      persist.mockResolvedValue(mockPersistResult)
+
+      const result = await submissionService.createCRMActivity(
+        mockContactId,
+        mockSeason
+      )
+
+      expect(persist).toHaveBeenCalledWith([
+        expect.objectContaining({
+          season: mockSeason,
+          startDate: new Date('2026-03-04T12:12:33.353Z'),
+          status: 'STARTED'
+        })
+      ])
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Creating RCR CRM Activity')
+      )
+    })
+
+    it('should throw if persist fails', async () => {
+      persist.mockRejectedValue(new Error('CRM failure'))
+
+      await expect(
+        submissionService.createCRMActivity(mockContactId, mockSeason)
+      ).rejects.toThrow('CRM failure')
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Creating RCR CRM Activity')
+      )
     })
   })
 })
