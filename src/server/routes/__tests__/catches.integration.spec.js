@@ -3,9 +3,8 @@ import {
   createCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { executeQuery } from '@defra-fish/dynamics-lib'
 import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
 
@@ -14,7 +13,7 @@ describe('catches.integration', () => {
   let server = null
 
   beforeAll(async () => {
-    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
+    executeQuery.mockResolvedValue([])
     server = await initialiseServer({ port: null })
   })
 
