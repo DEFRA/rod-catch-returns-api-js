@@ -1,14 +1,16 @@
-import { contactForLicensee, executeQuery } from '@defra-fish/dynamics-lib'
 import {
   getMockResponseToolkit,
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
+import { executeQuery } from '@defra-fish/dynamics-lib'
+import { getContactForLicensee } from '../../../services/licences.service.js'
 import { handleServerError } from '../../../utils/server-utils.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../licences.js'
 
 jest.mock('../../../utils/logger-utils.js')
 jest.mock('../../../utils/server-utils.js')
+jest.mock('../../../services/licences.service.js')
 
 const [
   {
@@ -25,12 +27,6 @@ handleServerError.mockReturnValue(SERVER_ERROR_SYMBOL)
 
 describe('licences.unit', () => {
   describe('GET /licence/{licence}', () => {
-    const getUnsuccessfulCRMResponse = () => ({
-      ReturnStatus: 'failed',
-      ContactId: null,
-      Postcode: null
-    })
-
     afterEach(() => {
       jest.clearAllMocks()
     })
@@ -44,14 +40,25 @@ describe('licences.unit', () => {
       query: { verification }
     })
 
-    it('should return licence and contact details when login is successful', async () => {
-      const dynamicsResponse = {
-        ReturnStatus: 'success',
-        ContactId: 'contact-identifier-111',
-        Postcode: 'WA4 1HT',
-        ReturnPermissionNumber: '11100420-2WT1SFT-B7A111'
+    const getSuccessfulCRMResponse = () => [
+      {
+        entity: {
+          id: '00000000-0000-0000-0000-000000000001',
+          referenceNumber: '11100420-2WT1SFT-B7A111'
+        },
+        expanded: {
+          licensee: {
+            entity: {
+              id: 'contact-identifier-111',
+              postcode: 'WA4 1HT'
+            }
+          }
+        }
       }
-      contactForLicensee.mockResolvedValueOnce(dynamicsResponse)
+    ]
+
+    it('should return licence and contact details when login is successful', async () => {
+      getContactForLicensee.mockResolvedValueOnce(getSuccessfulCRMResponse())
 
       const result = await getLicenceHandler(
         getLicenceRequest(),
@@ -69,8 +76,7 @@ describe('licences.unit', () => {
     })
 
     it('should return 403 when login is unsuccessful', async () => {
-      const dynamicsResponse = getUnsuccessfulCRMResponse()
-      contactForLicensee.mockResolvedValueOnce(dynamicsResponse)
+      getContactForLicensee.mockResolvedValueOnce([])
 
       const result = await getLicenceHandler(
         getLicenceRequest(),
@@ -81,9 +87,24 @@ describe('licences.unit', () => {
       expect(result.statusCode).toBe(403)
     })
 
+    it('should return 403 when contact id is missing', async () => {
+      getContactForLicensee.mockResolvedValueOnce([
+        {
+          entity: { referenceNumber: '123' },
+          expanded: { licensee: { entity: { id: null } } }
+        }
+      ])
+
+      const result = await getLicenceHandler(
+        getLicenceRequest(),
+        getMockResponseToolkit()
+      )
+
+      expect(result.statusCode).toBe(403)
+    })
+
     it('should return log an error when login is unsuccessful', async () => {
-      const dynamicsResponse = getUnsuccessfulCRMResponse()
-      contactForLicensee.mockResolvedValueOnce(dynamicsResponse)
+      getContactForLicensee.mockResolvedValueOnce([])
 
       await getLicenceHandler(getLicenceRequest(), getMockResponseToolkit())
 
@@ -91,13 +112,13 @@ describe('licences.unit', () => {
         'Login unsuccessful with request %s and %s. Response: %s',
         'B7A111',
         'WA4 1HT',
-        JSON.stringify(dynamicsResponse)
+        JSON.stringify([])
       )
     })
 
     it('should call handleServerError if an error occurs', async () => {
       const error = new Error('Unexpected error')
-      contactForLicensee.mockRejectedValueOnce(error)
+      getContactForLicensee.mockRejectedValueOnce(error)
       const h = getMockResponseToolkit()
 
       await getLicenceHandler(getLicenceRequest(), h)
@@ -111,7 +132,7 @@ describe('licences.unit', () => {
 
     it('should return an error response if an error occurs while creating the catch', async () => {
       const error = new Error('Unexpected error')
-      contactForLicensee.mockRejectedValueOnce(error)
+      getContactForLicensee.mockRejectedValueOnce(error)
 
       const result = await getLicenceHandler(
         getLicenceRequest(),
