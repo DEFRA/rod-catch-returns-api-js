@@ -13,8 +13,10 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import {
+  getCRMActivitiesContactById,
   handleCrmActivity,
-  isSubmissionExistsByUserAndSeason
+  isSubmissionExistsByUserAndSeason,
+  updateCRMActivityForContactAndSeason
 } from '../../services/submissions.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
@@ -329,22 +331,10 @@ export default [
               submission.season
             )
 
-            const updateCrmActivityResult = await updateActivity(
+            await updateCRMActivityForContactAndSeason(
               submission.contactId,
               submission.season
             )
-
-            if (updateCrmActivityResult.ErrorMessage) {
-              logger.error(
-                `failed to update activity in CRM for ${submission.contactId}`,
-                updateCrmActivityResult.ErrorMessage
-              )
-            } else {
-              logger.info(
-                'Updated CRM activity with result:',
-                updateCrmActivityResult
-              )
-            }
           }
 
           const mappedSubmission = mapSubmissionToResponse(

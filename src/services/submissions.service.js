@@ -81,7 +81,7 @@ export const getSubmissionByCatchId = async (catchId) => {
     )
   }
 }
-
+// TODO rename this function
 /**
  * Handle CRM activity creation with logging
  * @param {string} contactId
@@ -89,7 +89,7 @@ export const getSubmissionByCatchId = async (catchId) => {
  */
 export const handleCrmActivity = async (contactId, season) => {
   logger.info(
-    `Fetching RCR CRM Activities for: contactId=${contactId}, season=${season}`
+    `Fetching RCR CRM Activities for create: contactId=${contactId}, season=${season}`
   )
 
   const getActivitiesResult = await getCRMActivitiesContactById(
@@ -98,7 +98,7 @@ export const handleCrmActivity = async (contactId, season) => {
   )
 
   logger.info(
-    `RCR CRM Activities found for contactId=${contactId}, season=${season}, result=${JSON.stringify(getActivitiesResult)}`
+    `RCR CRM Activities found for create: contactId=${contactId}, season=${season}, result=${JSON.stringify(getActivitiesResult)}`
   )
 
   if (getActivitiesResult.length === 0) {
@@ -125,6 +125,24 @@ export const handleCrmActivity = async (contactId, season) => {
   }
 }
 
+/**
+ * Retrieves CRM activities for a specific contact and season.
+ *
+ * @param {string} contactId - The unique identifier of the contact.
+ * @param {string|number} season - The season year to filter activities by.
+ *
+ * @returns {Promise<Array<{
+ *   entity: {
+ *     id: string,
+ *     status: number,
+ *     season: number,
+ *     startDate: string,        // ISO 8601 date string
+ *     lastUpdated: string,      // ISO 8601 date string
+ *     submittedDate: string | null
+ *   },
+ *   expanded: Record<string, any>
+ * }>>}
+ */
 export const getCRMActivitiesContactById = async (contactId, season) => {
   const query = rcrActivityForContact(contactId, season)
   const result = await executeQuery(query)
@@ -150,4 +168,40 @@ export const createCRMActivity = async (contactId, season) => {
   const result = await persist([rcrActivity])
 
   return result
+}
+
+export const updateCRMActivityForContactAndSeason = async (
+  contactId,
+  season
+) => {
+  logger.info(
+    `Fetching RCR CRM Activities for update: contactId=${contactId}, season=${season}`
+  )
+  const rcrActivityResult = await getCRMActivitiesContactById(contactId, season)
+
+  logger.info(
+    `RCR CRM Activities found for update: contactId=${contactId}, season=${season}, result=${JSON.stringify(rcrActivityResult)}`
+  )
+
+  if (rcrActivityResult.length !== 1) {
+    throw new Error(
+      `The number of RCR CRM Activities found for contactId=${contactId}, season=${season} is not 1 result=${JSON.stringify(rcrActivityResult)}`
+    )
+  }
+
+  const rcrActivity = rcrActivityResult[0].entity
+  rcrActivity.status = RCR_ACTIVITY_STATUS.SUBMITTED
+  rcrActivity.submittedDate = new Date()
+  logger.info(
+    `Updating RCR CRM Activities for: contactId=${contactId}, season=${season} with details=${rcrActivity}`
+  )
+
+  try {
+    await persist([rcrActivity])
+  } catch (err) {
+    logger.error(
+      `Error updating RCR CRM Activity for contactId=${contactId}, season=${season}, please check the database and crm to see if the details match`
+    )
+    throw err
+  }
 }
