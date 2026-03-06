@@ -59,8 +59,6 @@ export default [
             season
           )
 
-          logger.info(foundSubmission)
-
           if (foundSubmission) {
             const errorMessage = `Submission already exists for contact=${contactId} and season=${season}`
             logger.error(errorMessage)
