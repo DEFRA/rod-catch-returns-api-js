@@ -73,6 +73,35 @@ describe('logger-utils.unit', () => {
       expect(logger.info).toHaveBeenCalledWith('GET /test')
     })
 
+    it('should include query string if present', () => {
+      const request = getMockRequest({
+        url: {
+          pathname: '/test',
+          search: '?page=2'
+        }
+      })
+
+      logRequest(request, getMockResponseToolkit())
+
+      expect(logger.info).toHaveBeenCalledWith('GET /test?page=2')
+    })
+
+    it.each(['POST', 'PATCH', 'PUT'])(
+      'should include body for %s requests',
+      (method) => {
+        const request = getMockRequest({
+          method,
+          payload: { name: 'John' }
+        })
+
+        logRequest(request, getMockResponseToolkit())
+
+        expect(logger.info).toHaveBeenCalledWith(
+          `${method} /test | body={"name":"John"}`
+        )
+      }
+    )
+
     it('should return h.continue', () => {
       const h = getMockResponseToolkit()
       const result = logRequest(getMockRequest(), h)
