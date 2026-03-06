@@ -13,10 +13,9 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import {
-  getCRMActivitiesContactById,
-  handleCrmActivity,
-  isSubmissionExistsByUserAndSeason,
-  updateCRMActivityForContactAndSeason
+  handleCreateCrmActivity,
+  handleUpdateCRMActivity,
+  isSubmissionExistsByUserAndSeason
 } from '../../services/submissions.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
@@ -25,7 +24,6 @@ import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 import { sequelize } from '../../services/database.service.js'
-import { updateActivity } from '@defra-fish/dynamics-lib'
 
 const BASE_SUBMISSIONS_URL = '/submissions/{submissionId}'
 
@@ -73,7 +71,7 @@ export default [
 
           const createdSubmission = await Submission.create(submissionData)
 
-          await handleCrmActivity(contactId, season)
+          await handleCreateCrmActivity(contactId, season)
 
           const response = mapSubmissionToResponse(createdSubmission.toJSON())
 
@@ -331,7 +329,7 @@ export default [
               submission.season
             )
 
-            await updateCRMActivityForContactAndSeason(
+            await handleUpdateCRMActivity(
               submission.contactId,
               submission.season
             )

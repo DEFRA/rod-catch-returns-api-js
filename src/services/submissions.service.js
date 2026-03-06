@@ -81,13 +81,12 @@ export const getSubmissionByCatchId = async (catchId) => {
     )
   }
 }
-// TODO rename this function
 /**
  * Handle CRM activity creation with logging
  * @param {string} contactId
  * @param {string|number} season
  */
-export const handleCrmActivity = async (contactId, season) => {
+export const handleCreateCrmActivity = async (contactId, season) => {
   logger.info(
     `Fetching RCR CRM Activities for create: contactId=${contactId}, season=${season}`
   )
@@ -149,6 +148,14 @@ export const getCRMActivitiesContactById = async (contactId, season) => {
   return result
 }
 
+/**
+ * Creates a new CRM RCR activity for a contact for the specified season.
+ *
+ * @param {string} contactId - The unique identifier of the contact the RCR CRM Activity will be associated with.
+ * @param {number} season - The season year for the RCR CRM Activity.
+ *
+ * @returns {Promise<string>} A promise that resolves to the ID of the newly created CRM Activity.
+ */
 export const createCRMActivity = async (contactId, season) => {
   const rcrActivity = new RCRActivity()
   rcrActivity.season = season
@@ -167,13 +174,21 @@ export const createCRMActivity = async (contactId, season) => {
 
   const result = await persist([rcrActivity])
 
-  return result
+  return result[0]
 }
 
-export const updateCRMActivityForContactAndSeason = async (
-  contactId,
-  season
-) => {
+/**
+ * Updates the RCR CRM activity for a given contact and season.
+ *
+ * @param {string} contactId - The unique identifier of the contact whose RCR CRM activity should be updated.
+ * @param {number} season - The season year of the activity to update.
+ *
+ * @returns {Promise<void>} Resolves when the activity has been successfully updated.
+ *
+ * @throws {Error} Throws if the number of activities found is not exactly one.
+ * @throws {Error} Throws if persisting the updated activity fails.
+ */
+export const handleUpdateCRMActivity = async (contactId, season) => {
   logger.info(
     `Fetching RCR CRM Activities for update: contactId=${contactId}, season=${season}`
   )
