@@ -3,13 +3,14 @@ import {
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
 import {
-  executeQuery,
-  persist,
-  updateActivity as updateActivityCRM
-} from '@defra-fish/dynamics-lib'
+  handleCreateCRMActivity,
+  handleUpdateCRMActivity
+} from '../../../services/crm.service.js'
 import { Submission } from '../../../entities/index.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
 import initialiseServer from '../../server.js'
+
+jest.mock('../../../services/crm.service.js')
 
 const createExpectedActivity = (
   id,
@@ -60,7 +61,6 @@ describe('submissions.integration', () => {
     const CONTACT_IDENTIFIER_CREATE_SUBMISSION =
       'contact-identifier-create-submission'
     beforeEach(async () => {
-      executeQuery.mockResolvedValueOnce([])
       await Submission.destroy({
         where: {
           contactId: CONTACT_IDENTIFIER_CREATE_SUBMISSION
@@ -261,7 +261,9 @@ describe('submissions.integration', () => {
     })
 
     it('should throw an error when the call to create an activity in CRM returns an error', async () => {
-      persist.mockRejectedValueOnce(new Error('Error persisting'))
+      handleCreateCRMActivity.mockRejectedValueOnce(
+        new Error('Error persisting')
+      )
       const result = await server.inject({
         method: 'POST',
         url: '/api/submissions',
@@ -609,7 +611,6 @@ describe('submissions.integration', () => {
       deleteSubmissionAndRelatedData(
         CONTACT_IDENTIFIER_GET_ACTIVITIES_FOR_SUBMISSION
       )
-      executeQuery.mockResolvedValueOnce([])
     })
 
     afterAll(() =>
@@ -705,18 +706,7 @@ describe('submissions.integration', () => {
     const CONTACT_IDENTIFIER_UPDATE_SUBMISSION =
       'contact-identifier-update-submission'
 
-    const getUpdateActivityResponse = () => ({
-      '@odata.context':
-        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
-      ReturnStatus: 'success',
-      SuccessMessage: 'RCR Activity - updated successfully',
-      ErrorMessage: null,
-      oDataContext:
-        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
-    })
-
     beforeEach(async () => {
-      executeQuery.mockResolvedValueOnce([])
       await Submission.destroy({
         where: {
           contactId: CONTACT_IDENTIFIER_UPDATE_SUBMISSION
@@ -733,7 +723,6 @@ describe('submissions.integration', () => {
     })
 
     it('should successfully update a submission with a valid status', async () => {
-      updateActivityCRM.mockResolvedValueOnce(getUpdateActivityResponse())
       const createdSubmission = await createSubmission(
         server,
         CONTACT_IDENTIFIER_UPDATE_SUBMISSION
@@ -808,37 +797,8 @@ describe('submissions.integration', () => {
       expect(updatedSubmission.statusCode).toBe(404)
     })
 
-    it('should successfully update a Submission when the call to update an activity in CRM returns an ErrorMessage', async () => {
-      updateActivityCRM.mockResolvedValueOnce({
-        '@odata.context':
-          'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage: 'Failed to update activity',
-        oDataContext:
-          'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
-      })
-      const createdSubmission = await createSubmission(
-        server,
-        CONTACT_IDENTIFIER_UPDATE_SUBMISSION
-      )
-      const submissionId = JSON.parse(createdSubmission.payload).id
-      expect(JSON.parse(createdSubmission.payload).season).toBe(2023)
-
-      const result = await server.inject({
-        method: 'PATCH',
-        url: `/api/submissions/${submissionId}`,
-        payload: {
-          status: 'SUBMITTED'
-        }
-      })
-
-      expect(result.statusCode).toBe(200)
-    })
-
-    it('should return a 500 when the call to create an activity in CRM throws an error', async () => {
-      updateActivityCRM.mockRejectedValueOnce(new Error('CRM error'))
+    it('should return a 500 when the call to update an activity in CRM throws an error', async () => {
+      handleUpdateCRMActivity.mockRejectedValueOnce(new Error('CRM error'))
 
       const createdSubmission = await createSubmission(
         server,
@@ -866,7 +826,6 @@ describe('submissions.integration', () => {
       'contact-identifier-delete-submission'
     beforeEach(async () => {
       await deleteSubmissionAndRelatedData(CONTACT_IDENTIFIER_DELETE_SUBMISSION)
-      executeQuery.mockResolvedValueOnce([])
     })
 
     afterAll(

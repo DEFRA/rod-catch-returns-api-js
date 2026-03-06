@@ -13,13 +13,13 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import {
-  handleCreateCrmActivity,
-  handleUpdateCRMActivity,
-  isSubmissionExistsByUserAndSeason
-} from '../../services/submissions.service.js'
+  handleCreateCRMActivity,
+  handleUpdateCRMActivity
+} from '../../services/crm.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
+import { isSubmissionExistsByUserAndSeason } from '../../services/submissions.service.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
@@ -59,6 +59,8 @@ export default [
             season
           )
 
+          logger.info(foundSubmission)
+
           if (foundSubmission) {
             const errorMessage = `Submission already exists for contact=${contactId} and season=${season}`
             logger.error(errorMessage)
@@ -71,7 +73,7 @@ export default [
 
           const createdSubmission = await Submission.create(submissionData)
 
-          await handleCreateCrmActivity(contactId, season)
+          await handleCreateCRMActivity(contactId, season)
 
           const response = mapSubmissionToResponse(createdSubmission.toJSON())
 

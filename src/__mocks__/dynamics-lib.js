@@ -36,7 +36,7 @@ module.exports = {
   retrieveMultipleAsMap: jest.fn().mockReturnValue({
     cached: jest.fn()
   }),
-  persist: jest.fn(),
+  persist: jest.fn().mockResolvedValue([]),
   Role: {
     definition: {
       localCollection: 'roles'
