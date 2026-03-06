@@ -4,7 +4,7 @@ import {
   getCRMActivitiesContactById,
   getSubmission,
   getSubmissionByCatchId,
-  handleCrmActivity,
+  handleCreateCrmActivity,
   isSubmissionExistsById,
   isSubmissionExistsByUserAndSeason
 } from '../submissions.service.js'
@@ -204,7 +204,7 @@ describe('submission.service.unit', () => {
     })
   })
 
-  describe('handleCrmActivity', () => {
+  describe('handleCreateCrmActivity', () => {
     const mockContactId = 'contact-123'
     const mockSeason = '2024'
 
@@ -221,7 +221,7 @@ describe('submission.service.unit', () => {
     it('should not create an RCR CRM Activity if one already exists for the specified contact id and season', async () => {
       executeQuery.mockResolvedValue([{ id: 'existing' }])
 
-      await handleCrmActivity(mockContactId, mockSeason)
+      await handleCreateCrmActivity(mockContactId, mockSeason)
 
       expect(persist).not.toHaveBeenCalled()
       expect(logger.info).toHaveBeenNthCalledWith(
@@ -230,10 +230,11 @@ describe('submission.service.unit', () => {
       )
     })
 
-    it('should create an RCR CRM activity if none exist for the specified contact id and season', async () => {
+    it('should create an RCR CRM activity if none exists for the specified contact id and season', async () => {
       executeQuery.mockResolvedValue([])
+      persist.mockResolvedValueOnce(['abc-123'])
 
-      await handleCrmActivity(mockContactId, mockSeason)
+      await handleCreateCrmActivity(mockContactId, mockSeason)
 
       expect(persist).toHaveBeenCalledWith([
         {
@@ -255,7 +256,7 @@ describe('submission.service.unit', () => {
       persist.mockRejectedValue(new Error('CRM failure'))
 
       await expect(
-        handleCrmActivity(mockContactId, mockSeason)
+        handleCreateCrmActivity(mockContactId, mockSeason)
       ).rejects.toThrow('CRM failure')
     })
 
@@ -265,7 +266,7 @@ describe('submission.service.unit', () => {
       persist.mockRejectedValue(new Error('CRM failure'))
 
       await expect(
-        handleCrmActivity(mockContactId, mockSeason)
+        handleCreateCrmActivity(mockContactId, mockSeason)
       ).rejects.toThrow()
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -332,6 +333,15 @@ describe('submission.service.unit', () => {
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Creating RCR CRM Activity')
       )
+    })
+
+    it('should return the id of the newly created RCRActivity', async () => {
+      const mockPersistResult = 'new-activity'
+      persist.mockResolvedValue([mockPersistResult])
+
+      const result = await createCRMActivity(mockContactId, mockSeason)
+
+      expect(result).toBe(mockPersistResult)
     })
 
     it('should throw and log an error if persist fails', async () => {
