@@ -47,7 +47,8 @@ module.exports = {
   findByExample: jest.fn(),
   RCRActivity,
   RCR_ACTIVITY_STATUS: {
-    STARTED: 'STARTED'
+    STARTED: 'STARTED',
+    SUBMITTED: 'SUBMITTED'
   },
   Contact: {
     fromResponse: jest.fn()
