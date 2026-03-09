@@ -17,7 +17,6 @@ import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 import { sequelize } from '../../../services/database.service.js'
@@ -121,7 +120,6 @@ describe('submissions.unit', () => {
     it('should return a 201 status code if the submission is created successfully', async () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
-      handleCrmActivity.mockResolvedValueOnce(getCreateActivityResponse())
 
       const result = await postSubmissionHandler(
         getSubmissionRequest(),
@@ -133,7 +131,6 @@ describe('submissions.unit', () => {
 
     it('should return the created submission in the response body', async () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
-      handleCrmActivity.mockResolvedValueOnce(getCreateActivityResponse())
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
 
       const result = await postSubmissionHandler(

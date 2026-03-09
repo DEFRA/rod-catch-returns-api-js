@@ -1,13 +1,18 @@
 import { Catch, Submission } from '../../entities/index.js'
 import {
+  createCRMActivity,
+  getCRMActivitiesContactById,
   getSubmission,
   getSubmissionByCatchId,
   handleCrmActivity,
   isSubmissionExistsById,
   isSubmissionExistsByUserAndSeason
 } from '../submissions.service.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
-import { getCreateActivityResponse } from '../../test-utils/test-data.js'
+import {
+  executeQuery,
+  persist,
+  rcrActivityForContact
+} from '@defra-fish/dynamics-lib'
 import logger from '../../utils/logger-utils.js'
 
 jest.mock('../../entities/index.js')
@@ -200,71 +205,144 @@ describe('submission.service.unit', () => {
   })
 
   describe('handleCrmActivity', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
     beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2026-03-04T12:12:33.353Z'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
       jest.clearAllMocks()
     })
 
-    it('should log info and return the result if the call to create an activity in CRM is successful', async () => {
-      const crmResponse = getCreateActivityResponse()
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should not create an RCR CRM Activity if one already exists for the specified contact id and season', async () => {
+      executeQuery.mockResolvedValue([{ id: 'existing' }])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
+      await handleCrmActivity(mockContactId, mockSeason)
 
-      expect(result).toBe(crmResponse)
-      expect(logger.info).toHaveBeenCalledWith(
-        'Created CRM activity with result:',
-        crmResponse
+      expect(persist).not.toHaveBeenCalled()
+      expect(logger.info).toHaveBeenNthCalledWith(
+        3,
+        'RCR CRM Activity already found for contactId=contact-123, season=2024 doing nothing'
       )
     })
 
-    it('should log an error and return the result when the call to create an activity in CRM returns an ErrorMessage', async () => {
-      const crmResponse = {
-        '@odata.context':
-          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage: 'Failed to create activity'
-      }
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should create an RCR CRM activity if none exist for the specified contact id and season', async () => {
+      executeQuery.mockResolvedValue([])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
+      await handleCrmActivity(mockContactId, mockSeason)
 
-      expect(result).toBe(crmResponse)
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to create activity in CRM for contact-identifier-111',
-        'Failed to create activity'
+      expect(persist).toHaveBeenCalledWith([
+        {
+          bindToEntity: expect.any(Function),
+          season: '2024',
+          startDate: new Date('2026-03-04T12:12:33.353Z'),
+          status: 'STARTED'
+        }
+      ])
+      expect(logger.info).toHaveBeenNthCalledWith(
+        3,
+        'No RCR CRM Activities found for contactId=contact-123, season=2024 creating now'
       )
     })
 
-    it('should log info and return the result when the call to create an activity in CRM returns "RCR Activity Already Exists For the Given Contact and Activity Status"', async () => {
-      const crmResponse = {
-        '@odata.context':
-          'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-        RCRActivityId: null,
-        ReturnStatus: 'error',
-        SuccessMessage: '',
-        ErrorMessage:
-          'RCR Activity Already Exists For the Given Contact and Activity Status'
-      }
-      createActivityCRM.mockResolvedValue(crmResponse)
+    it('should throw if persist fails', async () => {
+      executeQuery.mockResolvedValue([])
 
-      const result = await handleCrmActivity('contact-identifier-111', 2024)
-
-      expect(result).toBe(crmResponse)
-      expect(logger.info).toHaveBeenCalledWith(
-        'Failed to create activity in CRM for contact-identifier-111',
-        'RCR Activity Already Exists For the Given Contact and Activity Status'
-      )
-    })
-
-    it('should throw an error when the call to create an activity in CRM returns an error', async () => {
-      const error = new Error('CRM')
-      createActivityCRM.mockRejectedValueOnce(error)
+      persist.mockRejectedValue(new Error('CRM failure'))
 
       await expect(
-        handleCrmActivity('contact-identifier-111', 2024)
-      ).rejects.toThrow(error)
+        handleCrmActivity(mockContactId, mockSeason)
+      ).rejects.toThrow('CRM failure')
+    })
+
+    it('should log error a helpful error message indicating that the devs should check the database and crm if persist fails', async () => {
+      executeQuery.mockResolvedValue([])
+
+      persist.mockRejectedValue(new Error('CRM failure'))
+
+      await expect(
+        handleCrmActivity(mockContactId, mockSeason)
+      ).rejects.toThrow()
+
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error creating RCR CRM Activity for contactId=${mockContactId}, season=${mockSeason}, please check the database and crm to see if the details match`
+      )
+    })
+  })
+
+  describe('getCRMActivitiesContactById', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
+    it('should return RCR CRM Activities for the given contact id and season', async () => {
+      const mockActivities = [{ id: 'activity1' }, { id: 'activity2' }]
+      executeQuery.mockResolvedValue(mockActivities)
+
+      const result = await getCRMActivitiesContactById(
+        mockContactId,
+        mockSeason
+      )
+
+      expect(rcrActivityForContact).toHaveBeenCalledWith(
+        mockContactId,
+        mockSeason
+      )
+      expect(result).toEqual(mockActivities)
+    })
+
+    it('should throw if executeQuery rejects', async () => {
+      executeQuery.mockRejectedValue(new Error('Database failure'))
+
+      await expect(
+        getCRMActivitiesContactById(mockContactId, mockSeason)
+      ).rejects.toThrow('Database failure')
+    })
+  })
+
+  describe('createCRMActivity', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2026-03-04T12:12:33.353Z'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('should persist a new RCRActivity', async () => {
+      const mockPersistResult = [{ id: 'new-activity' }]
+      persist.mockResolvedValue(mockPersistResult)
+
+      await createCRMActivity(mockContactId, mockSeason)
+
+      expect(persist).toHaveBeenCalledWith([
+        expect.objectContaining({
+          season: mockSeason,
+          startDate: new Date('2026-03-04T12:12:33.353Z'),
+          status: 'STARTED'
+        })
+      ])
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Creating RCR CRM Activity')
+      )
+    })
+
+    it('should throw and log an error if persist fails', async () => {
+      persist.mockRejectedValue(new Error('CRM failure'))
+
+      await expect(
+        createCRMActivity(mockContactId, mockSeason)
+      ).rejects.toThrow('CRM failure')
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Creating RCR CRM Activity')
+      )
     })
   })
 })
