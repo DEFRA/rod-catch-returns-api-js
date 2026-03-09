@@ -1,13 +1,4 @@
 import { Activity, Catch, Submission } from '../entities/index.js'
-import {
-  Contact,
-  RCRActivity,
-  RCR_ACTIVITY_STATUS,
-  executeQuery,
-  persist,
-  rcrActivityForContact
-} from '@defra-fish/dynamics-lib'
-import logger from '../utils/logger-utils.js'
 
 /**
  * Checks if a submission exists in the database by its ID.
@@ -80,74 +71,4 @@ export const getSubmissionByCatchId = async (catchId) => {
       `Failed to fetch submission for catch ID ${catchId}: ${error}`
     )
   }
-}
-
-/**
- * Handle CRM activity creation with logging
- * @param {string} contactId
- * @param {string|number} season
- */
-export const handleCrmActivity = async (contactId, season) => {
-  logger.info(
-    `Fetching RCR CRM Activities for: contactId=${contactId}, season=${season}`
-  )
-
-  const getActivitiesResult = await getCRMActivitiesContactById(
-    contactId,
-    season
-  )
-
-  logger.info(
-    `RCR CRM Activities found for contactId=${contactId}, season=${season}, result=${JSON.stringify(getActivitiesResult)}`
-  )
-
-  if (getActivitiesResult.length === 0) {
-    logger.info(
-      `No RCR CRM Activities found for contactId=${contactId}, season=${season} creating now`
-    )
-
-    try {
-      await createCRMActivity(contactId, season)
-    } catch (err) {
-      logger.error(
-        `Error creating RCR CRM Activity for contactId=${contactId}, season=${season}, please check the database and crm to see if the details match`
-      )
-      throw err
-    }
-
-    logger.info(
-      `RCR CRM Activity created for contactId=${contactId}, season=${season}`
-    )
-  } else {
-    logger.info(
-      `RCR CRM Activity already found for contactId=${contactId}, season=${season} doing nothing`
-    )
-  }
-}
-
-export const getCRMActivitiesContactById = async (contactId, season) => {
-  const query = rcrActivityForContact(contactId, season)
-  const result = await executeQuery(query)
-  return result
-}
-
-export const createCRMActivity = async (contactId, season) => {
-  const rcrActivity = new RCRActivity()
-  rcrActivity.season = season
-  rcrActivity.startDate = new Date()
-  rcrActivity.status = RCR_ACTIVITY_STATUS.STARTED
-
-  const contact = Contact.fromResponse({ contactid: contactId })
-  rcrActivity.bindToEntity(
-    RCRActivity.definition.relationships.licensee,
-    contact
-  )
-
-  logger.info(
-    `Creating RCR CRM Activity with details ${JSON.stringify(rcrActivity)} and contactId=${contactId}`
-  )
-
-  const result = await persist([rcrActivity])
-
-  return result
 }

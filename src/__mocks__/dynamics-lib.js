@@ -28,10 +28,8 @@ module.exports = {
     executeUnboundFunction: jest.fn()
   },
   contactAndPermissionForLicensee: jest.fn(),
-  createActivity: jest.fn(),
   executeQuery: jest.fn(),
   permissionForFullReferenceNumber: jest.fn(),
-  updateActivity: jest.fn(),
   rcrActivityForContact: jest.fn(),
   retrieveMultipleAsMap: jest.fn().mockReturnValue({
     cached: jest.fn()
@@ -47,7 +45,8 @@ module.exports = {
   findByExample: jest.fn(),
   RCRActivity,
   RCR_ACTIVITY_STATUS: {
-    STARTED: 'STARTED'
+    STARTED: 'STARTED',
+    SUBMITTED: 'SUBMITTED'
   },
   Contact: {
     fromResponse: jest.fn()

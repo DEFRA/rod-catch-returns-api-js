@@ -4,16 +4,16 @@ import {
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
-import { executeQuery } from '@defra-fish/dynamics-lib'
 import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
+
+jest.mock('../../../services/crm.service.js')
 
 describe('catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
   beforeAll(async () => {
-    executeQuery.mockResolvedValue([])
     server = await initialiseServer({ port: null })
   })
 
