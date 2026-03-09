@@ -195,7 +195,7 @@ describe('server.unit', () => {
 
     const server = await initialiseServer()
 
-    expect(server.ext).toHaveBeenCalledWith('onRequest', logRequest)
+    expect(server.ext).toHaveBeenCalledWith('onPostAuth', logRequest)
   })
 
   it('should add an interceptor to log all outgoing responses', async () => {
