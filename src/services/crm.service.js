@@ -135,7 +135,7 @@ export const handleUpdateCRMActivity = async (contactId, season) => {
   rcrActivity.status = RCR_ACTIVITY_STATUS.SUBMITTED
   rcrActivity.submittedDate = new Date()
   logger.info(
-    `Updating RCR CRM Activities for: contactId=${contactId}, season=${season} with details=${rcrActivity}`
+    `Updating RCR CRM Activities for: contactId=${contactId}, season=${season} with details=${JSON.stringify(rcrActivity)}`
   )
 
   try {
