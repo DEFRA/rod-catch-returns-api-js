@@ -55,3 +55,16 @@ export const getTotalSmallCatchCountsBySmallCatchId = async (smallCatchId) => {
 
   return sumCounts(smallCatchCounts)
 }
+
+/**
+ * Retrieves all small catch counts associated with a specific small catch ID.
+ *
+ * @param {number|string} smallCatchId - The ID of the small catch for which to retrieve.
+ * @returns {Promise<SmallCatchCount>} - A promise that resolves to the an array of small catch counts.
+ * @throws {Error} - Throws an error if the database query fails.
+ */
+export const getSmallCatchCountsBySmallCatchId = async (smallCatchId) => {
+  return SmallCatchCount.findAll({
+    where: { small_catch_id: smallCatchId }
+  })
+}

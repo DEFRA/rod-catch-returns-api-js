@@ -10,18 +10,17 @@ import {
   getServerDetails
 } from '../../../test-utils/server-test-utils.js'
 import {
-  handleCrmActivity,
-  isSubmissionExistsByUserAndSeason
-} from '../../../services/submissions.service.js'
+  handleCreateCRMActivity,
+  handleUpdateCRMActivity
+} from '../../../services/crm.service.js'
 import {
   handleNotFound,
   handleServerError
 } from '../../../utils/server-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
+import { isSubmissionExistsByUserAndSeason } from '../../../services/submissions.service.js'
 import logger from '../../../utils/logger-utils.js'
 import routes from '../submissions.js'
 import { sequelize } from '../../../services/database.service.js'
-import { updateActivity as updateActivityCRM } from '@defra-fish/dynamics-lib'
 
 jest.mock('../../../entities/index.js')
 jest.mock('../../../utils/logger-utils.js')
@@ -43,6 +42,7 @@ jest.mock('../../../services/database.service.js', () => ({
   }
 }))
 jest.mock('../../../services/submissions.service.js')
+jest.mock('../../../services/crm.service.js')
 
 const [
   {
@@ -121,7 +121,6 @@ describe('submissions.unit', () => {
     it('should return a 201 status code if the submission is created successfully', async () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
-      handleCrmActivity.mockResolvedValueOnce(getCreateActivityResponse())
 
       const result = await postSubmissionHandler(
         getSubmissionRequest(),
@@ -133,7 +132,6 @@ describe('submissions.unit', () => {
 
     it('should return the created submission in the response body', async () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
-      handleCrmActivity.mockResolvedValueOnce(getCreateActivityResponse())
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
 
       const result = await postSubmissionHandler(
@@ -198,7 +196,7 @@ describe('submissions.unit', () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
-      handleCrmActivity.mockRejectedValueOnce(error)
+      handleCreateCRMActivity.mockRejectedValueOnce(error)
 
       const h = getMockResponseToolkit()
       await postSubmissionHandler(getSubmissionRequest(), h)
@@ -214,7 +212,7 @@ describe('submissions.unit', () => {
       isSubmissionExistsByUserAndSeason.mockResolvedValueOnce(false)
       Submission.create.mockResolvedValueOnce(getCreatedSubmission())
       const error = new Error('CRM')
-      handleCrmActivity.mockRejectedValueOnce(error)
+      handleCreateCRMActivity.mockRejectedValueOnce(error)
 
       const result = await postSubmissionHandler(
         getSubmissionRequest(),
@@ -667,32 +665,13 @@ describe('submissions.unit', () => {
       })
     })
 
-    const getSuccessUpdateActivityCRM = () => ({
-      '@odata.context':
-        'https://dynamics.om/api/data/v9.1/defra_UpdateRCRActivityResponse',
-      ReturnStatus: 'success',
-      SuccessMessage: 'RCR Activity - updated successfully',
-      ErrorMessage: null,
-      oDataContext:
-        'https://dynamics.com/api/data/v9.1/defra_UpdateRCRActivityResponse'
-    })
-
-    const getErrorUpdateActivityCRM = () => ({
-      '@odata.context':
-        'https://dynamics.com/api/data/v9.1/defra_CreateRCRActivityResponse',
-      RCRActivityId: null,
-      ReturnStatus: 'error',
-      SuccessMessage: '',
-      ErrorMessage: 'Failed to update activity'
-    })
-
     afterEach(() => {
       jest.clearAllMocks()
     })
 
     it('should return a 200 status code if the submission is updated successfully', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+      handleUpdateCRMActivity.mockResolvedValueOnce(null)
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),
@@ -705,7 +684,7 @@ describe('submissions.unit', () => {
     it('should call update with the "status"', async () => {
       const foundSubmission = getFoundSubmission()
       Submission.findByPk.mockResolvedValueOnce(foundSubmission)
-      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+      handleUpdateCRMActivity.mockResolvedValueOnce()
 
       await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),
@@ -722,7 +701,7 @@ describe('submissions.unit', () => {
     it('should call update with "reportingExclude"', async () => {
       const foundSubmission = getFoundSubmission()
       Submission.findByPk.mockResolvedValueOnce(foundSubmission)
-      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+      handleUpdateCRMActivity.mockResolvedValueOnce()
 
       await patchSubmissionByIdHandler(
         getSubmissionRequest({ reportingExclude: true }),
@@ -738,7 +717,7 @@ describe('submissions.unit', () => {
 
     it('should return the updated submission in the response body', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      updateActivityCRM.mockResolvedValue(getSuccessUpdateActivityCRM())
+      handleUpdateCRMActivity.mockResolvedValue()
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),
@@ -803,37 +782,10 @@ describe('submissions.unit', () => {
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
 
-    it('should still return 200 when the call to update an activity in CRM returns an ErrorMessage', async () => {
-      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
-
-      const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
-        getMockResponseToolkit()
-      )
-
-      expect(result.statusCode).toBe(200)
-    })
-
-    it('should log an error when the call to update an activity in CRM returns an ErrorMessage', async () => {
-      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      updateActivityCRM.mockResolvedValue(getErrorUpdateActivityCRM())
-
-      await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
-        getMockResponseToolkit()
-      )
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'failed to update activity in CRM for contact-identifier-111',
-        'Failed to update activity'
-      )
-    })
-
     it('should call handleServerError when the call to update an activity in CRM returns an error', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
       const error = new Error('CRM')
-      updateActivityCRM.mockRejectedValueOnce(error)
+      handleUpdateCRMActivity.mockRejectedValueOnce(error)
 
       const h = getMockResponseToolkit()
       await patchSubmissionByIdHandler(
@@ -851,7 +803,7 @@ describe('submissions.unit', () => {
     it('should return an error response when the call to update an activity in CRM returns an error', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
       const error = new Error('CRM')
-      updateActivityCRM.mockRejectedValueOnce(error)
+      handleUpdateCRMActivity.mockRejectedValueOnce(error)
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),

@@ -3,18 +3,17 @@ import {
   createCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
+
+jest.mock('../../../services/crm.service.js')
 
 describe('catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
   beforeAll(async () => {
-    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
   })
 
@@ -707,7 +706,8 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
-            property: 'dateCaught'
+            property: 'dateCaught',
+            value: '2023-06-24'
           }
         ]
       })
@@ -738,7 +738,8 @@ describe('catches.integration', () => {
           {
             entity: 'Catch',
             message: 'CATCH_NO_DATE_RECORDED_WITH_ONLY_MONTH_RECORDED',
-            property: 'dateCaught'
+            property: 'dateCaught',
+            value: '2023-06-24'
           }
         ]
       })

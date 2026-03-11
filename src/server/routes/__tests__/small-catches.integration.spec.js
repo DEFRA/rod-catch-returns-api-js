@@ -3,19 +3,18 @@ import {
   createSmallCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import { getMonthNameFromNumber } from '../../../utils/date-utils.js'
 import initialiseServer from '../../server.js'
+
+jest.mock('../../../services/crm.service.js')
 
 describe('small-catches.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
   beforeAll(async () => {
-    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
   })
 

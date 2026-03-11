@@ -49,19 +49,15 @@ export const deleteActivitiesAndSmallCatches = async (submissionId) => {
 }
 
 export const deleteSubmissionAndRelatedData = async (contactId) => {
-  const submission = await Submission.findOne({
-    where: {
-      contactId
-    }
+  const submissions = await Submission.findAll({
+    where: { contactId }
   })
 
-  if (submission) {
+  for (const submission of submissions) {
     await deleteActivitiesAndSmallCatches(submission.id)
   }
 
   await Submission.destroy({
-    where: {
-      contactId
-    }
+    where: { contactId }
   })
 }

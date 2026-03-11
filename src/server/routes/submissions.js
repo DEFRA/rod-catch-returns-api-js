@@ -13,17 +13,17 @@ import {
   updateSubmissionSchema
 } from '../../schemas/submission.schema.js'
 import {
-  handleCrmActivity,
-  isSubmissionExistsByUserAndSeason
-} from '../../services/submissions.service.js'
+  handleCreateCRMActivity,
+  handleUpdateCRMActivity
+} from '../../services/crm.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
 import { StatusCodes } from 'http-status-codes'
+import { isSubmissionExistsByUserAndSeason } from '../../services/submissions.service.js'
 import logger from '../../utils/logger-utils.js'
 import { mapActivityToResponse } from '../../mappers/activities.mapper.js'
 import { mapSubmissionToResponse } from '../../mappers/submission.mapper.js'
 import { sequelize } from '../../services/database.service.js'
-import { updateActivity } from '@defra-fish/dynamics-lib'
 
 const BASE_SUBMISSIONS_URL = '/submissions/{submissionId}'
 
@@ -71,7 +71,7 @@ export default [
 
           const createdSubmission = await Submission.create(submissionData)
 
-          await handleCrmActivity(contactId, season)
+          await handleCreateCRMActivity(contactId, season)
 
           const response = mapSubmissionToResponse(createdSubmission.toJSON())
 
@@ -329,22 +329,10 @@ export default [
               submission.season
             )
 
-            const updateCrmActivityResult = await updateActivity(
+            await handleUpdateCRMActivity(
               submission.contactId,
               submission.season
             )
-
-            if (updateCrmActivityResult.ErrorMessage) {
-              logger.error(
-                `failed to update activity in CRM for ${submission.contactId}`,
-                updateCrmActivityResult.ErrorMessage
-              )
-            } else {
-              logger.info(
-                'Updated CRM activity with result:',
-                updateCrmActivityResult
-              )
-            }
           }
 
           const mappedSubmission = mapSubmissionToResponse(

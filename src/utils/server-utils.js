@@ -18,7 +18,16 @@ export const logRequest = (request, h) => {
     return h.continue
   }
 
-  logger.info(`${request.method.toUpperCase()} ${request.path}`)
+  const method = request.method.toUpperCase()
+
+  let logLine = `${method} ${request.path}${request?.url?.search || ''}`
+
+  if (['POST', 'PATCH', 'PUT'].includes(method) && request.payload) {
+    logLine += ` | body=${JSON.stringify(request.payload)}`
+  }
+
+  logger.info(logLine)
+
   return h.continue
 }
 

@@ -1,4 +1,5 @@
 import {
+  getActivityAndSubmissionByActivityId,
   getSubmissionByActivityId,
   isActivityExists
 } from '../activities.service.js'
@@ -113,6 +114,78 @@ describe('activity.service.unit', () => {
 
       await expect(getSubmissionByActivityId(mockActivityId)).rejects.toThrow(
         `Failed to fetch submission for activity ID ${mockActivityId}: Error: Database error`
+      )
+    })
+  })
+
+  describe('getActivityAndSubmissionByActivityId', () => {
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    const getMockActivity = () => ({
+      id: '275750',
+      daysFishedWithMandatoryRelease: 1,
+      daysFishedOther: 1,
+      createdAt: '2025-12-29T10:53:23.802Z',
+      updatedAt: '2025-12-29T15:01:35.363Z',
+      version: '2025-12-29T15:01:35.363Z',
+      submission_id: '328750',
+      river_id: '1',
+      SubmissionId: '328750',
+      Submission: {
+        id: '328750',
+        contactId: 'da6a6ac1-88d9-eb11-bacb-000d3ade9fad',
+        season: 2020,
+        status: 'INCOMPLETE',
+        source: 'WEB',
+        reportingExclude: false,
+        createdAt: '2025-12-29T10:53:09.237Z',
+        updatedAt: '2025-12-29T10:53:09.237Z',
+        version: '2025-12-29T10:53:09.197Z'
+      }
+    })
+
+    it('should return the activity with the linked submission if it exists', async () => {
+      const mockActivity = getMockActivity()
+      Activity.findOne.mockResolvedValue(mockActivity)
+
+      const result = await getActivityAndSubmissionByActivityId('275750')
+
+      expect(result).toBe(mockActivity)
+    })
+
+    it('should call Activity.findOne with the correct parameters', async () => {
+      Activity.findOne.mockResolvedValue(getMockActivity())
+
+      await getActivityAndSubmissionByActivityId('275750')
+
+      expect(Activity.findOne).toHaveBeenCalledWith({
+        where: { id: '275750' },
+        include: [
+          {
+            model: expect.anything(),
+            required: true
+          }
+        ]
+      })
+    })
+
+    it('should return null if no activity is found', async () => {
+      Activity.findOne.mockResolvedValue(null)
+
+      const result = await getActivityAndSubmissionByActivityId('275750')
+
+      expect(result).toBeNull()
+    })
+
+    it('should throw an error if Activity.findOne throws', async () => {
+      Activity.findOne.mockRejectedValue(new Error('Database error'))
+
+      await expect(
+        getActivityAndSubmissionByActivityId('275750')
+      ).rejects.toThrow(
+        `Failed to fetch activity or linked submission for activity ID 275750: Error: Database error`
       )
     })
   })

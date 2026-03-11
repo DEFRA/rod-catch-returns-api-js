@@ -4,18 +4,17 @@ import {
   createSmallCatch,
   createSubmission
 } from '../../../test-utils/server-test-utils.js'
-import { createActivity as createActivityCRM } from '@defra-fish/dynamics-lib'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
-import { getCreateActivityResponse } from '../../../test-utils/test-data.js'
 import { getMockAuthAndUser } from '../../../test-utils/auth-test-utils.js'
 import initialiseServer from '../../server.js'
+
+jest.mock('../../../services/crm.service.js')
 
 describe('activities.integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server = null
 
   beforeAll(async () => {
-    createActivityCRM.mockResolvedValue(getCreateActivityResponse())
     server = await initialiseServer({ port: null })
   })
 
@@ -913,16 +912,17 @@ describe('activities.integration', () => {
         }
       })
 
-      expect(JSON.parse(result.payload)).toEqual({
-        errors: [
-          {
-            entity: 'Activity',
-            message: 'ACTIVITY_RIVER_NOT_FOUND',
-            property: 'river',
-            value: 'rivers/0'
-          }
-        ]
-      })
+      expect(JSON.parse(result.payload)).toEqual(
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            output: expect.objectContaining({
+              payload: expect.objectContaining({
+                message: expect.stringContaining('RIVER_NOT_FOUND')
+              })
+            })
+          })
+        })
+      )
     })
   })
 

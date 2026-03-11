@@ -1,4 +1,4 @@
-import { contactForLicensee, executeQuery } from '@defra-fish/dynamics-lib'
+import { executeQuery } from '@defra-fish/dynamics-lib'
 import initialiseServer from '../../server.js'
 
 describe('licences.integration', () => {
@@ -14,44 +14,37 @@ describe('licences.integration', () => {
   })
 
   describe('GET /api/licence', () => {
-    const getMockContactResponse = () => ({
-      ContactId: 'contact-identifier-111',
-      FirstName: 'Fester',
-      LastName: 'Tester',
-      DateOfBirth: '9/13/1946 12:00:00 AM',
-      Premises: '47',
-      Street: null,
-      Town: 'Testerton',
-      Locality: null,
-      Postcode: 'WA4 1HT',
-      ReturnStatus: 'success',
-      SuccessMessage: 'contact found successfully',
-      ErrorMessage: null,
-      ReturnPermissionNumber: '11100420-2WT1SFT-B7A111',
-      oDataContext:
-        'https://api.com/api/data/v9.1/$metadata#Microsoft.Dynamics.CRM.defra_GetContactByLicenceAndPostcodeResponse'
-    })
-
-    const getMockNoContactResponse = () => ({
-      ContactId: null,
-      FirstName: null,
-      LastName: null,
-      DateOfBirth: null,
-      Premises: null,
-      Street: null,
-      Town: null,
-      Locality: null,
-      Postcode: null,
-      ReturnStatus: 'error',
-      SuccessMessage: '',
-      ErrorMessage: 'contact does not exists',
-      ReturnPermissionNumber: null,
-      oDataContext:
-        'https://api.crm4.dynamics.com/api/data/v9.1/$metadata#Microsoft.Dynamics.CRM.defra_GetContactByLicenceAndPostcodeResponse'
-    })
+    const getMockContactResponse = () => [
+      {
+        entity: {
+          id: '00000000-0000-0000-0000-000000000001',
+          referenceNumber: '11100420-2WT1SFT-B7A111',
+          issueDate: '2021-12-30T11:35:34.000Z',
+          startDate: '2021-12-30T12:05:34.000Z',
+          endDate: '2022-12-30T12:05:34.000Z',
+          stagingId: '00000000-0000-0000-0000-000000000002',
+          dataSource: {
+            id: 100000001,
+            label: 'Web Sales',
+            description: 'Web Sales'
+          },
+          isRenewal: false,
+          isRecurringPayment: null,
+          isLicenceForYou: null
+        },
+        expanded: {
+          licensee: {
+            entity: {
+              id: 'contact-identifier-111',
+              postcode: 'WA4 1HT'
+            }
+          }
+        }
+      }
+    ]
 
     it('should return the licence and contact details and a 200 status code, if licence number and postcode are valid', async () => {
-      contactForLicensee.mockResolvedValue(getMockContactResponse())
+      executeQuery.mockResolvedValueOnce(getMockContactResponse())
 
       const result = await server.inject({
         method: 'GET',
@@ -69,7 +62,7 @@ describe('licences.integration', () => {
     })
 
     it('should return 403 if licence number or postcode is invalid', async () => {
-      contactForLicensee.mockResolvedValue(getMockNoContactResponse())
+      executeQuery.mockResolvedValueOnce([])
 
       const result = await server.inject({
         method: 'GET',
@@ -80,7 +73,7 @@ describe('licences.integration', () => {
     })
 
     it('should return 500 if there is any other error', async () => {
-      contactForLicensee.mockRejectedValue(new Error('error'))
+      executeQuery.mockRejectedValueOnce(new Error('error'))
 
       const result = await server.inject({
         method: 'GET',
@@ -242,7 +235,7 @@ describe('licences.integration', () => {
     })
 
     it('should return 500 if there is any other error', async () => {
-      executeQuery.mockRejectedValue(new Error('error'))
+      executeQuery.mockRejectedValueOnce(new Error('error'))
 
       const result = await server.inject({
         method: 'GET',
