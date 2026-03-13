@@ -14,5 +14,8 @@ export default async () => {
 
   process.env.BASE_URL = 'http://localhost:5000'
 
+  process.env.AIRBRAKE_PROJECT_KEY = 'key'
+  process.env.AIRBRAKE_HOST = 'host'
+
   logger.info('\nDatabase host set to localhost')
 }
