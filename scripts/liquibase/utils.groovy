@@ -11,7 +11,7 @@ def runLiquibaseAction(action, dbEnv) {
     """, returnStdout: true).trim()
 }
 
-def fetchSecret(secretId, region) {
+def fetchSecret(parameterName, region) {
     return sh(
         script: "aws ssm get-parameter --name '${parameterName}' --with-decryption --region ${region} --query Parameter.Value --output text",
         returnStdout: true
