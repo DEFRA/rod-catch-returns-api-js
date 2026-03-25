@@ -13,7 +13,7 @@ def runLiquibaseAction(action, dbEnv) {
 
 def fetchSecret(secretId, region) {
     return sh(
-        script: "aws secretsmanager get-secret-value --secret-id '${secretId}' --region ${region} --query SecretString --output text",
+        script: "aws ssm get-parameter --name '${parameterName}' --with-decryption --region ${region} --query Parameter.Value --output text",
         returnStdout: true
     ).trim()
 }
