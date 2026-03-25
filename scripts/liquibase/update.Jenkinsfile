@@ -19,7 +19,7 @@ pipeline {
                         echo "Running with settings: ${settings}"
 
                         withAWS(role: settings.ROLE_NAME, roleAccount: settings.ACCOUNT_ID, region: settings.REGION) {
-                            DB_ENV = utils.loadDatabaseEnv(SETTINGS.ENVIRONMENT, settings.REGION)
+                            DB_ENV = utils.loadDatabaseEnv(settings.ENVIRONMENT, settings.REGION)
                         }
                     }
                 }
