@@ -27,10 +27,10 @@ def fetchParameter(paramName, region) {
 
 def loadDatabaseEnv(paramSecretPrefix, region) {
     return [
-        DATABASE_USERNAME: fetchSecret("${paramSecretPrefix}/ire/webops/rcr/rds/db_user", region),
-        DATABASE_PASSWORD: fetchSecret("${paramSecretPrefix}/ire/webops/rcr/rds/db_password", region),
-        DATABASE_HOST    : fetchParameter("${paramSecretPrefix}/ire/rcr/webops/rds/hostname", region),
-        DATABASE_NAME    : fetchParameter("${paramSecretPrefix}/ire/webops/rcr/rds/db_user", region),
+        DATABASE_USERNAME: fetchSecret("/${paramSecretPrefix}/ire/webops/rcr/rds/db_user", region),
+        DATABASE_PASSWORD: fetchSecret("/${paramSecretPrefix}/ire/webops/rcr/rds/db_password", region),
+        DATABASE_HOST    : fetchParameter("/${paramSecretPrefix}/ire/rcr/webops/rds/hostname", region),
+        DATABASE_NAME    : fetchParameter("/${paramSecretPrefix}/ire/webops/rcr/rds/db_user", region),
         DATABASE_PORT    : 5432
     ]
 }
