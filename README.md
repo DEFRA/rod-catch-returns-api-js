@@ -117,7 +117,7 @@ npm run docker:service-dev
 
 If you are a Mac user, you may receive an error that something is already running on port 5000. This can be fixed by going into your system settings and disabling Airplay Receiver.
 
-To stop the running the service:
+To stop running the service:
 
 ```shell script
 npm run docker:stop-dev
@@ -137,7 +137,7 @@ To run the service:
 npm run docker:service
 ```
 
-To stop the running the service:
+To stop running the service:
 
 ```shell script
 npm run docker:stop
