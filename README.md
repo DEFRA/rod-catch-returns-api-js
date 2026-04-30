@@ -4,7 +4,7 @@ The JavaScript version of the Rod Catch Returns API.
 
 ## Prerequisites
 
-- Node v20.x (to execute npm helper scripts only, see .nvmrc for latest version)
+- Node v24.x (to execute npm helper scripts only, see .nvmrc for latest version)
 - Docker v18.06.0+ (to run the docker services)
 
 It is recommended to use [NVM](https://github.com/nvm-sh/nvm) to manage the node versions.
@@ -115,7 +115,9 @@ To run the service:
 npm run docker:service-dev
 ```
 
-To stop the running ther service
+If you are a Mac user, you may receive an error that something is already running on port 5000. This can be fixed by going into your system settings and disabling Airplay Receiver.
+
+To stop running the service:
 
 ```shell script
 npm run docker:stop-dev
@@ -135,7 +137,7 @@ To run the service:
 npm run docker:service
 ```
 
-To stop the running ther service
+To stop running the service:
 
 ```shell script
 npm run docker:stop
