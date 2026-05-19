@@ -11,13 +11,6 @@ def runLiquibaseAction(action, dbEnv) {
     """, returnStdout: true).trim()
 }
 
-def fetchSecret(secretId, region) {
-    return sh(
-        script: "aws secretsmanager get-secret-value --secret-id '${secretId}' --region ${region} --query SecretString --output text",
-        returnStdout: true
-    ).trim()
-}
-
 def fetchParameter(paramName, region) {
     return sh(
         script: "aws ssm get-parameter --name '${paramName}' --with-decryption --region ${region} --query 'Parameter.Value' --output text",
@@ -27,10 +20,10 @@ def fetchParameter(paramName, region) {
 
 def loadDatabaseEnv(paramSecretPrefix, region) {
     return [
-        DATABASE_USERNAME: fetchSecret("${paramSecretPrefix}/rds/db_user", region),
-        DATABASE_PASSWORD: fetchSecret("${paramSecretPrefix}/rds/db_password", region),
-        DATABASE_HOST    : fetchParameter("${paramSecretPrefix}/rds/hostname", region),
-        DATABASE_NAME    : fetchParameter("${paramSecretPrefix}/rds/db_name", region),
+        DATABASE_NAME    : fetchParameter("/${paramSecretPrefix}/ire/rcr/webops/rds/db_name", region),
+        DATABASE_HOST    : fetchParameter("/${paramSecretPrefix}/ire/rcr/webops/rds/hostname", region),
+        DATABASE_PASSWORD: fetchParameter("/${paramSecretPrefix}/ire/webops/rcr/rds/db_password", region),
+        DATABASE_USERNAME: fetchParameter("/${paramSecretPrefix}/ire/webops/rcr/rds/db_user", region),
         DATABASE_PORT    : 5432
     ]
 }
@@ -40,7 +33,6 @@ def loadAWSSettings(env) {
     SETTINGS.ENVIRONMENT = env.ENVIRONMENT
     SETTINGS.LOCATION = env.LOCATION
     SETTINGS.SERVICE_CODE = env.SERVICE_CODE
-    SETTINGS.PARAM_SECRET_PREFIX = "/${SETTINGS.ENVIRONMENT}/${SETTINGS.LOCATION}/${SETTINGS.SERVICE_CODE}/webops".toLowerCase()
     SETTINGS.ACCOUNT_ID = env.ACCOUNT_ID
     SETTINGS.ROLE_NAME = env.ROLE_NAME
     SETTINGS.REGION = env.REGION
