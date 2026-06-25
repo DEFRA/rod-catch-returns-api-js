@@ -3,10 +3,12 @@ import { writeFileSync } from 'node:fs'
 
 const REPO_URL = 'https://github.com/DEFRA/rod-catch-returns-api-js'
 
+const SEMVER_TAG_REGEX = /^v[0-9]\.[0-9]{1,3}\.[0-9]{1,2}$/
+
 const allTags = execSync('git tag --sort=v:refname', { encoding: 'utf-8' })
   .trim()
   .split('\n')
-  .filter((tag) => !tag.includes('-rc.') && !tag.includes('-beta.'))
+  .filter((tag) => SEMVER_TAG_REGEX.test(tag))
 
 console.log(`Found ${allTags.length} full release tags: ${allTags.join(', ')}`)
 
