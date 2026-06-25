@@ -27,7 +27,7 @@
     "migrate:build": "docker build -f Dockerfile.migrate -t liquibase-migrator .",
     "migrate:up": "docker run --network host -e ACTION=update-and-tag --rm --env-file .env liquibase-migrator",
     "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator",
-    "generate-changelog": "node scripts/generate-changelog.mjs"
+    "generate-changelog": "node scripts/generate-changelog.js"
   },
   "repository": {
     "type": "git",
