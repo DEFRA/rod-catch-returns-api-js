@@ -55,7 +55,7 @@ export function formatSection(commits) {
     return `- ${c.title}${prLink}${author}`
   })
 
-  return `\n${lines.join('\n')}\n`
+  return `\n${lines.join('\n')}`
 }
 
 // Only run when executed directly, not when imported by tests
@@ -84,7 +84,7 @@ if (!process.env.JEST_WORKER_ID) {
     return [...acc, `${heading}${body}`]
   }, [])
 
-  const changelog = `# Changelog\n${sections.join('\n')}`
+  const changelog = `# Changelog\n${sections.join('\n')}\n`
 
   writeFileSync('CHANGELOG.md', changelog)
   console.log('\nCHANGELOG.md generated successfully')

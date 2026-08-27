@@ -196,7 +196,7 @@ describe('generate-changelog.unit', () => {
       ]
 
       expect(formatSection(commits)).toBe(
-        '\n- Add logging to all requests [#121](https://github.com/DEFRA/rod-catch-returns-api-js/pull/121) ([@samwisegamgee](https://github.com/samwisegamgee))\n'
+        '\n- Add logging to all requests [#121](https://github.com/DEFRA/rod-catch-returns-api-js/pull/121) ([@samwisegamgee](https://github.com/samwisegamgee))'
       )
     })
 
@@ -210,7 +210,7 @@ describe('generate-changelog.unit', () => {
         }
       ]
 
-      expect(formatSection(commits)).toBe('\n- Initial commit (Pippin Took)\n')
+      expect(formatSection(commits)).toBe('\n- Initial commit (Pippin Took)')
     })
 
     it('formats multiple commits as separate lines', () => {
@@ -231,7 +231,7 @@ describe('generate-changelog.unit', () => {
 
       expect(formatSection(commits)).toBe(
         '\n- First change [#10](https://github.com/DEFRA/rod-catch-returns-api-js/pull/10) ([@devone](https://github.com/devone))\n' +
-          '- Second change [#11](https://github.com/DEFRA/rod-catch-returns-api-js/pull/11) (Frodo Baggins)\n'
+          '- Second change [#11](https://github.com/DEFRA/rod-catch-returns-api-js/pull/11) (Frodo Baggins)'
       )
     })
 
