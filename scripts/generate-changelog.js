@@ -31,7 +31,7 @@ export function getCommits(startRef, endRef) {
       .map((line) => {
         const [subject, authorName, authorEmail] = line.split('|||')
         const prMatch = subject.match(/\(#(\d+)\)$/)
-        const title = subject.replace(/\s*\(#\d+\)$/, '')
+        const title = subject.replace(/\s*\(#\d+\)$/, '').trim()
         const prNumber = prMatch ? prMatch[1] : null
         const username = getGithubUsername(authorEmail)
         return { title, prNumber, authorName, username }

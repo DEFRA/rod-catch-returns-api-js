@@ -122,6 +122,11 @@ describe('generate-changelog.unit', () => {
             'Fix missing parameter (#122)',
             'Frodo Baggins',
             'frodo.baggins@example.com'
+          ),
+          buildGitLogLine(
+            ' Trim trailing whitespace   (#123)',
+            'Treebeard',
+            'fangornfan@example.com'
           )
         ].join('\n')
       )
@@ -137,6 +142,12 @@ describe('generate-changelog.unit', () => {
           title: 'Fix missing parameter',
           prNumber: '122',
           authorName: 'Frodo Baggins',
+          username: null
+        },
+        {
+          title: 'Trim trailing whitespace',
+          prNumber: '123',
+          authorName: 'Treebeard',
           username: null
         }
       ])
