@@ -52,7 +52,7 @@ export function formatSection(commits) {
     const author = c.username
       ? ` ([@${c.username}](https://github.com/${c.username}))`
       : ` (${c.authorName})`
-    return `* ${c.title}${prLink}${author}`
+    return `- ${c.title}${prLink}${author}`
   })
 
   return `\n${lines.join('\n')}\n`
@@ -65,7 +65,9 @@ if (!process.env.JEST_WORKER_ID) {
     .split('\n')
     .filter((tag) => SEMVER_TAG_REGEX.test(tag))
 
-  console.log(`Found ${allTags.length} full release tags: ${allTags.join(', ')}`)
+  console.log(
+    `Found ${allTags.length} full release tags: ${allTags.join(', ')}`
+  )
 
   const sections = allTags.reduceRight((acc, tag, i) => {
     const isFirst = i === 0
