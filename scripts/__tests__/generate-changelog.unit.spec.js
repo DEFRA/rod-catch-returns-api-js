@@ -1,13 +1,22 @@
-import { SEMVER_TAG_REGEX, getGithubUsername, shouldExclude, getCommits, formatSection } from '../generate-changelog.js'
+import {
+  SEMVER_TAG_REGEX,
+  formatSection,
+  getCommits,
+  getGithubUsername,
+  shouldExclude
+} from '../generate-changelog.js'
+
+import { execSync } from 'node:child_process'
 
 jest.mock('node:child_process', () => ({
   execSync: jest.fn()
 }))
 
-import { execSync } from 'node:child_process'
-
-const buildGitLogLine = (subject, authorName = 'Gandalf Grey', authorEmail = 'gandalf.grey@example.com') =>
-  `${subject}|||${authorName}|||${authorEmail}`
+const buildGitLogLine = (
+  subject,
+  authorName = 'Gandalf Grey',
+  authorEmail = 'gandalf.grey@example.com'
+) => `${subject}|||${authorName}|||${authorEmail}`
 
 describe('generate-changelog.unit', () => {
   beforeEach(() => {
@@ -36,11 +45,15 @@ describe('generate-changelog.unit', () => {
 
   describe('getGithubUsername', () => {
     it('extracts a plain GitHub username from a noreply email', () => {
-      expect(getGithubUsername('aragorn@users.noreply.github.com')).toBe('aragorn')
+      expect(getGithubUsername('aragorn@users.noreply.github.com')).toBe(
+        'aragorn'
+      )
     })
 
     it('extracts a GitHub username from a noreply email with numeric prefix', () => {
-      expect(getGithubUsername('12345678+aragorn@users.noreply.github.com')).toBe('aragorn')
+      expect(
+        getGithubUsername('12345678+aragorn@users.noreply.github.com')
+      ).toBe('aragorn')
     })
 
     it('returns null for a regular email address', () => {
@@ -56,12 +69,12 @@ describe('generate-changelog.unit', () => {
       }
     )
 
-    it.each([
-      'SEMVER-MAJOR: Release 0.12.0',
-      'SEMVER-MAJOR Release 1.0.0'
-    ])('excludes SEMVER-MAJOR release commit "%s"', (title) => {
-      expect(shouldExclude(title)).toBe(true)
-    })
+    it.each(['SEMVER-MAJOR: Release 0.12.0', 'SEMVER-MAJOR Release 1.0.0'])(
+      'excludes SEMVER-MAJOR release commit "%s"',
+      (title) => {
+        expect(shouldExclude(title)).toBe(true)
+      }
+    )
 
     it.each([
       'Fix missing parameter in performance improvement',
@@ -74,7 +87,9 @@ describe('generate-changelog.unit', () => {
 
   describe('getCommits', () => {
     it('calls git log with the correct range when both refs are provided', () => {
-      execSync.mockReturnValue(buildGitLogLine('Add logging to all requests (#121)'))
+      execSync.mockReturnValue(
+        buildGitLogLine('Add logging to all requests (#121)')
+      )
 
       getCommits('v0.9.0', 'v0.10.0')
 
@@ -98,28 +113,70 @@ describe('generate-changelog.unit', () => {
     it('returns parsed commits with title, PR number, and resolved GitHub usernames', () => {
       execSync.mockReturnValue(
         [
-          buildGitLogLine('Add logging to all requests (#121)', 'Gandalf Grey', '12345+gandalfgrey@users.noreply.github.com'),
-          buildGitLogLine('Fix missing parameter (#122)', 'Frodo Baggins', 'frodo.baggins@example.com')
+          buildGitLogLine(
+            'Add logging to all requests (#121)',
+            'Gandalf Grey',
+            '12345+gandalfgrey@users.noreply.github.com'
+          ),
+          buildGitLogLine(
+            'Fix missing parameter (#122)',
+            'Frodo Baggins',
+            'frodo.baggins@example.com'
+          ),
+          buildGitLogLine(
+            ' Trim trailing whitespace   (#123)',
+            'Treebeard',
+            'fangornfan@example.com'
+          )
         ].join('\n')
       )
 
       expect(getCommits('v0.9.0', 'v0.10.0')).toStrictEqual([
-        { title: 'Add logging to all requests', prNumber: '121', authorName: 'Gandalf Grey', username: 'gandalfgrey' },
-        { title: 'Fix missing parameter', prNumber: '122', authorName: 'Frodo Baggins', username: null }
+        {
+          title: 'Add logging to all requests',
+          prNumber: '121',
+          authorName: 'Gandalf Grey',
+          username: 'gandalfgrey'
+        },
+        {
+          title: 'Fix missing parameter',
+          prNumber: '122',
+          authorName: 'Frodo Baggins',
+          username: null
+        },
+        {
+          title: 'Trim trailing whitespace',
+          prNumber: '123',
+          authorName: 'Treebeard',
+          username: null
+        }
       ])
     })
 
     it('returns only non-excluded commits when version bump and release commits are present', () => {
       execSync.mockReturnValue(
         [
-          buildGitLogLine('1.0.0', 'GitHub Actions', 'actions@users.noreply.github.com'),
+          buildGitLogLine(
+            '1.0.0',
+            'GitHub Actions',
+            'actions@users.noreply.github.com'
+          ),
           buildGitLogLine('SEMVER-MAJOR: Release 0.12.0'),
-          buildGitLogLine('Add real feature (#99)', 'Merry Brandybuck', 'merry.brandybuck@example.com')
+          buildGitLogLine(
+            'Add real feature (#99)',
+            'Merry Brandybuck',
+            'merry.brandybuck@example.com'
+          )
         ].join('\n')
       )
 
       expect(getCommits('v0.11.0', 'v1.0.0')).toStrictEqual([
-        { title: 'Add real feature', prNumber: '99', authorName: 'Merry Brandybuck', username: null }
+        {
+          title: 'Add real feature',
+          prNumber: '99',
+          authorName: 'Merry Brandybuck',
+          username: null
+        }
       ])
     })
 
@@ -141,33 +198,51 @@ describe('generate-changelog.unit', () => {
   describe('formatSection', () => {
     it('formats a commit with a PR link and GitHub username', () => {
       const commits = [
-        { title: 'Add logging to all requests', prNumber: '121', authorName: 'Samwise Gamgee', username: 'samwisegamgee' }
+        {
+          title: 'Add logging to all requests',
+          prNumber: '121',
+          authorName: 'Samwise Gamgee',
+          username: 'samwisegamgee'
+        }
       ]
 
       expect(formatSection(commits)).toBe(
-        '\n* Add logging to all requests [#121](https://github.com/DEFRA/rod-catch-returns-api-js/pull/121) ([@samwisegamgee](https://github.com/samwisegamgee))\n'
+        '\n- Add logging to all requests [#121](https://github.com/DEFRA/rod-catch-returns-api-js/pull/121) ([@samwisegamgee](https://github.com/samwisegamgee))'
       )
     })
 
     it('formats a commit without a PR link when prNumber is null', () => {
       const commits = [
-        { title: 'Initial commit', prNumber: null, authorName: 'Pippin Took', username: null }
+        {
+          title: 'Initial commit',
+          prNumber: null,
+          authorName: 'Pippin Took',
+          username: null
+        }
       ]
 
-      expect(formatSection(commits)).toBe(
-        '\n* Initial commit (Pippin Took)\n'
-      )
+      expect(formatSection(commits)).toBe('\n- Initial commit (Pippin Took)')
     })
 
     it('formats multiple commits as separate lines', () => {
       const commits = [
-        { title: 'First change', prNumber: '10', authorName: 'Bilbo Baggins', username: 'devone' },
-        { title: 'Second change', prNumber: '11', authorName: 'Frodo Baggins', username: null }
+        {
+          title: 'First change',
+          prNumber: '10',
+          authorName: 'Bilbo Baggins',
+          username: 'devone'
+        },
+        {
+          title: 'Second change',
+          prNumber: '11',
+          authorName: 'Frodo Baggins',
+          username: null
+        }
       ]
 
       expect(formatSection(commits)).toBe(
-        '\n* First change [#10](https://github.com/DEFRA/rod-catch-returns-api-js/pull/10) ([@devone](https://github.com/devone))\n' +
-          '* Second change [#11](https://github.com/DEFRA/rod-catch-returns-api-js/pull/11) (Frodo Baggins)\n'
+        '\n- First change [#10](https://github.com/DEFRA/rod-catch-returns-api-js/pull/10) ([@devone](https://github.com/devone))\n' +
+          '- Second change [#11](https://github.com/DEFRA/rod-catch-returns-api-js/pull/11) (Frodo Baggins)'
       )
     })
 
