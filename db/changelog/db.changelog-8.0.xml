@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <!--
+        Add river, catchment and region for "Coastal Waters"
+    -->
+    <changeSet id="add coastal waters region" author="Defra">
+        <sql>
+            <![CDATA[
+                insert into rcr_region(id, name, created, last_modified, version) values (nextval('rcr_region_id_seq'), 'Coastal Waters', now(), now(), now());
+            ]]>
+        </sql>
+        <rollback>
+            <!-- We are not rolling back the region insert as an activity might be using it -->
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add coastal waters catchment" author="Defra">
+        <sql>
+            <![CDATA[
+                insert into rcr_catchment(id, name, region_id, created, last_modified, version, gate_id) values (nextval('rcr_catchment_id_seq'), 'Coastal Waters', (select id from rcr_region where name = 'Coastal Waters'), now(), now(), now(), 2);
+            ]]>
+        </sql>
+        <rollback>
+            <!-- We are not rolling back the catchment insert as an activity might be using it -->
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add coastal waters river" author="Defra">
+        <sql>
+            <![CDATA[
+                insert into rcr_river(id, name, catchment_id, created, last_modified, version) values (nextval('rcr_river_id_seq'), 'Coastal Waters', (select id from rcr_catchment where name = 'Coastal Waters'), now(), now(), now());
+            ]]>
+        </sql>
+        <rollback>
+            <!-- We are not rolling back the river insert as an activity might be using it -->
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
