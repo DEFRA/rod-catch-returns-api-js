@@ -4,6 +4,9 @@
   "description": "rod catch returns api js",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "npm": ">=11.19.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "test": "jest",
