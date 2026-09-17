@@ -71,6 +71,15 @@ echo "Pushing new release tag to the remote"
 git tag "${NEW_VERSION}" -m "${NEW_VERSION}" -f
 git push origin "${NEW_VERSION}"
 
+# Generate and commit the changelog for full releases on main
+if [ "${BRANCH}" == "main" ]; then
+  echo "Generating CHANGELOG.md"
+  npm run generate-changelog
+  git add CHANGELOG.md
+  git commit -m "Update CHANGELOG.md for ${NEW_VERSION}" --no-verify
+  git push origin "${BRANCH}:${BRANCH}" --no-verify
+fi
+
 # If we've pushed a new release into main and it is not a hotfix/patch, then merge the changes back to develop
 if [ "${BRANCH}" == "main" ] && [ "${RELEASE_TYPE}" != "patch" ]; then
   git checkout develop

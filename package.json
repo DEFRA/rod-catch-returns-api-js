@@ -1,9 +1,13 @@
 {
   "name": "rod-catch-returns-api",
-  "version": "1.1.0",
+  "version": "1.2.0-rc.4",
   "description": "rod catch returns api js",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">24.0.0",
+    "npm": ">=11.19.0 <12.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "test": "jest",
@@ -26,7 +30,8 @@
     "docker:stop": "docker container kill rcr_api_js",
     "migrate:build": "docker build -f Dockerfile.migrate -t liquibase-migrator .",
     "migrate:up": "docker run --network host -e ACTION=update-and-tag --rm --env-file .env liquibase-migrator",
-    "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator"
+    "migrate:down": "docker run --network host -e ACTION='rollback-count --count=1' --rm --env-file .env liquibase-migrator",
+    "generate-changelog": "node scripts/generate-changelog.js"
   },
   "repository": {
     "type": "git",
@@ -68,6 +73,7 @@
   "devDependencies": {
     "@babel/preset-env": "7.24.8",
     "babel-jest": "30.0.2",
+    "changelog-maker": "^4.4.28",
     "eslint": "9.29.0",
     "eslint-config-prettier": "10.1.1",
     "husky": "9.1.1",
