@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+
+- Upgrade npm to 11.19.0 [#149](https://github.com/DEFRA/rod-catch-returns-api-js/pull/149) ([@lailien3](https://github.com/lailien3))
+- Add coastal waters to rivers list [#147](https://github.com/DEFRA/rod-catch-returns-api-js/pull/147) (Iris Faraway)
+- Fix linter issues in CHANGELOG [#148](https://github.com/DEFRA/rod-catch-returns-api-js/pull/148) (Iris Faraway)
+- Add changelog to JS API [#145](https://github.com/DEFRA/rod-catch-returns-api-js/pull/145) ([@lailien3](https://github.com/lailien3))
+- Pin GitHub Actions to specific SHA [#146](https://github.com/DEFRA/rod-catch-returns-api-js/pull/146) (Iris Faraway)
+
 ## 1.1.0
 
 - Upgrade to Node v24 [#143](https://github.com/DEFRA/rod-catch-returns-api-js/pull/143) (Iris Faraway)
