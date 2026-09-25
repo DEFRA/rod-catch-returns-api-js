@@ -4,8 +4,8 @@ import {
 } from '../../../test-utils/server-test-utils.js'
 import {
   handleCreateCRMActivity,
-  handleUnlockCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../../../services/crm.service.js'
 import { Submission } from '../../../entities/index.js'
 import { deleteSubmissionAndRelatedData } from '../../../test-utils/database-test-utils.js'
@@ -808,7 +808,7 @@ describe('submissions.integration', () => {
     })
 
     it('should return a 500 when the call to update an activity in CRM throws an error', async () => {
-      handleUpdateCRMActivity.mockRejectedValueOnce(new Error('CRM error'))
+      handleSubmitCRMActivity.mockRejectedValueOnce(new Error('CRM error'))
 
       const createdSubmission = await createSubmission(
         server,

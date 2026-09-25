@@ -2,8 +2,8 @@ import {
   createCRMActivity,
   getCRMActivitiesContactById,
   handleCreateCRMActivity,
-  handleUnlockCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../crm.service.js'
 import {
   executeQuery,
@@ -168,7 +168,7 @@ describe('crm.service.unit', () => {
     })
   })
 
-  describe('handleUpdateCRMActivity', () => {
+  describe('handleSubmitCRMActivity', () => {
     const mockContactId = 'contact-123'
     const mockSeason = '2024'
 
@@ -193,7 +193,7 @@ describe('crm.service.unit', () => {
       executeQuery.mockResolvedValue([mockActivity])
       persist.mockResolvedValue()
 
-      await handleUpdateCRMActivity(mockContactId, mockSeason)
+      await handleSubmitCRMActivity(mockContactId, mockSeason)
 
       expect(persist).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -214,7 +214,7 @@ describe('crm.service.unit', () => {
       executeQuery.mockResolvedValue([])
 
       await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
+        handleSubmitCRMActivity(mockContactId, mockSeason)
       ).rejects.toThrow(
         `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=[]`
       )
@@ -229,7 +229,7 @@ describe('crm.service.unit', () => {
       executeQuery.mockResolvedValue(mockActivities)
 
       await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
+        handleSubmitCRMActivity(mockContactId, mockSeason)
       ).rejects.toThrow(
         `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=${JSON.stringify(mockActivities)}`
       )
@@ -247,7 +247,7 @@ describe('crm.service.unit', () => {
       persist.mockRejectedValue(new Error('CRM failure'))
 
       await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
+        handleSubmitCRMActivity(mockContactId, mockSeason)
       ).rejects.toThrow('CRM failure')
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -287,7 +287,7 @@ describe('crm.service.unit', () => {
         expect.objectContaining({
           id: 'activity-123',
           status: 'STARTED',
-          submittedDate: new Date('2026-03-04T12:12:33.353Z')
+          submittedDate: null
         })
       ])
 

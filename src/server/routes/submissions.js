@@ -14,8 +14,8 @@ import {
 } from '../../schemas/submission.schema.js'
 import {
   handleCreateCRMActivity,
-  handleUnlockCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../../services/crm.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
@@ -330,7 +330,7 @@ export default [
               submission.season
             )
 
-            await handleUpdateCRMActivity(
+            await handleSubmitCRMActivity(
               submission.contactId,
               submission.season
             )

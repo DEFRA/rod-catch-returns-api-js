@@ -52,18 +52,22 @@ export const handleCreateCRMActivity = async (contactId, season) => {
 }
 
 /**
- * Unlocks a previously submitted RCR CRM activity for a given contact and season.
+ * Finds and udpates a previously submitted RCR CRM activity for a given contact and season.
  *
  * @param {string} contactId - The unique identifier of the contact whose RCR CRM activity should be updated.
  * @param {number} season - The season year of the activity to update.
- * @param {string} status - Whether the activity is STARTED or SUBMITTED.
  *
  * @returns {Promise<void>} Resolves when the activity has been successfully updated.
  *
  * @throws {Error} Throws if the number of activities found is not exactly one.
  * @throws {Error} Throws if persisting the updated activity fails.
  */
-const findAndUpdateExistingRcrActivity = async (contactId, season, status) => {
+const findAndUpdateExistingRcrActivity = async (
+  contactId,
+  season,
+  status,
+  submittedDate
+) => {
   logger.info(
     `Fetching RCR CRM Activities for update: contactId=${contactId}, season=${season}`
   )
@@ -81,7 +85,7 @@ const findAndUpdateExistingRcrActivity = async (contactId, season, status) => {
 
   const rcrActivity = rcrActivityResult[0].entity
   rcrActivity.status = status
-  rcrActivity.submittedDate = new Date()
+  rcrActivity.submittedDate = submittedDate
   logger.info(
     `Updating RCR CRM Activities for: contactId=${contactId}, season=${season} with details=${JSON.stringify(rcrActivity)}`
   )
@@ -157,11 +161,12 @@ export const createCRMActivity = async (contactId, season) => {
  *
  * @returns {Promise<void>} Resolves when the activity has been successfully updated.
  */
-export const handleUpdateCRMActivity = async (contactId, season) => {
+export const handleSubmitCRMActivity = async (contactId, season) => {
   await findAndUpdateExistingRcrActivity(
     contactId,
     season,
-    RCR_ACTIVITY_STATUS.SUBMITTED
+    RCR_ACTIVITY_STATUS.SUBMITTED,
+    new Date()
   )
 }
 
@@ -177,6 +182,7 @@ export const handleUnlockCRMActivity = async (contactId, season) => {
   await findAndUpdateExistingRcrActivity(
     contactId,
     season,
-    RCR_ACTIVITY_STATUS.STARTED
+    RCR_ACTIVITY_STATUS.STARTED,
+    null
   )
 }
