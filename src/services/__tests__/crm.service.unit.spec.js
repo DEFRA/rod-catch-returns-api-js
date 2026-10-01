@@ -2,7 +2,8 @@ import {
   createCRMActivity,
   getCRMActivitiesContactById,
   handleCreateCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../crm.service.js'
 import {
   executeQuery,
@@ -167,7 +168,7 @@ describe('crm.service.unit', () => {
     })
   })
 
-  describe('handleUpdateCRMActivity', () => {
+  describe('handleSubmitCRMActivity', () => {
     const mockContactId = 'contact-123'
     const mockSeason = '2024'
 
@@ -189,10 +190,10 @@ describe('crm.service.unit', () => {
           submittedDate: null
         }
       }
-      executeQuery.mockResolvedValue([mockActivity])
-      persist.mockResolvedValue()
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockResolvedValueOnce()
 
-      await handleUpdateCRMActivity(mockContactId, mockSeason)
+      await handleSubmitCRMActivity(mockContactId, mockSeason)
 
       expect(persist).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -201,6 +202,20 @@ describe('crm.service.unit', () => {
           submittedDate: new Date('2026-03-04T12:12:33.353Z')
         })
       ])
+    })
+
+    it('should log that it is updating the CRM activity', async () => {
+      const mockActivity = {
+        entity: {
+          id: 'activity-123',
+          status: 'STARTED',
+          submittedDate: null
+        }
+      }
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockResolvedValueOnce()
+
+      await handleSubmitCRMActivity(mockContactId, mockSeason)
 
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -209,28 +224,19 @@ describe('crm.service.unit', () => {
       )
     })
 
-    it('should throw an error if no activities are found', async () => {
-      executeQuery.mockResolvedValue([])
-
-      await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
-      ).rejects.toThrow(
-        `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=[]`
-      )
-    })
-
-    it('should throw an error if more than one activity is found', async () => {
-      const mockActivities = [
-        { entity: { id: 'activity-1' } },
-        { entity: { id: 'activity-2' } }
+    it.each([
+      ['no activities are found', []],
+      [
+        'more than one activity is found',
+        [{ entity: { id: 'activity-1' } }, { entity: { id: 'activity-2' } }]
       ]
-
-      executeQuery.mockResolvedValue(mockActivities)
+    ])('should thrown an error if %s', async (_description, resolvedValue) => {
+      executeQuery.mockResolvedValueOnce(resolvedValue)
 
       await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
+        handleSubmitCRMActivity(mockContactId, mockSeason)
       ).rejects.toThrow(
-        `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=${JSON.stringify(mockActivities)}`
+        `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=${JSON.stringify(resolvedValue)}`
       )
     })
 
@@ -242,11 +248,104 @@ describe('crm.service.unit', () => {
         }
       }
 
-      executeQuery.mockResolvedValue([mockActivity])
-      persist.mockRejectedValue(new Error('CRM failure'))
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockRejectedValueOnce(new Error('CRM failure'))
 
       await expect(
-        handleUpdateCRMActivity(mockContactId, mockSeason)
+        handleSubmitCRMActivity(mockContactId, mockSeason)
+      ).rejects.toThrow('CRM failure')
+
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error updating RCR CRM Activity for contactId=${mockContactId}, season=${mockSeason}, please check the database and crm to see if the details match`
+      )
+    })
+  })
+
+  describe('handleUnlockCRMActivity', () => {
+    const mockContactId = 'contact-123'
+    const mockSeason = '2024'
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2026-03-04T12:12:33.353Z'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+      jest.clearAllMocks()
+    })
+
+    it('should update the CRM activity when exactly one activity exists', async () => {
+      const mockActivity = {
+        entity: {
+          id: 'activity-123',
+          status: 'SUBMITTED',
+          submittedDate: null
+        }
+      }
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockResolvedValueOnce()
+
+      await handleUnlockCRMActivity(mockContactId, mockSeason)
+
+      expect(persist).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'activity-123',
+          status: 'STARTED',
+          submittedDate: null
+        })
+      ])
+    })
+
+    it('should log that it is updating the CRM activity', async () => {
+      const mockActivity = {
+        entity: {
+          id: 'activity-123',
+          status: 'SUBMITTED',
+          submittedDate: null
+        }
+      }
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockResolvedValueOnce()
+
+      await handleUnlockCRMActivity(mockContactId, mockSeason)
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `Updating RCR CRM Activities for: contactId=${mockContactId}, season=${mockSeason}`
+        )
+      )
+    })
+
+    it.each([
+      ['no activities are found', []],
+      [
+        'more than one activity is found',
+        [{ entity: { id: 'activity-1' } }, { entity: { id: 'activity-2' } }]
+      ]
+    ])('should thrown an error if %s', async (_description, resolvedValue) => {
+      executeQuery.mockResolvedValueOnce(resolvedValue)
+
+      await expect(
+        handleUnlockCRMActivity(mockContactId, mockSeason)
+      ).rejects.toThrow(
+        `The number of RCR CRM Activities found for contactId=${mockContactId}, season=${mockSeason} is not 1 result=${JSON.stringify(resolvedValue)}`
+      )
+    })
+
+    it('should log an error and throw if persist fails', async () => {
+      const mockActivity = {
+        entity: {
+          id: 'activity-123',
+          status: 'SUBMITTED'
+        }
+      }
+
+      executeQuery.mockResolvedValueOnce([mockActivity])
+      persist.mockRejectedValueOnce(new Error('CRM failure'))
+
+      await expect(
+        handleUnlockCRMActivity(mockContactId, mockSeason)
       ).rejects.toThrow('CRM failure')
 
       expect(logger.error).toHaveBeenCalledWith(
