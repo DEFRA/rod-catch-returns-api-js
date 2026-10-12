@@ -11,7 +11,8 @@ import {
 } from '../../../test-utils/server-test-utils.js'
 import {
   handleCreateCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../../../services/crm.service.js'
 import {
   handleNotFound,
@@ -640,22 +641,22 @@ describe('submissions.unit', () => {
         payload
       })
 
-    const getFoundSubmission = () => ({
+    const getFoundSubmission = (status) => ({
       id: '1',
       contactId: 'contact-identifier-111',
       season: '2024',
-      status: 'SUBMITTED',
+      status,
       source: 'WEB',
       version: '2024-10-10T13:13:11.000Z',
       reportingExclude: false,
       createdAt: '2024-10-10T13:13:11.000Z',
       updatedAt: '2024-10-10T13:13:11.000Z',
-      update: jest.fn().mockResolvedValue({
-        toJSON: jest.fn().mockReturnValue({
+      update: jest.fn(status).mockResolvedValue({
+        toJSON: jest.fn(status).mockReturnValue({
           id: '1',
           contactId: 'contact-identifier-111',
           season: '2024',
-          status: 'SUBMITTED',
+          status,
           source: 'WEB',
           version: '2024-10-10T13:13:11.000Z',
           reportingExclude: false,
@@ -669,62 +670,132 @@ describe('submissions.unit', () => {
       jest.clearAllMocks()
     })
 
-    it('should return a 200 status code if the submission is updated successfully', async () => {
-      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      handleUpdateCRMActivity.mockResolvedValueOnce(null)
+    describe('when the status is SUBMITTED', () => {
+      it('should return a 200 status code if the submission is updated successfully', async () => {
+        Submission.findByPk.mockResolvedValueOnce(
+          getFoundSubmission('SUBMITTED')
+        )
+        handleSubmitCRMActivity.mockResolvedValueOnce(null)
 
-      const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
-        getMockResponseToolkit()
-      )
+        const result = await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'SUBMITTED' }),
+          getMockResponseToolkit()
+        )
 
-      expect(result.statusCode).toBe(200)
-    })
+        expect(result.statusCode).toBe(200)
+      })
 
-    it('should call update with the "status"', async () => {
-      const foundSubmission = getFoundSubmission()
-      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
-      handleUpdateCRMActivity.mockResolvedValueOnce()
+      it('should call update with the "status"', async () => {
+        const foundSubmission = getFoundSubmission('SUBMITTED')
+        Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+        handleSubmitCRMActivity.mockResolvedValueOnce()
 
-      await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
-        getMockResponseToolkit()
-      )
+        await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'SUBMITTED' }),
+          getMockResponseToolkit()
+        )
 
-      expect(foundSubmission.update).toHaveBeenCalledWith({
-        status: 'SUBMITTED',
-        reportingExclude: undefined,
-        version: expect.any(Date)
+        expect(foundSubmission.update).toHaveBeenCalledWith({
+          status: 'SUBMITTED',
+          reportingExclude: undefined,
+          version: expect.any(Date)
+        })
+      })
+
+      it('should call update with "reportingExclude"', async () => {
+        const foundSubmission = getFoundSubmission('SUBMITTED')
+        Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+        handleSubmitCRMActivity.mockResolvedValueOnce()
+
+        await patchSubmissionByIdHandler(
+          getSubmissionRequest({ reportingExclude: true }),
+          getMockResponseToolkit()
+        )
+
+        expect(foundSubmission.update).toHaveBeenCalledWith({
+          status: undefined,
+          reportingExclude: true,
+          version: expect.any(Date)
+        })
+      })
+
+      it('should return the updated submission in the response body', async () => {
+        Submission.findByPk.mockResolvedValueOnce(
+          getFoundSubmission('SUBMITTED')
+        )
+        handleSubmitCRMActivity.mockResolvedValue()
+
+        const result = await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'SUBMITTED' }),
+          getMockResponseToolkit()
+        )
+
+        expect(result.payload).toMatchSnapshot()
       })
     })
 
-    it('should call update with "reportingExclude"', async () => {
-      const foundSubmission = getFoundSubmission()
-      Submission.findByPk.mockResolvedValueOnce(foundSubmission)
-      handleUpdateCRMActivity.mockResolvedValueOnce()
+    describe('when the status is INCOMPLETE', () => {
+      it('should return a 200 status code if the submission is updated successfully', async () => {
+        Submission.findByPk.mockResolvedValueOnce(
+          getFoundSubmission('INCOMPLETE')
+        )
+        handleUnlockCRMActivity.mockResolvedValueOnce(null)
 
-      await patchSubmissionByIdHandler(
-        getSubmissionRequest({ reportingExclude: true }),
-        getMockResponseToolkit()
-      )
+        const result = await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'INCOMPLETE' }),
+          getMockResponseToolkit()
+        )
 
-      expect(foundSubmission.update).toHaveBeenCalledWith({
-        status: undefined,
-        reportingExclude: true,
-        version: expect.any(Date)
+        expect(result.statusCode).toBe(200)
       })
-    })
 
-    it('should return the updated submission in the response body', async () => {
-      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
-      handleUpdateCRMActivity.mockResolvedValue()
+      it('should call update with the "status"', async () => {
+        const foundSubmission = getFoundSubmission('INCOMPLETE')
+        Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+        handleUnlockCRMActivity.mockResolvedValueOnce()
 
-      const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
-        getMockResponseToolkit()
-      )
+        await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'INCOMPLETE' }),
+          getMockResponseToolkit()
+        )
 
-      expect(result.payload).toMatchSnapshot()
+        expect(foundSubmission.update).toHaveBeenCalledWith({
+          status: 'INCOMPLETE',
+          reportingExclude: undefined,
+          version: expect.any(Date)
+        })
+      })
+
+      it('should call update with "reportingExclude"', async () => {
+        const foundSubmission = getFoundSubmission('INCOMPLETE')
+        Submission.findByPk.mockResolvedValueOnce(foundSubmission)
+        handleUnlockCRMActivity.mockResolvedValueOnce()
+
+        await patchSubmissionByIdHandler(
+          getSubmissionRequest({ reportingExclude: true }),
+          getMockResponseToolkit()
+        )
+
+        expect(foundSubmission.update).toHaveBeenCalledWith({
+          status: undefined,
+          reportingExclude: true,
+          version: expect.any(Date)
+        })
+      })
+
+      it('should return the updated submission in the response body', async () => {
+        Submission.findByPk.mockResolvedValueOnce(
+          getFoundSubmission('INCOMPLETE')
+        )
+        handleUnlockCRMActivity.mockResolvedValue()
+
+        const result = await patchSubmissionByIdHandler(
+          getSubmissionRequest({ status: 'INCOMPLETE' }),
+          getMockResponseToolkit()
+        )
+
+        expect(result.payload).toMatchSnapshot()
+      })
     })
 
     it('should call handleNotFound if the submission is not found', async () => {
@@ -732,7 +803,7 @@ describe('submissions.unit', () => {
       const h = getMockResponseToolkit()
 
       await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getSubmissionRequest({ status: 'INCOMPLETE' }),
         h
       )
 
@@ -746,7 +817,7 @@ describe('submissions.unit', () => {
       Submission.findByPk.mockResolvedValueOnce(null)
 
       const result = await patchSubmissionByIdHandler(
-        getSubmissionRequest({ status: 'SUBMITTED' }),
+        getSubmissionRequest({ status: 'INCOMPLETE' }),
         getMockResponseToolkit()
       )
 
@@ -782,10 +853,10 @@ describe('submissions.unit', () => {
       expect(result).toBe(SERVER_ERROR_SYMBOL)
     })
 
-    it('should call handleServerError when the call to update an activity in CRM returns an error', async () => {
-      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+    it('should call handleServerError when the call to submit an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission('SUBMITTED'))
       const error = new Error('CRM')
-      handleUpdateCRMActivity.mockRejectedValueOnce(error)
+      handleSubmitCRMActivity.mockRejectedValueOnce(error)
 
       const h = getMockResponseToolkit()
       await patchSubmissionByIdHandler(
@@ -803,10 +874,43 @@ describe('submissions.unit', () => {
     it('should return an error response when the call to update an activity in CRM returns an error', async () => {
       Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
       const error = new Error('CRM')
-      handleUpdateCRMActivity.mockRejectedValueOnce(error)
+      handleSubmitCRMActivity.mockRejectedValueOnce(error)
 
       const result = await patchSubmissionByIdHandler(
         getSubmissionRequest({ status: 'SUBMITTED' }),
+        getMockResponseToolkit()
+      )
+
+      expect(result).toBe(SERVER_ERROR_SYMBOL)
+    })
+
+    it('should call handleServerError when the call to unlock an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(
+        getFoundSubmission('INCOMPLETE')
+      )
+      const error = new Error('CRM')
+      handleUnlockCRMActivity.mockRejectedValueOnce(error)
+
+      const h = getMockResponseToolkit()
+      await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'INCOMPLETE' }),
+        h
+      )
+
+      expect(handleServerError).toHaveBeenCalledWith(
+        'Error updating submission',
+        error,
+        h
+      )
+    })
+
+    it('should return an error response when the call to unlock an activity in CRM returns an error', async () => {
+      Submission.findByPk.mockResolvedValueOnce(getFoundSubmission())
+      const error = new Error('CRM')
+      handleUnlockCRMActivity.mockRejectedValueOnce(error)
+
+      const result = await patchSubmissionByIdHandler(
+        getSubmissionRequest({ status: 'INCOMPLETE' }),
         getMockResponseToolkit()
       )
 

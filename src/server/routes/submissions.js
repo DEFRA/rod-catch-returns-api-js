@@ -14,7 +14,8 @@ import {
 } from '../../schemas/submission.schema.js'
 import {
   handleCreateCRMActivity,
-  handleUpdateCRMActivity
+  handleSubmitCRMActivity,
+  handleUnlockCRMActivity
 } from '../../services/crm.service.js'
 import { handleNotFound, handleServerError } from '../../utils/server-utils.js'
 import { STATUSES } from '../../utils/constants.js'
@@ -321,7 +322,7 @@ export default [
           // if a value is undefined, it is not updated by Sequelize
           const updatedSubmission = await submission.update(submissionData)
 
-          // Update CRM Activity if status is SUBMITTED
+          // Update CRM Activity with correct status
           if (status === STATUSES.SUBMITTED) {
             logger.info(
               'Updating CRM activity with request:',
@@ -329,7 +330,19 @@ export default [
               submission.season
             )
 
-            await handleUpdateCRMActivity(
+            await handleSubmitCRMActivity(
+              submission.contactId,
+              submission.season
+            )
+          }
+          if (status === STATUSES.INCOMPLETE) {
+            logger.info(
+              'Updating CRM activity with request:',
+              submission.contactId,
+              submission.season
+            )
+
+            await handleUnlockCRMActivity(
               submission.contactId,
               submission.season
             )
