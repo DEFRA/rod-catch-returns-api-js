@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- Unlocking submission should change status in CRM [#151](https://github.com/DEFRA/rod-catch-returns-api-js/pull/151) (Iris Faraway)
+- Update CHANGELOG.md for v1.2.0 ([@actions](https://github.com/actions))
+
 ## 1.2.0
 
 - Upgrade npm to 11.19.0 [#149](https://github.com/DEFRA/rod-catch-returns-api-js/pull/149) ([@lailien3](https://github.com/lailien3))
