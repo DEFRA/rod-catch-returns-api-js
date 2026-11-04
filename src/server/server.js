@@ -91,11 +91,16 @@ export default async () => {
 
   server.route(apiPrefixRoutes)
 
+  const pkgPath = path.join(process.cwd(), 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+
   await server.start()
   logger.info(
-    'Server started at %s. Listening on %s',
+    'Server started at %s. Listening on %s. Version %s running on node version %s.',
     new Date(),
-    server.info.uri
+    server.info.uri,
+    pkg.version,
+    process.version
   )
 
   const shutdown = async (code) => {
