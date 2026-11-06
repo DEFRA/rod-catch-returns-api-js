@@ -17,6 +17,8 @@ import { sequelize } from '../services/database.service.js'
 import { tokenService } from '../services/token.service.js'
 
 const CACHE_TTL_MS_DEFAULT = 3600000 // default cache is 1 hour
+const SIGINT_TERMINATION = 130
+const SIGKILL_TERMINATION = 137
 
 const shutdown = async (server, code) => {
   await server.stop()
@@ -111,8 +113,8 @@ export default async () => {
     process.version
   )
 
-  process.on('SIGINT', () => shutdown(server, 130))
-  process.on('SIGTERM', () => shutdown(server, 137))
+  process.on('SIGINT', () => shutdown(server, SIGINT_TERMINATION))
+  process.on('SIGTERM', () => shutdown(server, SIGKILL_TERMINATION))
 
   return server
 }
