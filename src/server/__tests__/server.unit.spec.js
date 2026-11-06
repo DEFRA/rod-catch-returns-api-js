@@ -84,8 +84,10 @@ describe('server.unit', () => {
     await initialiseServer()
 
     expect(logger.info).toHaveBeenCalledWith(
-      'Server started at %s. Listening on %s',
+      'Server started at %s. Listening on %s. Version %s running on node version %s.',
       expect.any(Date),
+      expect.any(String),
+      expect.any(String),
       expect.any(String)
     )
   })

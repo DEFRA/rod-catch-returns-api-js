@@ -10,11 +10,21 @@ import Vision from '@hapi/vision'
 import airbrake from '../utils/airbrake.js'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
+import fs from 'node:fs'
 import logger from '../utils/logger-utils.js'
+import path from 'node:path'
 import { sequelize } from '../services/database.service.js'
 import { tokenService } from '../services/token.service.js'
 
 const CACHE_TTL_MS_DEFAULT = 3600000 // default cache is 1 hour
+const SIGINT_TERMINATION = 130
+const SIGKILL_TERMINATION = 137
+
+const shutdown = async (server, code) => {
+  await server.stop()
+  await airbrake.flush()
+  process.exit(code)
+}
 
 export default async () => {
   const envValidationResult = envSchema.validate(process.env, {
@@ -91,21 +101,20 @@ export default async () => {
 
   server.route(apiPrefixRoutes)
 
+  const pkgPath = path.join(process.cwd(), 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+
   await server.start()
   logger.info(
-    'Server started at %s. Listening on %s',
+    'Server started at %s. Listening on %s. Version %s running on node version %s.',
     new Date(),
-    server.info.uri
+    server.info.uri,
+    pkg.version,
+    process.version
   )
 
-  const shutdown = async (code) => {
-    await server.stop()
-    await airbrake.flush()
-    process.exit(code)
-  }
-
-  process.on('SIGINT', () => shutdown(130))
-  process.on('SIGTERM', () => shutdown(137))
+  process.on('SIGINT', () => shutdown(server, SIGINT_TERMINATION))
+  process.on('SIGTERM', () => shutdown(server, SIGKILL_TERMINATION))
 
   return server
 }
