@@ -10,13 +10,19 @@ import Vision from '@hapi/vision'
 import airbrake from '../utils/airbrake.js'
 import { envSchema } from '../config.js'
 import { failAction } from '../utils/error-utils.js'
-import fs from 'fs'
+import fs from 'node:fs'
 import logger from '../utils/logger-utils.js'
-import path from 'path'
+import path from 'node:path'
 import { sequelize } from '../services/database.service.js'
 import { tokenService } from '../services/token.service.js'
 
 const CACHE_TTL_MS_DEFAULT = 3600000 // default cache is 1 hour
+
+const shutdown = async (server, code) => {
+  await server.stop()
+  await airbrake.flush()
+  process.exit(code)
+}
 
 export default async () => {
   const envValidationResult = envSchema.validate(process.env, {
@@ -105,14 +111,8 @@ export default async () => {
     process.version
   )
 
-  const shutdown = async (code) => {
-    await server.stop()
-    await airbrake.flush()
-    process.exit(code)
-  }
-
-  process.on('SIGINT', () => shutdown(130))
-  process.on('SIGTERM', () => shutdown(137))
+  process.on('SIGINT', () => shutdown(server, 130))
+  process.on('SIGTERM', () => shutdown(server, 137))
 
   return server
 }
