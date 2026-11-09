@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- SEMVER-MINOR: Release 1.4.0 (Lawrence-Sithole-Def)
+- Add the Dependency Review to GH Actions PR Workflow [#153](https://github.com/DEFRA/rod-catch-returns-api-js/pull/153) (Mark Roberts)
+- Update rod-catch-returns-api-js to Node.js 24.22.1 [#154](https://github.com/DEFRA/rod-catch-returns-api-js/pull/154) (Lawrence-Sithole-Def)
+- Update CHANGELOG.md for v1.3.0 ([@actions](https://github.com/actions))
+
 ## 1.3.0
 
 - Unlocking submission should change status in CRM [#151](https://github.com/DEFRA/rod-catch-returns-api-js/pull/151) (Iris Faraway)
